@@ -42,3 +42,15 @@ bool sx_is_tiny(vec3 v)
 {
     return v.x < M_FLOAT_EPS && v.y < M_FLOAT_EPS && v.z < M_FLOAT_EPS;
 }
+
+// https://www.graphics.rwth-aachen.de/publication/2/jgt.pdf
+float sx_golden_ratio_sequence(int i)
+{
+    return fract((float(i) + 1.0) * M_GOLDEN_RATIO);
+}
+
+// https://people.irisa.fr/Ricardo.Marques/articles/2013/SF_CGF.pdf
+vec2 sx_spherical_fibonacci(int i, int numSamples)
+{
+    return vec2((float(i) + 0.5) / float(numSamples), sx_golden_ratio_sequence(i));
+}

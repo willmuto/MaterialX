@@ -47,7 +47,7 @@ void sx_conductorbrdf_indirect(vec3 V, float weight, vec3 reflectivity, vec3 edg
     vec3 ior_n, ior_k;
     sx_complexior(reflectivity, edgecolor, ior_n, ior_k);
 
-    vec3 Li = sx_environment_specular(normal, V, roughness.alpha);
+    vec3 Li = sx_environment_specular(normal, V, tangent, roughness);
     vec3 F = sx_fresnel_conductor(dot(normal, V), ior_n, ior_k);
     F *= weight;
     result = Li * F;

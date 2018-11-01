@@ -61,7 +61,7 @@ void sx_dielectricbrdf_indirect(vec3 V, float weight, vec3 tint, float ior, roug
         return;
     }
 
-    vec3 Li = sx_environment_specular(normal, V, roughness.alpha);
+    vec3 Li = sx_environment_specular(normal, V, tangent, roughness);
 
     float NdotV = dot(normal,V);
     float F = sx_fresnel_schlick_roughness(NdotV, ior, roughness.alpha);

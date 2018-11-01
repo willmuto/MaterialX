@@ -18,6 +18,7 @@ option(MATERIALX_INSTALL_PYTHON "Install the MaterialX Python package as a third
 option(MATERIALX_WARNINGS_AS_ERRORS "Interpret all compiler warnings as errors." OFF)
 option(MATERIALX_BUILD_RENDER "Build the MaterialX Render module. " ON)
 option(MATERIALX_TEST_RENDER "Run tests for MaterialX Render module. Requires a valid GPU setup for hardware dependent validation." OFF)
+option(MATERIALX_BUILD_VIEWER "Build the MaterialX Viewer. " OFF)
 option(MATERIALX_BUILD_GEN_OSL "Build the OSL shader generator back-end." ON)
 option(MATERIALX_BUILD_GEN_GLSL "Build the GLSL shader generator back-end." ON)
 cmake_dependent_option(MATERIALX_BUILD_GEN_OGSFX "Build the OGSFX shader generator back-end." ON "MATERIALX_BUILD_GEN_GLSL" OFF)
@@ -135,6 +136,10 @@ if (MATERIALX_BUILD_RENDER)
     add_definitions(-DMATERIALX_BUILD_RENDER)
     add_subdirectory(source/MaterialXRender)
 endif(MATERIALX_BUILD_RENDER)
+
+if (MATERIALX_BUILD_VIEWER)
+    add_subdirectory(source/MaterialXView)
+endif(MATERIALX_BUILD_VIEWER)
 
 add_subdirectory(source/MaterialXTest)
 add_subdirectory(documents)
