@@ -1,0 +1,6 @@
+[submodule "external/NanoGUI"]
+	path = external/NanoGUI
+	url = https://github.com/wjakob/nanogui
+[submodule "external/TinyObjLoader"]
+	path = external/TinyObjLoader
+	url = https://github.com/syoyo/tinyobjloader
