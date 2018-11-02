@@ -57,10 +57,18 @@ vec3 sx_environment_specular(vec3 N, vec3 V, vec3 X, roughnessinfo roughness)
 
         // Compute the geometric term.
         float G = sx_microfacet_ggx_smith_G(NdotL, NdotV, roughness.alpha);
+        
+        // Fresnel is applied outside the lighting integral for now.
+        // TODO: Move Fresnel term into the lighting integral.
+        float F = 1.0;
 
         // Add the radiance contribution of this sample.
-        // TODO: Move Fresnel term into the lighting integral.
-        radiance += sampleColor * NdotL * G / (NdotH / (4.0 * VdotH));
+        // From https://cdn2.unrealengine.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
+        //   incidentLight = sampleColor * NdotL
+        //   microfacetSpecular = D * G * F / (4 * NdotL * NdotV)
+        //   pdf = D * NdotH / (4 * VdotH)
+        //   radiance = incidentLight * microfacetSpecular / pdf
+        radiance += sampleColor * G * F * VdotH / (NdotV * NdotH);
     }
 
     // Normalize and return the final radiance.
