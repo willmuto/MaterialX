@@ -8,8 +8,8 @@
 #include <iostream>
 #include <fstream>
 
-using MatrixXfProxy = Eigen::Map<ng::MatrixXf>;
-using MatrixXuProxy = Eigen::Map<ng::MatrixXu>;
+using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
+using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
 const float PI = std::acos(-1.0f);
 
@@ -200,7 +200,7 @@ bool Viewer::mouseMotionEvent(const ng::Vector2i& p,
             mx::Matrix44 world, view, proj;
             computeCameraMatrices(world, view, proj);
             mx::Matrix44 worldView = view * world;
-            float zval = ng::project(ng::Vector3f(&_mesh->getMeshCenter()[0]),
+            float zval = ng::project(ng::Vector3f(&_mesh->getSphereCenter()[0]),
                                      ng::Matrix4f(&worldView.getTranspose()[0][0]),
                                      ng::Matrix4f(&proj.getTranspose()[0][0]),
                                      mSize).z();
@@ -276,8 +276,8 @@ void Viewer::recenterCamera()
 {
     _cameraParams.arcball = ng::Arcball();
     _cameraParams.arcball.setSize(mSize);
-    _cameraParams.modelZoom = 2.0f / _mesh->getMaxDist();
-    _cameraParams.modelTranslation = _mesh->getMeshCenter() * -1.0f;
+    _cameraParams.modelZoom = 2.0f / _mesh->getSphereRadius();
+    _cameraParams.modelTranslation = _mesh->getSphereCenter() * -1.0f;
 }
 
 void Viewer::computeCameraMatrices(mx::Matrix44& world,

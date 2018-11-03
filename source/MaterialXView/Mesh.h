@@ -22,39 +22,39 @@ class Mesh
         return _faceCount;
     }
 
-    const mx::Vector3 getMeshCenter()
-    {
-        return _meshCenter;
-    }
-
-    float getMaxDist()
-    {
-        return _maxDist;
-    }
-
-    std::vector<mx::Vector3>& getPositions()
+    const std::vector<mx::Vector3>& getPositions()
     {
         return _positions;
     }
 
-    std::vector<mx::Vector3>& getNormals()
+    const std::vector<mx::Vector3>& getNormals()
     {
         return _normals;
     }
 
-    std::vector<mx::Vector2>& getTexcoords()
+    const std::vector<mx::Vector2>& getTexcoords()
     {
         return _texcoords;
     }
   
-    std::vector<mx::Vector3>& getTangents()
+    const std::vector<mx::Vector3>& getTangents()
     {
         return _tangents;
     }
   
-    std::vector<uint32_t>& getIndices()
+    const std::vector<uint32_t>& getIndices()
     {
         return _indices;
+    }
+
+    const mx::Vector3 getSphereCenter()
+    {
+        return _sphereCenter;
+    }
+
+    float getSphereRadius()
+    {
+        return _sphereRadius;
     }
 
   private:
@@ -69,8 +69,8 @@ class Mesh
 
     mx::Vector3 _boxMin;
     mx::Vector3 _boxMax;
-    mx::Vector3 _meshCenter;
-    float _maxDist = 0.0f;
+    mx::Vector3 _sphereCenter;
+    float _sphereRadius;
 };
 
 using MeshPtr = std::unique_ptr<Mesh>;

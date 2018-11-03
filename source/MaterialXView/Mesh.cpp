@@ -11,7 +11,7 @@ Mesh::Mesh() :
     _faceCount(0),
     _boxMin(MAX_FLOAT, MAX_FLOAT, MAX_FLOAT),
     _boxMax(-MAX_FLOAT, -MAX_FLOAT, -MAX_FLOAT),
-    _maxDist(0)
+    _sphereRadius(0.0f)
 {
 }
 
@@ -45,13 +45,13 @@ bool Mesh::loadMesh(const std::string& filename)
     _tangents.resize(_vertCount);
     _indices.resize(_faceCount * 3);
 
-    for (size_t s = 0; s < shapes.size(); s++)
+    for (const tinyobj::shape_t& shape : shapes)
     {
-        for (size_t f = 0; f < shapes[s].mesh.indices.size() / 3; f++)
+        for (size_t f = 0; f < _faceCount; f++)
         {
-            tinyobj::index_t idx0 = shapes[s].mesh.indices[3 * f + 0];
-            tinyobj::index_t idx1 = shapes[s].mesh.indices[3 * f + 1];
-            tinyobj::index_t idx2 = shapes[s].mesh.indices[3 * f + 2];
+            tinyobj::index_t idx0 = shape.mesh.indices[3 * f + 0];
+            tinyobj::index_t idx1 = shape.mesh.indices[3 * f + 1];
+            tinyobj::index_t idx2 = shape.mesh.indices[3 * f + 2];
   
             // Copy positions and compute bounding box.
             mx::Vector3 v[3];
@@ -74,9 +74,8 @@ bool Mesh::loadMesh(const std::string& filename)
                 _boxMax[k] = std::max(v[2][k], _boxMax[k]);
             }
 
-            _meshCenter = (_boxMax + _boxMin) / 2;
-            _maxDist = std::max((_boxMin - _meshCenter).getMagnitude(),
-                                (_boxMax - _meshCenter).getMagnitude());
+            _sphereCenter = (_boxMax + _boxMin) / 2;
+            _sphereRadius = (_sphereCenter - _boxMin).getMagnitude();
 
             // Copy or compute normals
             mx::Vector3 n[3];
