@@ -47,7 +47,7 @@ class Mesh
         return _indices;
     }
 
-    const mx::Vector3 getSphereCenter()
+    const mx::Vector3& getSphereCenter()
     {
         return _sphereCenter;
     }

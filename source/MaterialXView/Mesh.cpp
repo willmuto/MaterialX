@@ -47,7 +47,7 @@ bool Mesh::loadMesh(const std::string& filename)
 
     for (const tinyobj::shape_t& shape : shapes)
     {
-        for (size_t f = 0; f < _faceCount; f++)
+        for (size_t f = 0; f < shape.mesh.indices.size() / 3; f++)
         {
             tinyobj::index_t idx0 = shape.mesh.indices[3 * f + 0];
             tinyobj::index_t idx1 = shape.mesh.indices[3 * f + 1];
