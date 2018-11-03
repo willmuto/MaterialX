@@ -33,6 +33,10 @@ bool Mesh::loadMesh(const std::string& filename)
     }
 
     _vertCount = attrib.vertices.size() / 3;
+    if (!_vertCount)
+    {
+        return false;
+    }
 
     for (size_t i = 0; i < shapes.size(); i++)
     {

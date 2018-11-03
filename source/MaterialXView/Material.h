@@ -23,6 +23,7 @@ void loadLibraries(const mx::StringVec& libraryNames, const mx::FilePath& search
 StringPair generateSource(const mx::FilePath& filePath, const mx::FilePath& searchPath, mx::DocumentPtr stdLib);
 ShaderPtr generateShader(const mx::FilePath& filePath, const mx::FilePath& searchPath, mx::DocumentPtr stdLib);
 
+void bindMesh(ShaderPtr& shader, MeshPtr& mesh);
 void bindUniforms(ShaderPtr& shader, mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
                   mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj);
 

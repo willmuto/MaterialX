@@ -40,7 +40,6 @@ class Viewer : public ng::Screen
     bool mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int modifiers) override;
   
   private:
-    void bindMesh();
     void recenterCamera();
     void computeCameraMatrices(mx::Matrix44& world,
                                mx::Matrix44& view,

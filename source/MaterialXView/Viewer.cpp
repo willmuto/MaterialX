@@ -8,9 +8,6 @@
 #include <iostream>
 #include <fstream>
 
-using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
-using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
-
 const float PI = std::acos(-1.0f);
 
 const int MIN_ENV_SAMPLES = 16;
@@ -42,9 +39,16 @@ Viewer::Viewer() :
         {
             mProcessEvents = false;
             _mesh = MeshPtr(new Mesh());
-            _mesh->loadMesh(filename);
-            bindMesh();
-            recenterCamera();
+            if (_mesh->loadMesh(filename))
+            {
+                bindMesh(_glShader, _mesh);
+                recenterCamera();
+            }
+            else
+            {
+                new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Mesh Loading Error", filename);
+                _mesh = nullptr;
+            }
             mProcessEvents = true;
         }
     });
@@ -60,7 +64,7 @@ Viewer::Viewer() :
             try
             {
                 _glShader = generateShader(_materialFilename, _searchPath, _stdLib);
-                bindMesh();
+                bindMesh(_glShader, _mesh);
             }
             catch (std::exception& e)
             {
@@ -101,7 +105,7 @@ Viewer::Viewer() :
     try
     {
         _glShader = generateShader(_materialFilename, _searchPath, _stdLib);
-        bindMesh();
+        bindMesh(_glShader, _mesh);
     }
     catch (std::exception& e)
     {
@@ -122,7 +126,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
             try
             {
                 _glShader = generateShader(_materialFilename, _searchPath, _stdLib);
-                bindMesh();
+                bindMesh(_glShader, _mesh);
             }
             catch (std::exception& e)
             {
@@ -249,27 +253,6 @@ bool Viewer::mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int 
         _translationActive = false;
     }
     return true;
-}
-
-void Viewer::bindMesh()
-{
-    if (!_mesh)
-    {
-        return;
-    }
-
-    MatrixXfProxy positions(&_mesh->getPositions()[0][0], 3, _mesh->getPositions().size());
-    MatrixXfProxy normals(&_mesh->getNormals()[0][0], 3, _mesh->getNormals().size());
-    MatrixXfProxy tangents(&_mesh->getTangents()[0][0], 3, _mesh->getTangents().size());
-    MatrixXfProxy texcoords(&_mesh->getTexcoords()[0][0], 2, _mesh->getTexcoords().size());
-    MatrixXuProxy indices(&_mesh->getIndices()[0], 3, _mesh->getIndices().size() / 3);
-
-    _glShader->bind();
-    _glShader->uploadAttrib("i_position", positions);
-    _glShader->uploadAttrib("i_normal", normals);
-    _glShader->uploadAttrib("i_tangent", tangents);
-    _glShader->uploadAttrib("i_texcoord_0", texcoords);
-    _glShader->uploadIndices(indices);
 }
 
 void Viewer::recenterCamera()

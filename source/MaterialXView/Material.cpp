@@ -3,6 +3,9 @@
 #include <MaterialXGenShader/Util.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 
+using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
+using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
+
 // TODO: Move image caching into the ImageHandler class.
 class ImageDesc
 {
@@ -91,6 +94,27 @@ ShaderPtr generateShader(const mx::FilePath& filePath, const mx::FilePath& searc
     StringPair source = generateSource(filePath, searchPath, stdLib);
     shader->init(filePath.getBaseName(), source.first, source.second);
     return shader;
+}
+
+void bindMesh(ShaderPtr& shader, MeshPtr& mesh)
+{
+    if (!mesh)
+    {
+        return;
+    }
+
+    MatrixXfProxy positions(&mesh->getPositions()[0][0], 3, mesh->getPositions().size());
+    MatrixXfProxy normals(&mesh->getNormals()[0][0], 3, mesh->getNormals().size());
+    MatrixXfProxy tangents(&mesh->getTangents()[0][0], 3, mesh->getTangents().size());
+    MatrixXfProxy texcoords(&mesh->getTexcoords()[0][0], 2, mesh->getTexcoords().size());
+    MatrixXuProxy indices(&mesh->getIndices()[0], 3, mesh->getIndices().size() / 3);
+
+    shader->bind();
+    shader->uploadAttrib("i_position", positions);
+    shader->uploadAttrib("i_normal", normals);
+    shader->uploadAttrib("i_tangent", tangents);
+    shader->uploadAttrib("i_texcoord_0", texcoords);
+    shader->uploadIndices(indices);
 }
 
 void bindUniforms(ShaderPtr& shader, mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
