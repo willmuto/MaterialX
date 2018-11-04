@@ -135,9 +135,6 @@ void Mesh::generateTangents()
 {
     // Based on Eric Lengyel at http://www.terathon.com/code/tangent.html
 
-    std::vector<mx::Vector3> tan1(_vertCount);
-    std::vector<mx::Vector3> tan2(_vertCount);
-
     for (int f = 0; f < _faceCount; f++)
     {
         int i1 = _indices[f * 3 + 0];
@@ -165,28 +162,21 @@ void Mesh::generateTangents()
         float t2 = w3[1] - w1[1];
         
         float r = 1 / (s1 * t2 - s2 * t1);
-        mx::Vector3 sdir((t2 * x1 - t1 * x2) * r,
-                         (t2 * y1 - t1 * y2) * r,
-                         (t2 * z1 - t1 * z2) * r);
-        mx::Vector3 tdir((s1 * x2 - s2 * x1) * r,
-                         (s1 * y2 - s2 * y1) * r,
-                         (s1 * z2 - s2 * z1) * r);
+        mx::Vector3 dir((t2 * x1 - t1 * x2) * r,
+                        (t2 * y1 - t1 * y2) * r,
+                        (t2 * z1 - t1 * z2) * r);
         
-        tan1[i1] += sdir;
-        tan1[i2] += sdir;
-        tan1[i3] += sdir;
-        
-        tan2[i1] += tdir;
-        tan2[i2] += tdir;
-        tan2[i3] += tdir;
+        _tangents[i1] += dir;
+        _tangents[i2] += dir;
+        _tangents[i3] += dir;
     }
     
     for (int v = 0; v < _vertCount; v++)
     {
         const mx::Vector3& n = _normals[v];
-        const mx::Vector3& t = tan1[v];
+        mx::Vector3& t = _tangents[v];
         
         // Gram-Schmidt orthogonalize
-        _tangents[v] = (t - n * n.dot(t)).getNormalized();
+        t = (t - n * n.dot(t)).getNormalized();
     }
 }
