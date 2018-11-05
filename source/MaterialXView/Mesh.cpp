@@ -135,7 +135,7 @@ void Mesh::generateTangents()
 {
     // Based on Eric Lengyel at http://www.terathon.com/code/tangent.html
 
-    for (int f = 0; f < _faceCount; f++)
+    for (size_t f = 0; f < _faceCount; f++)
     {
         int i1 = _indices[f * 3 + 0];
         int i2 = _indices[f * 3 + 1];
@@ -171,7 +171,7 @@ void Mesh::generateTangents()
         _tangents[i3] += dir;
     }
     
-    for (int v = 0; v < _vertCount; v++)
+    for (size_t v = 0; v < _vertCount; v++)
     {
         const mx::Vector3& n = _normals[v];
         mx::Vector3& t = _tangents[v];
