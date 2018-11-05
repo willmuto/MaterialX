@@ -3,6 +3,8 @@
 #include <MaterialXGenShader/Util.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 
+#include <iostream>
+
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
@@ -164,6 +166,7 @@ void bindUniforms(ShaderPtr& shader, mx::ImageHandlerPtr imageHandler, mx::FileP
                 float* data = nullptr;
                 if (!imageHandler->loadImage(path, desc.width, desc.height, desc.channelCount, &data))
                 {
+                    std::cerr << "Failed to load image: " << path.asString() << std::endl;
                     continue;
                 }
                 desc.mipCount = (unsigned int) std::log2(std::max(desc.width, desc.height)) + 1;
