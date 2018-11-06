@@ -204,21 +204,21 @@ bool Viewer::mouseMotionEvent(const ng::Vector2i& p,
             mx::Matrix44 world, view, proj;
             computeCameraMatrices(world, view, proj);
             mx::Matrix44 worldView = view * world;
-            float zval = ng::project(ng::Vector3f(&_mesh->getSphereCenter()[0]),
-                                     ng::Matrix4f(&worldView.getTranspose()[0][0]),
-                                     ng::Matrix4f(&proj.getTranspose()[0][0]),
+            float zval = ng::project(ng::Vector3f(_mesh->getSphereCenter().data()),
+                                     ng::Matrix4f(worldView.getTranspose().data()),
+                                     ng::Matrix4f(proj.getTranspose().data()),
                                      mSize).z();
             ng::Vector3f pos1 = ng::unproject(ng::Vector3f((float) p.x(),
                                                            (float) (mSize.y() - p.y()),
                                                            (float) zval),
-                                              ng::Matrix4f(&worldView.getTranspose()[0][0]),
-                                              ng::Matrix4f(&proj.getTranspose()[0][0]),
+                                              ng::Matrix4f(worldView.getTranspose().data()),
+                                              ng::Matrix4f(proj.getTranspose().data()),
                                               mSize);
             ng::Vector3f pos0 = ng::unproject(ng::Vector3f((float) _translationStart.x(),
                                                            (float) (mSize.y() - _translationStart.y()),
                                                            (float) zval),
-                                              ng::Matrix4f(&worldView.getTranspose()[0][0]),
-                                              ng::Matrix4f(&proj.getTranspose()[0][0]),
+                                              ng::Matrix4f(worldView.getTranspose().data()),
+                                              ng::Matrix4f(proj.getTranspose().data()),
                                               mSize);
             ng::Vector3f delta = pos1 - pos0;
             _cameraParams.modelTranslation = _cameraParams.modelTranslationStart +

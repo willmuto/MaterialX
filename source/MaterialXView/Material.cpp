@@ -127,16 +127,16 @@ void bindUniforms(ShaderPtr& shader, mx::ImageHandlerPtr imageHandler, mx::FileP
     mx::Matrix44 invTransWorld = world.getInverse().getTranspose();
 
     // Bind view properties.
-    shader->setUniform("u_worldMatrix", ng::Matrix4f(&world.getTranspose()[0][0]));
-    shader->setUniform("u_viewProjectionMatrix", ng::Matrix4f(&viewProj.getTranspose()[0][0]));
+    shader->setUniform("u_worldMatrix", ng::Matrix4f(world.getTranspose().data()));
+    shader->setUniform("u_viewProjectionMatrix", ng::Matrix4f(viewProj.getTranspose().data()));
     if (shader->uniform("u_worldInverseTransposeMatrix", false) != -1)
     {
-        shader->setUniform("u_worldInverseTransposeMatrix", ng::Matrix4f(&invTransWorld.getTranspose()[0][0]));
+        shader->setUniform("u_worldInverseTransposeMatrix", ng::Matrix4f(invTransWorld.getTranspose().data()));
     }
     if (shader->uniform("u_viewPosition", false) != -1)
     {
         mx::Vector3 viewPosition(invView[0][3], invView[1][3], invView[2][3]);
-        shader->setUniform("u_viewPosition", ng::Vector3f(&viewPosition[0]));
+        shader->setUniform("u_viewPosition", ng::Vector3f(viewPosition.data()));
     }
 
     // Bind light properties.
