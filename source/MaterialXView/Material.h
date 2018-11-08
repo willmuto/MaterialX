@@ -24,7 +24,7 @@ using MaterialPtr = std::unique_ptr<class Material>;
 // TODO: Move image caching into the ImageHandler class.
 class ImageDesc
 {
-public:
+  public:
     unsigned int width = 0; // TODO: These would be better as size_t.
     unsigned int height = 0;
     unsigned int channelCount = 0;

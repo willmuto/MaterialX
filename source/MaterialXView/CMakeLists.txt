@@ -1,7 +1,7 @@
 if (NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../external/NanoGUI/ext/glfw/src")
     message(FATAL_ERROR "Building the MaterialX viewer requires submodules such as "
-	    "NanoGUI to be present. Update your repository by calling the following:\n"
-		"git submodule update --init --recursive")
+        "NanoGUI to be present. Update your repository by calling the following:\n"
+        "git submodule update --init --recursive")
 endif()
 
 file(GLOB materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
