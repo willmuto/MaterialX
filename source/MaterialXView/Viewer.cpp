@@ -142,9 +142,9 @@ void Viewer::updatePropertySheet()
     _propertySheet->setWindow(_propertySheetWindow);
 
     mx::ElementPtr element = nullptr;
-    if (_renderableElementIndex >= 0 && _renderableElementIndex < _renderableElements.size())
+    if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
     {
-        element = _renderableElements[_renderableElementIndex];
+        element = _elementSelections[_elementSelectionIndex];
     }
     if (!element)
     {
@@ -271,10 +271,10 @@ Viewer::Viewer() :
     ng::Button* meshButton = new ng::Button(_window, "Load Mesh");
     meshButton->setCallback([this]()
     {
+        mProcessEvents = false;
         std::string filename = ng::file_dialog({{"obj", "Wavefront OBJ"}}, false);
         if (!filename.empty())
         {
-            mProcessEvents = false;
             _mesh = MeshPtr(new Mesh());
             if (_mesh->loadMesh(filename))
             {
@@ -289,43 +289,44 @@ Viewer::Viewer() :
                 new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Mesh Loading Error", filename);
                 _mesh = nullptr;
             }
-            mProcessEvents = true;
         }
+        mProcessEvents = true;
     });
 
     ng::Button* materialButton = new ng::Button(_window, "Load Material");
     materialButton->setCallback([this]()
     {
+        mProcessEvents = false;
         std::string filename = ng::file_dialog({{"mtlx", "MaterialX"}}, false);
         if (!filename.empty())
         {
-            mProcessEvents = false;
             _materialFilename = filename;
             try
             {
-                loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
-                _renderableElementIndex = _renderableElements.size() ? 0 : -1;
-                updateMaterialComboBox();
+                loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+                _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
+                updateElementSelections();
                 updatePropertySheet();
-                setElementToRender(_renderableElementIndex);
+                setElementSelection(_elementSelectionIndex);
             }
             catch (std::exception& e)
             {
                 new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
             }
-            mProcessEvents = true;
         }
+        mProcessEvents = true;
     });
 
-    _materialComboBox = new ng::ComboBox(_window, {"None"});
-    _materialComboBox->setChevronIcon(-1);
-    _materialComboBox->setCallback([this](int choice) {
-        mx::ElementPtr elem = choice >= 0 ? _renderableElements[choice] : nullptr;
+    _elementSelectionBox = new ng::ComboBox(_window, {"None"});
+    _elementSelectionBox->setChevronIcon(-1);
+    _elementSelectionBox->setCallback([this](int choice)
+    {
+        mx::ElementPtr elem = choice >= 0 ? _elementSelections[choice] : nullptr;
         _material = Material::generateShader(_searchPath, elem);
         if (_material)
         {
             _material->bindMesh(_mesh);
-            _renderableElementIndex = choice;
+            _elementSelectionIndex = choice;
         }
         updatePropertySheet();
     });
@@ -359,10 +360,10 @@ Viewer::Viewer() :
 
     try
     {
-        loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
-        _renderableElementIndex = _renderableElements.size() ? 0 : -1;
-        updateMaterialComboBox();
-        setElementToRender(_renderableElementIndex);
+        loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+        _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
+        updateElementSelections();
+        setElementSelection(_elementSelectionIndex);
     }
     catch (std::exception& e)
     {
@@ -379,20 +380,25 @@ Viewer::Viewer() :
     performLayout();
 }
 
-void Viewer::updateMaterialComboBox()
+void Viewer::updateElementSelections()
 {
     std::vector<std::string> items;
-    for (size_t i = 0; i < _renderableElements.size(); i++)
+    for (size_t i = 0; i < _elementSelections.size(); i++)
     {
-        items.push_back(_renderableElements[i]->getNamePath());
+        items.push_back(_elementSelections[i]->getNamePath());
     }
-    _materialComboBox->setItems(items);
+    _elementSelectionBox->setItems(items);
+    _elementSelectionBox->setVisible(items.size() > 1);
     performLayout();
 }
 
-bool Viewer::setElementToRender(int index)
+bool Viewer::setElementSelection(int index)
 {
-    mx::ElementPtr elem = (index >= 0 && index < _renderableElements.size()) ? _renderableElements[index] : nullptr;
+    mx::ElementPtr elem;
+    if (index >= 0 && index < _elementSelections.size())
+    {
+        elem = _elementSelections[index];
+    }
     if (elem)
     {
         _material = Material::generateShader(_searchPath, elem);
@@ -415,11 +421,11 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     {
         try 
         {
-            loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
-            _renderableElementIndex = _renderableElements.size() ? 0 : -1;
-            updateMaterialComboBox();
+            loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+            _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
+            updateElementSelections();
             updatePropertySheet();
-            setElementToRender(_renderableElementIndex);
+            setElementSelection(_elementSelectionIndex);
         }
         catch (std::exception& e)
         {
@@ -433,7 +439,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         {
             try
             {
-                mx::ElementPtr elem = _renderableElements.size() ? _renderableElements[0] : nullptr;
+                mx::ElementPtr elem = _elementSelections.size() ? _elementSelections[0] : nullptr;
                 if (elem)
                 {
                     mx::HwShaderPtr hwShader = nullptr;
@@ -455,24 +461,24 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     // Allow left and right keys to cycle through the renderable elements
     if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
     {
-        int elementSize = static_cast<int>(_renderableElements.size());
+        int elementSize = static_cast<int>(_elementSelections.size());
         if (elementSize > 1)
         {
             int newIndex = 0;
             if (key == GLFW_KEY_RIGHT)
             {
-                newIndex = (_renderableElementIndex + 1) % elementSize;
+                newIndex = (_elementSelectionIndex + 1) % elementSize;
             }
             else
             {
-                newIndex = (_renderableElementIndex + elementSize - 1) % elementSize;
+                newIndex = (_elementSelectionIndex + elementSize - 1) % elementSize;
             }
             try
             {
-                if (setElementToRender(newIndex))
+                if (setElementSelection(newIndex))
                 {
-                    _materialComboBox->setSelectedIndex(newIndex);
-                    _renderableElementIndex = newIndex;
+                    _elementSelectionBox->setSelectedIndex(newIndex);
+                    _elementSelectionIndex = newIndex;
                 }
             }
             catch (std::exception& e)
