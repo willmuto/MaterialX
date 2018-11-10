@@ -4,9 +4,11 @@
 #include <nanogui/combobox.h>
 #include <nanogui/layout.h>
 #include <nanogui/messagedialog.h>
+#include <nanogui/label.h>
 
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 const float PI = std::acos(-1.0f);
 
@@ -20,7 +22,242 @@ void writeTextFile(const std::string& text, const std::string& filePath)
     file << text;
     file.close();
 }
-  
+ 
+void addValueToForm(mx::ValuePtr value, const std::string& label, ng::FormHelper& form)
+{
+    if (!value)
+    {
+        return;
+    }
+    if (value->isA<int>())
+    {
+        int v = value->asA<int>();
+        form.addVariable(label, v, false);
+    }
+    else if (value->isA<float>())
+    {
+        float v = value->asA<float>();
+        form.addVariable(label, v, false);
+    }
+    else if (value->isA<mx::Color2>())
+    {
+        mx::Color2 v = value->asA<mx::Color2>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = 0.0f;
+        c.b() = 0.0f;
+        c.w() = v[1];
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<mx::Color3>())
+    {
+        mx::Color3 v = value->asA<mx::Color3>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = 1.0;
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<mx::Color4>())
+    {
+        mx::Color4 v = value->asA<mx::Color4>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = v[3];
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<mx::Vector2>())
+    {
+        mx::Vector2 v = value->asA<mx::Vector2>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = 0.0f;
+        c.w() = 1.0f;
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<mx::Vector3>())
+    {
+        mx::Vector3 v = value->asA<mx::Vector3>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = 1.0;
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<mx::Vector4>())
+    {
+        mx::Vector4 v = value->asA<mx::Vector4>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = v[3];
+        form.addVariable(label, c, false);
+    }
+    else if (value->isA<std::string>())
+    {
+        std::string v = value->asA<std::string>();
+        if (!v.empty())
+        {
+            form.addVariable(label, v, false);
+        }
+    }
+}
+
+void Viewer::updatePropertySheet()
+{
+    if (!_propertySheet)
+    {
+        _propertySheet = new ng::FormHelper(this);
+    }
+   
+    // Remove the window associated with the form.
+    // This is done by explicitly creating and owning the window
+    // as opposed to having it being done by the form
+    ng::Vector2i previousPosition(0, 0);
+    if (_propertySheetWindow)
+    {
+        for (int i = 0; i < _propertySheetWindow->childCount(); i++)
+        {
+            _propertySheetWindow->removeChild(i);
+        }
+        // We don't want the property sheet to move when
+        // we update it's contents so cache any previous position
+        // to use when we create a new window.
+        previousPosition = _propertySheetWindow->position();
+        this->removeChild(_propertySheetWindow);
+    }
+    _propertySheetWindow = new ng::Window(this, "Property Sheet");
+    ng::AdvancedGridLayout* layout = new ng::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
+    layout->setMargin(10);
+    layout->setColStretch(2, 1);
+    _propertySheetWindow->setPosition(previousPosition);
+    _propertySheetWindow->setVisible(false); // TODO: Add toggle for this display
+    _propertySheetWindow->setLayout(layout);
+    _propertySheet->setWindow(_propertySheetWindow);
+
+    mx::ElementPtr element = nullptr;
+    if (_renderableElementIndex >= 0 && _renderableElementIndex < _renderableElements.size())
+    {
+        element = _renderableElements[_renderableElementIndex];
+    }
+    if (!element)
+    {
+        return;
+    }
+
+    // Update to show properties for a shader reference
+    mx::ShaderRefPtr shaderRef = element->asA<mx::ShaderRef>();
+    if (shaderRef)
+    {
+        mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
+        if (nodeDef)
+        {
+            std::vector<mx::ValuePtr> formValues;
+            std::vector<mx::string> formNames;
+
+            // Scan for bindinputs
+            for (mx::ParameterPtr elem : nodeDef->getParameters())
+            {
+                const std::string& elemName = elem->getName();
+                mx::BindParamPtr bindParam = shaderRef->getBindParam(elemName);
+                mx::ValuePtr value = nullptr;
+                if (bindParam)
+                {
+                    if (!bindParam->getValueString().empty())
+                    {
+                         value = bindParam->getValue();
+                    }
+                }
+                // Adding nodedef values if desired
+                if (!value && _showNonEditableInputs)
+                {
+                    value = elem->getValue();
+                }
+                if (value)
+                {
+                    formValues.push_back(value);
+                    formNames.push_back(elemName);
+                }
+            }
+
+            // Scan for bindinputs
+            size_t startOfInputs = formValues.size();
+            for (const mx::InputPtr& input : nodeDef->getInputs())
+            {
+                const std::string& elemName = input->getName();
+                mx::BindInputPtr bindInput = shaderRef->getBindInput(elemName);
+                mx::ValuePtr value = nullptr;
+                if (bindInput)
+                {
+                    if (!bindInput->getValueString().empty())
+                    {
+                        value = bindInput->getValue();
+                    }
+                }
+                //  Adding nodedef values if desired
+                if (!value && _showNonEditableInputs)
+                {
+                    value = input->getValue();
+                }
+                if (value)
+                {
+                    formValues.push_back(value);
+                    formNames.push_back(elemName);
+                }
+            }
+
+            if (formValues.size() && startOfInputs > 0)
+            {
+                _propertySheet->addGroup("Shader Parameters");
+            }
+            for (size_t i=0; i<formValues.size(); i++)
+            {
+                if (i == startOfInputs)
+                {
+                    _propertySheet->addGroup("Shader Inputs");
+                }
+
+                mx::ValuePtr value = formValues[i];
+                const std::string& name = formNames[i];
+                addValueToForm(value, name, *_propertySheet);
+            }
+        }
+    }
+
+    else
+    {
+        // Handle showing properties on node directly connected to an output
+        mx::OutputPtr graphOutput = element->asA<mx::Output>();
+        if (graphOutput && graphOutput->getParent())
+        {
+            mx::NodePtr node = graphOutput->getConnectedNode();
+            if (node)
+            {
+                for (auto input : node->getInputs())
+                {
+                    mx::ValuePtr value = input->getValue();
+                    std::string label = input->getName();
+                    addValueToForm(value, label, *_propertySheet);
+                }
+                for (auto param : node->getParameters())
+                {
+                    mx::ValuePtr value = param->getValue();
+                    std::string label = param->getName();
+                    addValueToForm(value, label, *_propertySheet);
+                }
+            }
+        }
+    }
+
+    performLayout();
+}
+
 Viewer::Viewer() :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
     _translationActive(false),
@@ -66,11 +303,11 @@ Viewer::Viewer() :
             _materialFilename = filename;
             try
             {
-                _material = Material::generateShader(_materialFilename, _searchPath, _stdLib);
-                if (_material)
-                {
-                    _material->bindMesh(_mesh);
-                }
+                loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
+                _renderableElementIndex = _renderableElements.size() ? 0 : -1;
+                updateMaterialComboBox();
+                updatePropertySheet();
+                setElementToRender(_renderableElementIndex);
             }
             catch (std::exception& e)
             {
@@ -78,6 +315,19 @@ Viewer::Viewer() :
             }
             mProcessEvents = true;
         }
+    });
+
+    _materialComboBox = new ng::ComboBox(_window, {"None"});
+    _materialComboBox->setChevronIcon(-1);
+    _materialComboBox->setCallback([this](int choice) {
+        mx::ElementPtr elem = choice >= 0 ? _renderableElements[choice] : nullptr;
+        _material = Material::generateShader(_searchPath, elem);
+        if (_material)
+        {
+            _material->bindMesh(_mesh);
+            _renderableElementIndex = choice;
+        }
+        updatePropertySheet();
     });
 
     mx::StringVec sampleOptions;
@@ -94,7 +344,6 @@ Viewer::Viewer() :
         _envSamples = MIN_ENV_SAMPLES * (int) std::pow(2, index);
     });
 
-    performLayout();
 
     _stdLib = mx::createDocument();
     _startPath = mx::FilePath::getCurrentPath();
@@ -110,16 +359,50 @@ Viewer::Viewer() :
 
     try
     {
-        _material = Material::generateShader(_materialFilename, _searchPath, _stdLib);
-        if (_material)
-        {
-            _material->bindMesh(_mesh);
-        }
+        loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
+        _renderableElementIndex = _renderableElements.size() ? 0 : -1;
+        updateMaterialComboBox();
+        setElementToRender(_renderableElementIndex);
     }
     catch (std::exception& e)
     {
         new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
     }
+
+    // By default hind inputs which cannot be edited. e.g. for a shader ref there may be a lot of inputs
+    // which have not been overridden and thus are just the defaults.
+    _showNonEditableInputs = false;
+    _propertySheet = nullptr;
+    _propertySheetWindow = nullptr;
+    updatePropertySheet();
+
+    performLayout();
+}
+
+void Viewer::updateMaterialComboBox()
+{
+    std::vector<std::string> items;
+    for (size_t i = 0; i < _renderableElements.size(); i++)
+    {
+        items.push_back(_renderableElements[i]->getNamePath());
+    }
+    _materialComboBox->setItems(items);
+    performLayout();
+}
+
+bool Viewer::setElementToRender(int index)
+{
+    mx::ElementPtr elem = (index >= 0 && index < _renderableElements.size()) ? _renderableElements[index] : nullptr;
+    if (elem)
+    {
+        _material = Material::generateShader(_searchPath, elem);
+        if (_material)
+        {
+            _material->bindMesh(_mesh);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
@@ -130,20 +413,17 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     }
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
-        if (!_materialFilename.isEmpty())
+        try 
         {
-            try
-            {
-                _material = Material::generateShader(_materialFilename, _searchPath, _stdLib);
-                if (_material)
-                {
-                    _material->bindMesh(_mesh);
-                }
-            }
-            catch (std::exception& e)
-            {
-                new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
-            }
+            loadDocument(_materialFilename, _materialDocument, _stdLib, _renderableElements);
+            _renderableElementIndex = _renderableElements.size() ? 0 : -1;
+            updateMaterialComboBox();
+            updatePropertySheet();
+            setElementToRender(_renderableElementIndex);
+        }
+        catch (std::exception& e)
+        {
+            new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
         }
         return true;
     }
@@ -153,12 +433,16 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         {
             try
             {
-                mx::HwShaderPtr hwShader = nullptr;
-                StringPair source = generateSource(_materialFilename, _searchPath, _stdLib, hwShader);
-                std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
-                mx::StringVec splitName = mx::splitString(baseName, ".");
-                writeTextFile(source.first, _startPath / (baseName + "_vs.glsl"));
-                writeTextFile(source.second, _startPath / (baseName + "_ps.glsl"));
+                mx::ElementPtr elem = _renderableElements.size() ? _renderableElements[0] : nullptr;
+                if (elem)
+                {
+                    mx::HwShaderPtr hwShader = nullptr;
+                    StringPair source = generateSource(_searchPath, hwShader, elem);
+                    std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
+                    mx::StringVec splitName = mx::splitString(baseName, ".");
+                    writeTextFile(source.first, _startPath / (baseName + "_vs.glsl"));
+                    writeTextFile(source.second, _startPath / (baseName + "_ps.glsl"));
+                }
             }
             catch (std::exception& e)
             {
@@ -167,6 +451,38 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         }
         return true;
     }
+
+    // Allow left and right keys to cycle through the renderable elements
+    if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
+    {
+        int elementSize = static_cast<int>(_renderableElements.size());
+        if (elementSize > 1)
+        {
+            int newIndex = 0;
+            if (key == GLFW_KEY_RIGHT)
+            {
+                newIndex = (_renderableElementIndex + 1) % elementSize;
+            }
+            else
+            {
+                newIndex = (_renderableElementIndex + elementSize - 1) % elementSize;
+            }
+            try
+            {
+                if (setElementToRender(newIndex))
+                {
+                    _materialComboBox->setSelectedIndex(newIndex);
+                    _renderableElementIndex = newIndex;
+                }
+            }
+            catch (std::exception& e)
+            {
+                new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
+            }
+        }
+        return true;
+    }
+
     return false;
 }
 

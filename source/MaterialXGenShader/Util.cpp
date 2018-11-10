@@ -186,6 +186,11 @@ namespace
         for (GraphIterator it = output->traverseGraph().begin(); it != GraphIterator::end(); ++it)
         {
             ElementPtr upstreamElem = it.getUpstreamElement();
+            if (!upstreamElem)
+            {
+                it.setPruneSubgraph(true);
+                continue;
+            }
 
             const string& typeName = upstreamElem->asA<TypedElement>()->getType();
             const TypeDesc* type = TypeDesc::get(typeName);
@@ -409,7 +414,7 @@ bool isTransparentSurface(ElementPtr element, const ShaderGenerator& shadergen)
                 {
                     // Unconnected, check the value
                     ValuePtr value = opacity->getValue();
-                    if (!value || isWhite(value->asA<Color3>()))
+                    if (!value || (value->isA<Color3>() && isWhite(value->asA<Color3>())))
                     {
                         opaque = true;
                     }
