@@ -34,14 +34,14 @@ class ShaderValidator
     /// @param imageHandler Handler used to save image
     void setImageHandler(const ImageHandlerPtr imageHandler)
     {
-        _imageHandler = imageHandler;
+        _imageLoader = imageHandler;
     }
 
     /// Get image handler
     /// @return Shared pointer to an image handler
     const ImageHandlerPtr getImageHandler() const
     {
-        return _imageHandler;
+        return _imageLoader;
     }
 
     /// Set light handler to use for light bindings
@@ -124,7 +124,7 @@ class ShaderValidator
     ShaderValidator() {};
 
     /// Utility image handler
-    ImageHandlerPtr _imageHandler;
+    ImageHandlerPtr _imageLoader;
 
     /// Utility geometry handler
     GeometryHandlerPtr _geometryHandler;

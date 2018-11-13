@@ -19,6 +19,7 @@
 #ifdef MATERIALX_BUILD_GEN_GLSL
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 #include <MaterialXRender/ShaderValidators/Glsl/GlslValidator.h>
+#include <MaterialXRender/OpenGL/GLTextureHandler.h>
 #endif
 
 #ifdef MATERIALX_BUILD_GEN_OSL
@@ -26,7 +27,7 @@
 #include <MaterialXRender/ShaderValidators/Osl/OslValidator.h>
 #endif
 
-#include <MaterialXRender/Handlers/TinyEXRImageHandler.h>
+#include <MaterialXRender/Handlers/TinyEXRImageLoader.h>
 
 #include <fstream>
 #include <iostream>
@@ -64,7 +65,8 @@ TEST_CASE("GLSL Source", "[shadervalid]")
     // Validator initiazation will create a offscreen
     // window and offscreen OpenGL context for usage.
     mx::GlslValidatorPtr validator = mx::GlslValidator::create();
-    mx::TinyEXRImageHandlerPtr handler = mx::TinyEXRImageHandler::create();
+    mx::TinyEXRImageLoaderPtr loader = mx::TinyEXRImageLoader::create();
+    mx::GLTextureHandlerPtr handler = mx::GLTextureHandler::create(loader);
     bool initialized = false;
     bool orthographicsView = true;
     try
@@ -124,8 +126,8 @@ TEST_CASE("GLSL Source", "[shadervalid]")
     for (auto shaderName : shaderNames)
     {
         log << "------------ Validate shader from source: " << shaderName << std::endl;
-        std::string vertexShaderPath = shaderName + ".vert";
-        std::string pixelShaderPath = shaderName + ".frag";
+        std::string vertexShaderPath = shaderName + "_vs.glsl";
+        std::string pixelShaderPath = shaderName + "_ps.glsl";
 
         unsigned int stagesFound = 0;
         std::stringstream vertexShaderStream;
@@ -271,7 +273,8 @@ static mx::GlslValidatorPtr createGLSLValidator(bool& orthographicView, const st
     bool initialized = false;
     orthographicView = true;
     mx::GlslValidatorPtr validator = mx::GlslValidator::create();
-    mx::TinyEXRImageHandlerPtr imageHandler = mx::TinyEXRImageHandler::create();
+    mx::TinyEXRImageLoaderPtr imageLoader = mx::TinyEXRImageLoader::create();
+    mx::GLTextureHandlerPtr imageHandler = mx::GLTextureHandler::create(imageLoader);
     try
     {
         validator->initialize();
@@ -324,7 +327,6 @@ static mx::OslValidatorPtr createOSLValidator(bool& orthographicView, std::ostre
 #ifdef MATERIALX_OSL_INCLUDE_PATH
     validator->setOslIncludePath(MATERIALX_OSL_INCLUDE_PATH);
 #endif
-    mx::TinyEXRImageHandlerPtr imageHandler = mx::TinyEXRImageHandler::create();
     try
     {
         validator->initialize();
@@ -394,7 +396,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
         mx::ShaderPtr shader;
         try
         {
-            options.hwTransparency = mx::isTransparentSurface(element, shaderGenerator);
+			options.hwTransparency = mx::isTransparentSurface(element, shaderGenerator);
             shader = shaderGenerator.generate(shaderName, element, options);
         }
         catch(mx::ExceptionShaderGenError e)
@@ -460,10 +462,10 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
         {
             // Dump shader stages on error
             std::ofstream file;
-            file.open(shaderPath + ".vert");
+            file.open(shaderPath + "_vs.glsl");
             file << shader->getSourceCode(mx::HwShader::VERTEX_STAGE);
             file.close();
-            file.open(shaderPath + ".frag");
+            file.open(shaderPath + "_ps.glsl");
             file << shader->getSourceCode(mx::HwShader::PIXEL_STAGE);
             file.close();
 
@@ -471,7 +473,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
             {
                 log << e.what() << " " << error << std::endl;
             }
-            log << ">> Refer to shader code in dump files: " << shaderPath << "(.vert, .frag) files" << std::endl;
+            log << ">> Refer to shader code in dump files: " << shaderPath << "(_vs.glsl, _ps.glsl) files" << std::endl;
         }
         CHECK(validated);
     }

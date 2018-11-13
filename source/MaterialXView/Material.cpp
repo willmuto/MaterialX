@@ -10,7 +10,7 @@
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
-std::unordered_map<std::string, ImageDesc> imageCache;
+std::unordered_map<std::string, mx::ImageDesc> imageCache;
 
 void loadLibraries(const mx::StringVec& libraryNames, const mx::FilePath& searchPath, mx::DocumentPtr doc)
 {
@@ -174,7 +174,7 @@ void Material::bindMesh(MeshPtr& mesh)
     _ngShader->uploadIndices(indices);
 }
 
-bool Material::acquireTexture(const std::string& filename, mx::ImageHandlerPtr imageHandler, ImageDesc& desc)
+bool Material::acquireTexture(const std::string& filename, mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc)
 {
     if (imageCache.count(filename))
     {
@@ -183,25 +183,23 @@ bool Material::acquireTexture(const std::string& filename, mx::ImageHandlerPtr i
     else
     {
         // Load the requested texture into memory.
-        float* data = nullptr;
-        if (!imageHandler->loadImage(filename, desc.width, desc.height, desc.channelCount, &data))
+        if (!imageLoader->acquireImage(filename, desc, false))
         {
             std::cerr << "Failed to load image: " << filename << std::endl;
             return false;
         }
-        desc.mipCount = (unsigned int)std::log2(std::max(desc.width, desc.height)) + 1;
 
         // Upload texture and generate mipmaps.
-        glGenTextures(1, &desc.textureId);
-        glActiveTexture(GL_TEXTURE0 + desc.textureId);
+        glGenTextures(1, &desc.resourceId);
+        glActiveTexture(GL_TEXTURE0 + desc.resourceId);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glBindTexture(GL_TEXTURE_2D, desc.textureId);
+        glBindTexture(GL_TEXTURE_2D, desc.resourceId);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, desc.width, desc.height, 0,
-            (desc.channelCount == 4 ? GL_RGBA : GL_RGB), GL_FLOAT, data);
+            (desc.channelCount == 4 ? GL_RGBA : GL_RGB), GL_FLOAT, desc.resourceBuffer);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // Free memory buffer.
-        free(data);
+        // Free resource buffer.
+        free(desc.resourceBuffer);
 
         imageCache[filename] = desc;
     }
@@ -209,7 +207,7 @@ bool Material::acquireTexture(const std::string& filename, mx::ImageHandlerPtr i
 }
 
 bool Material::bindTexture(const std::string& filename, const std::string& uniformName, 
-                           mx::ImageHandlerPtr imageHandler, ImageDesc& desc)
+                           mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc)
 {
     if (!_ngShader)
     {
@@ -218,13 +216,13 @@ bool Material::bindTexture(const std::string& filename, const std::string& unifo
 
     _ngShader->bind();
 
-    if (acquireTexture(filename, imageHandler, desc))
+    if (acquireTexture(filename, imageLoader, desc))
     {
         // Bind texture to shader.
-        _ngShader->setUniform(uniformName, desc.textureId);
+        _ngShader->setUniform(uniformName, desc.resourceId);
 
-        glActiveTexture(GL_TEXTURE0 + desc.textureId);
-        glBindTexture(GL_TEXTURE_2D, desc.textureId);
+        glActiveTexture(GL_TEXTURE0 + desc.resourceId);
+        glBindTexture(GL_TEXTURE_2D, desc.resourceId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -235,7 +233,7 @@ bool Material::bindTexture(const std::string& filename, const std::string& unifo
     return false;
 }
 
-void Material::bindTextures(mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath)
+void Material::bindTextures(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath)
 {
     mx::HwShaderPtr hwShader = mxShader();
     const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
@@ -260,12 +258,12 @@ void Material::bindTextures(mx::ImageHandlerPtr imageHandler, mx::FilePath image
             }
         }
 
-        ImageDesc desc;
-        bindTexture(filename, uniformName, imageHandler, desc);
+        mx::ImageDesc desc;
+        bindTexture(filename, uniformName, imageLoader, desc);
     }
 }
 
-void Material::bindUniforms(mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
+void Material::bindUniforms(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath, int envSamples,
                             mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj)
 {
     GLShaderPtr shader = ngShader();
@@ -289,7 +287,7 @@ void Material::bindUniforms(mx::ImageHandlerPtr imageHandler, mx::FilePath image
     }
 
     // Bind surface textures
-    bindTextures(imageHandler, imagePath);
+    bindTextures(imageLoader, imagePath);
 
     // Bind light properties.
     if (shader->uniform("u_envSamples", false) != -1)
@@ -308,8 +306,8 @@ void Material::bindUniforms(mx::ImageHandlerPtr imageHandler, mx::FilePath image
             mx::FilePath path = imagePath / mx::FilePath(pair.second);
             const std::string filename = path.asString();
 
-            ImageDesc desc;
-            if (bindTexture(filename, pair.first, imageHandler, desc))
+            mx::ImageDesc desc;
+            if (bindTexture(filename, pair.first, imageLoader, desc))
             {
                 // Bind any associated uniforms.
                 if (pair.first == "u_envRadiance")

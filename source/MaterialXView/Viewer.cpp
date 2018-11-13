@@ -359,7 +359,7 @@ Viewer::Viewer() :
     _searchPath = _startPath / mx::FilePath("documents/Libraries");
     _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
 
-    _imageHandler = mx::TinyEXRImageHandler::create();
+    _imageLoader = mx::TinyEXRImageLoader::create();
     loadLibraries({"stdlib", "sxpbrlib"}, _searchPath, _stdLib);
 
     _mesh = MeshPtr(new Mesh());
@@ -516,7 +516,7 @@ void Viewer::drawContents()
     GLShaderPtr shader = _material->ngShader();
     shader->bind();
 
-    _material->bindUniforms(_imageHandler, _startPath, _envSamples, world, view, proj);
+    _material->bindUniforms(_imageLoader, _startPath, _envSamples, world, view, proj);
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);

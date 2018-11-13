@@ -7,7 +7,7 @@
 #include <MaterialXFormat/XmlIo.h>
 #include <MaterialXFormat/File.h>
 
-#include <MaterialXRender/Handlers/TinyExrImageHandler.h>
+#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 #include <MaterialXGenShader/HwShader.h>
 
 #include <nanogui/common.h>
@@ -20,17 +20,6 @@ using StringPair = std::pair<std::string, std::string>;
 using GLShaderPtr = std::shared_ptr<ng::GLShader>;
 
 using MaterialPtr = std::unique_ptr<class Material>;
-
-// TODO: Move image caching into the ImageHandler class.
-class ImageDesc
-{
-  public:
-    unsigned int width = 0; // TODO: These would be better as size_t.
-    unsigned int height = 0;
-    unsigned int channelCount = 0;
-    unsigned int mipCount = 0;
-    unsigned int textureId = 0;
-};
 
 class Material
 {
@@ -47,15 +36,15 @@ class Material
     void bindMesh(MeshPtr& mesh);
 
     /// Bind uniforms to shader
-    void bindUniforms(mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
+    void bindUniforms(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath, int envSamples,
                       mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj);
 
     /// Bind texture to shader
     bool bindTexture(const std::string& fileName, const std::string& uniformName,
-                     mx::ImageHandlerPtr imageHandler, ImageDesc& desc);
+                     mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc);
 
     /// Bind required file textures to shader
-    void bindTextures(mx::ImageHandlerPtr imageHandler, mx::FilePath imagePath);
+    void bindTextures(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath);
 
     /// Return if the shader is has transparency
     bool hasTransparency() const { return _hasTransparency; }
@@ -68,7 +57,7 @@ class Material
     }
 
     // Acquire a texture. Return information in image description
-    bool acquireTexture(const std::string& filename, mx::ImageHandlerPtr imageHandler, ImageDesc& desc);
+    bool acquireTexture(const std::string& filename, mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc);
 
     GLShaderPtr _ngShader;
     mx::HwShaderPtr _mxShader;

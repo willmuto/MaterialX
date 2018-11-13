@@ -446,7 +446,7 @@ void GlslValidator::validateRender(bool orthographicView)
             {
                 // Bind the program to use
                 _program->bind();
-                _program->bindInputs(_viewHandler, _geometryHandler, _imageHandler, _lightHandler);
+                _program->bindInputs(_viewHandler, _geometryHandler, _imageLoader, _lightHandler);
 
                 GeometryHandler::IndexBuffer& indexData = _geometryHandler->getIndexing();
                 glDrawElements(GL_TRIANGLES, (GLsizei)indexData.size(), GL_UNSIGNED_INT, (void*)0);
@@ -454,7 +454,7 @@ void GlslValidator::validateRender(bool orthographicView)
 
                 // Unbind resources
                 _program->unbind();
-                _program->unbindInputs();
+                _program->unbindInputs(_imageLoader);
             }
         }
 
@@ -515,7 +515,7 @@ void GlslValidator::save(const std::string& fileName)
     ShaderValidationErrorList errors;
     const std::string errorType("GLSL image save error.");
 
-    if (!_imageHandler)
+    if (!_imageLoader)
     {
         errors.push_back("No image handler specified.");
         throw ExceptionShaderValidationError(errorType, errors);
@@ -548,7 +548,12 @@ void GlslValidator::save(const std::string& fileName)
     }
 
     // Save using the handler
-    bool saved = _imageHandler->saveImage(fileName, _frameBufferWidth, _frameBufferHeight, 4, buffer);
+    ImageDesc desc;
+    desc.width = _frameBufferWidth;
+    desc.height = _frameBufferHeight;
+    desc.channelCount = 4;
+    desc.resourceBuffer = buffer;
+    bool saved = _imageLoader->saveImage(fileName, desc);
     delete[] buffer;
 
     if (!saved)
