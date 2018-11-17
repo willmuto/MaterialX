@@ -10,6 +10,9 @@
 #include <fstream>
 #include <math.h>
 
+#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
+#include <MaterialXRender/Handlers/stbImageLoader.h>
+
 const float PI = std::acos(-1.0f);
 
 const int MIN_ENV_SAMPLES = 16;
@@ -359,7 +362,10 @@ Viewer::Viewer() :
     _searchPath = _startPath / mx::FilePath("documents/Libraries");
     _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
 
-    _imageLoader = mx::TinyEXRImageLoader::create();
+    mx::ImageLoaderPtr exrImageLoader = mx::TinyEXRImageLoader::create();
+    mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
+    _imageHandler = mx::GLTextureHandler::create(exrImageLoader);
+    _imageHandler->addLoader(stbImageLoader);
     loadLibraries({"stdlib", "sxpbrlib"}, _searchPath, _stdLib);
 
     _mesh = MeshPtr(new Mesh());
@@ -369,6 +375,13 @@ Viewer::Viewer() :
     try
     {
         loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+    }
+    catch (std::exception& e)
+    {
+        new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to load document", e.what());
+    }
+    try
+    {
         _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
         updateElementSelections();
         setElementSelection(_elementSelectionIndex);
@@ -428,9 +441,16 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     }
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
-        try 
+        try
         {
             loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+        }
+        catch (std::exception& e)
+        {
+            new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to load document", e.what());
+        }
+        try
+        {
             _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
             updateElementSelections();
             updatePropertySheet();
@@ -516,7 +536,7 @@ void Viewer::drawContents()
     GLShaderPtr shader = _material->ngShader();
     shader->bind();
 
-    _material->bindUniforms(_imageLoader, _startPath, _envSamples, world, view, proj);
+    _material->bindUniforms(_imageHandler, _startPath, _envSamples, world, view, proj);
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
