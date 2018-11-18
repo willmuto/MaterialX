@@ -154,6 +154,10 @@ bool Material::bindTexture(const std::string& filename, const std::string& unifo
     samplingProperties.filterType = -1;
     samplingProperties.uaddressMode = -1;
     samplingProperties.vaddressMode = -1;
+    samplingProperties.defaultColor[0] = 0.0f;
+    samplingProperties.defaultColor[1] = 0.0f;
+    samplingProperties.defaultColor[2] = 0.0f;
+    samplingProperties.defaultColor[3] = 1.0f;
 
     imageHandler->bindImage(filename, samplingProperties);
 
