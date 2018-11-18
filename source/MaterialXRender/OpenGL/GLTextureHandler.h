@@ -50,7 +50,7 @@ class GLTextureHandler : public ImageHandler
     /// @param imageDesc Description of image updated during load.
     /// @param generateMipMaps Generate mip maps if supported.
     /// @return if load succeeded
-    bool acquireImage(std::string& fileName, ImageDesc &imageDesc, bool generatateMipMaps) override;
+    bool acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generatateMipMaps) override;
 
     /// Bind an image. This method will bind the texture to an active texture
     /// unit as defined by the corresponding image description. The method

@@ -49,7 +49,7 @@ bool ImageHandler::saveImage(const std::string& fileName,
     return false;
 }
 
-bool ImageHandler::acquireImage(std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps)
+bool ImageHandler::acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps)
 {
     std::pair <ImageLoaderMap::iterator, ImageLoaderMap::iterator> range;
     string extension = MaterialX::getFileExtension(fileName);

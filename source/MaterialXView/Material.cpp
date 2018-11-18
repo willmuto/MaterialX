@@ -123,20 +123,8 @@ void Material::bindMesh(MeshPtr& mesh)
     _ngShader->uploadIndices(indices);
 }
 
-bool Material::acquireTexture(const std::string& filename, mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc)
-{
-    // Load the requested texture into memory.
-    std::string fileName(filename);
-    if (!imageHandler->acquireImage(fileName, desc, true))
-    {
-        std::cerr << "Failed to load image: " << filename << std::endl;
-        return false;
-    }
-    return true;
-}
-
-bool Material::bindTexture(const std::string& filename, const std::string& uniformName, 
-                           mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc)
+bool Material::bindImage(const std::string& filename, const std::string& uniformName, 
+                         mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc)
 {
     if (!_ngShader)
     {
@@ -145,26 +133,22 @@ bool Material::bindTexture(const std::string& filename, const std::string& unifo
 
     _ngShader->bind();
 
-    acquireTexture(filename, imageHandler, desc);
+    // Acquire the given image.
+    if (!imageHandler->acquireImage(filename, desc, true))
+    {
+        std::cerr << "Failed to load image: " << filename << std::endl;
+        return false;
+    }
 
-    // Bind texture to shader.
+    // Bind the image and set its sampling properties.
     _ngShader->setUniform(uniformName, desc.resourceId);
-
     mx::ImageSamplingProperties samplingProperties;
-    samplingProperties.filterType = -1;
-    samplingProperties.uaddressMode = -1;
-    samplingProperties.vaddressMode = -1;
-    samplingProperties.defaultColor[0] = 0.0f;
-    samplingProperties.defaultColor[1] = 0.0f;
-    samplingProperties.defaultColor[2] = 0.0f;
-    samplingProperties.defaultColor[3] = 1.0f;
-
     imageHandler->bindImage(filename, samplingProperties);
 
     return true;
 }
 
-void Material::bindTextures(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath)
+void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath)
 {
     mx::HwShaderPtr hwShader = mxShader();
     const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
@@ -190,7 +174,7 @@ void Material::bindTextures(mx::GLTextureHandlerPtr imageHandler, mx::FilePath i
         }
 
         mx::ImageDesc desc;
-        bindTexture(filename, uniformName, imageHandler, desc);
+        bindImage(filename, uniformName, imageHandler, desc);
     }
 }
 
@@ -217,8 +201,8 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath i
         shader->setUniform("u_viewPosition", ng::Vector3f(viewPosition.data()));
     }
 
-    // Bind surface textures
-    bindTextures(imageHandler, imagePath);
+    // Bind images.
+    bindImages(imageHandler, imagePath);
 
     // Bind light properties.
     if (shader->uniform("u_envSamples", false) != -1)
@@ -238,7 +222,7 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath i
             const std::string filename = path.asString();
 
             mx::ImageDesc desc;
-            if (bindTexture(filename, pair.first, imageHandler, desc))
+            if (bindImage(filename, pair.first, imageHandler, desc))
             {
                 // Bind any associated uniforms.
                 if (pair.first == "u_envRadiance")

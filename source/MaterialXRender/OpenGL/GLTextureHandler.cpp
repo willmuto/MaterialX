@@ -29,7 +29,7 @@ bool GLTextureHandler::createColorImage(float color[4],
     return false;
 }
 
-bool GLTextureHandler::acquireImage(std::string& fileName,
+bool GLTextureHandler::acquireImage(const std::string& fileName,
                                     ImageDesc &imageDesc,
                                     bool generateMipMaps)
 {
@@ -55,7 +55,6 @@ bool GLTextureHandler::acquireImage(std::string& fileName,
     bool textureLoaded = false;
     if (ParentClass::acquireImage(fileName, imageDesc, generateMipMaps))
     {
-
         imageDesc.resourceId = MaterialX::GlslProgram::UNDEFINED_OPENGL_RESOURCE_ID;
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glGenTextures(1, &imageDesc.resourceId);
@@ -129,7 +128,6 @@ bool GLTextureHandler::acquireImage(std::string& fileName,
 
             cacheImage(BLACK_TEXTURE, desc);
         }
-        fileName = BLACK_TEXTURE;
         textureLoaded = true;
     }
 
@@ -169,7 +167,7 @@ bool GLTextureHandler::bindImage(const string &identifier, const ImageSamplingPr
         GLint magFilterType = (minFilterType == GL_LINEAR || minFilterType == GL_REPEAT) ? minFilterType : GL_LINEAR;
         GLint uaddressMode = mapAddressModeToGL(samplingProperties.uaddressMode);
         GLint vaddressMode = mapAddressModeToGL(samplingProperties.vaddressMode);
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, samplingProperties.defaultColor);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, samplingProperties.defaultColor.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, uaddressMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, vaddressMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterType);

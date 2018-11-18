@@ -39,12 +39,12 @@ class Material
     void bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
                       mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj);
 
-    /// Bind texture to shader
-    bool bindTexture(const std::string& fileName, const std::string& uniformName,
-                     mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc);
+    /// Bind image to shader
+    bool bindImage(const std::string& filename, const std::string& uniformName,
+                   mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc);
 
-    /// Bind required file textures to shader
-    void bindTextures(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath);
+    /// Bind required images to shader
+    void bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath);
 
     /// Return if the shader is has transparency
     bool hasTransparency() const { return _hasTransparency; }
@@ -55,9 +55,6 @@ class Material
         _ngShader = ngshader;
         _mxShader = mxshader;
     }
-
-    // Acquire a texture. Return information in image description
-    bool acquireTexture(const std::string& filename, mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc);
 
     GLShaderPtr _ngShader;
     mx::HwShaderPtr _mxShader;
