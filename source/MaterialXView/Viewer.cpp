@@ -18,6 +18,8 @@ const float PI = std::acos(-1.0f);
 const int MIN_ENV_SAMPLES = 16;
 const int MAX_ENV_SAMPLES = 256;
 
+namespace {
+
 void writeTextFile(const std::string& text, const std::string& filePath)
 {
     std::ofstream file;
@@ -112,154 +114,11 @@ void addValueToForm(mx::ValuePtr value, const std::string& label, ng::FormHelper
     }
 }
 
-void Viewer::updatePropertySheet()
-{
-    if (!_propertySheet)
-    {
-        _propertySheet = new ng::FormHelper(this);
-    }
-   
-    // Remove the window associated with the form.
-    // This is done by explicitly creating and owning the window
-    // as opposed to having it being done by the form
-    ng::Vector2i previousPosition(15, _window->height() + 60);
-    if (_propertySheetWindow)
-    {
-        for (int i = 0; i < _propertySheetWindow->childCount(); i++)
-        {
-            _propertySheetWindow->removeChild(i);
-        }
-        // We don't want the property sheet to move when
-        // we update it's contents so cache any previous position
-        // to use when we create a new window.
-        previousPosition = _propertySheetWindow->position();
-        this->removeChild(_propertySheetWindow);
-    }
-    _propertySheetWindow = new ng::Window(this, "Property Sheet");
-    ng::AdvancedGridLayout* layout = new ng::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
-    layout->setMargin(10);
-    layout->setColStretch(2, 1);
-    _propertySheetWindow->setPosition(previousPosition);
-    _propertySheetWindow->setVisible(_showPropertySheet);
-    _propertySheetWindow->setLayout(layout);
-    _propertySheet->setWindow(_propertySheetWindow);
+} // anonymous namespace
 
-    mx::ElementPtr element = nullptr;
-    if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
-    {
-        element = _elementSelections[_elementSelectionIndex];
-    }
-    if (!element)
-    {
-        return;
-    }
-
-    // Update to show properties for a shader reference
-    mx::ShaderRefPtr shaderRef = element->asA<mx::ShaderRef>();
-    if (shaderRef)
-    {
-        mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
-        if (nodeDef)
-        {
-            std::vector<mx::ValuePtr> formValues;
-            std::vector<mx::string> formNames;
-
-            // Scan for bindinputs
-            for (mx::ParameterPtr elem : nodeDef->getParameters())
-            {
-                const std::string& elemName = elem->getName();
-                mx::BindParamPtr bindParam = shaderRef->getBindParam(elemName);
-                mx::ValuePtr value = nullptr;
-                if (bindParam)
-                {
-                    if (!bindParam->getValueString().empty())
-                    {
-                         value = bindParam->getValue();
-                    }
-                }
-                // Adding nodedef values if desired
-                if (!value && _showNonEditableInputs)
-                {
-                    value = elem->getValue();
-                }
-                if (value)
-                {
-                    formValues.push_back(value);
-                    formNames.push_back(elemName);
-                }
-            }
-
-            // Scan for bindinputs
-            size_t startOfInputs = formValues.size();
-            for (const mx::InputPtr& input : nodeDef->getInputs())
-            {
-                const std::string& elemName = input->getName();
-                mx::BindInputPtr bindInput = shaderRef->getBindInput(elemName);
-                mx::ValuePtr value = nullptr;
-                if (bindInput)
-                {
-                    if (!bindInput->getValueString().empty())
-                    {
-                        value = bindInput->getValue();
-                    }
-                }
-                //  Adding nodedef values if desired
-                if (!value && _showNonEditableInputs)
-                {
-                    value = input->getValue();
-                }
-                if (value)
-                {
-                    formValues.push_back(value);
-                    formNames.push_back(elemName);
-                }
-            }
-
-            if (formValues.size() && startOfInputs > 0)
-            {
-                _propertySheet->addGroup("Shader Parameters");
-            }
-            for (size_t i=0; i<formValues.size(); i++)
-            {
-                if (i == startOfInputs)
-                {
-                    _propertySheet->addGroup("Shader Inputs");
-                }
-
-                mx::ValuePtr value = formValues[i];
-                const std::string& name = formNames[i];
-                addValueToForm(value, name, *_propertySheet);
-            }
-        }
-    }
-
-    else
-    {
-        // Handle showing properties on node directly connected to an output
-        mx::OutputPtr graphOutput = element->asA<mx::Output>();
-        if (graphOutput && graphOutput->getParent())
-        {
-            mx::NodePtr node = graphOutput->getConnectedNode();
-            if (node)
-            {
-                for (auto input : node->getInputs())
-                {
-                    mx::ValuePtr value = input->getValue();
-                    std::string label = input->getName();
-                    addValueToForm(value, label, *_propertySheet);
-                }
-                for (auto param : node->getParameters())
-                {
-                    mx::ValuePtr value = param->getValue();
-                    std::string label = param->getName();
-                    addValueToForm(value, label, *_propertySheet);
-                }
-            }
-        }
-    }
-
-    performLayout();
-}
+//
+// Viewer methods
+//
 
 Viewer::Viewer() :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
@@ -657,4 +516,153 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     proj = mx::Matrix44(ngProj.data(), ngProj.data() + ngProj.size()).getTranspose();
     world = mx::Matrix44::createScale(mx::Vector3(_cameraParams.zoom * _cameraParams.modelZoom));
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
+}
+
+void Viewer::updatePropertySheet()
+{
+    if (!_propertySheet)
+    {
+        _propertySheet = new ng::FormHelper(this);
+    }
+   
+    // Remove the window associated with the form.
+    // This is done by explicitly creating and owning the window
+    // as opposed to having it being done by the form
+    ng::Vector2i previousPosition(15, _window->height() + 60);
+    if (_propertySheetWindow)
+    {
+        for (int i = 0; i < _propertySheetWindow->childCount(); i++)
+        {
+            _propertySheetWindow->removeChild(i);
+        }
+        // We don't want the property sheet to move when
+        // we update it's contents so cache any previous position
+        // to use when we create a new window.
+        previousPosition = _propertySheetWindow->position();
+        this->removeChild(_propertySheetWindow);
+    }
+    _propertySheetWindow = new ng::Window(this, "Property Sheet");
+    ng::AdvancedGridLayout* layout = new ng::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
+    layout->setMargin(10);
+    layout->setColStretch(2, 1);
+    _propertySheetWindow->setPosition(previousPosition);
+    _propertySheetWindow->setVisible(_showPropertySheet);
+    _propertySheetWindow->setLayout(layout);
+    _propertySheet->setWindow(_propertySheetWindow);
+
+    mx::ElementPtr element = nullptr;
+    if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
+    {
+        element = _elementSelections[_elementSelectionIndex];
+    }
+    if (!element)
+    {
+        return;
+    }
+
+    // Update to show properties for a shader reference
+    mx::ShaderRefPtr shaderRef = element->asA<mx::ShaderRef>();
+    if (shaderRef)
+    {
+        mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
+        if (nodeDef)
+        {
+            std::vector<mx::ValuePtr> formValues;
+            std::vector<mx::string> formNames;
+
+            // Scan for bindinputs
+            for (mx::ParameterPtr elem : nodeDef->getParameters())
+            {
+                const std::string& elemName = elem->getName();
+                mx::BindParamPtr bindParam = shaderRef->getBindParam(elemName);
+                mx::ValuePtr value = nullptr;
+                if (bindParam)
+                {
+                    if (!bindParam->getValueString().empty())
+                    {
+                         value = bindParam->getValue();
+                    }
+                }
+                // Adding nodedef values if desired
+                if (!value && _showNonEditableInputs)
+                {
+                    value = elem->getValue();
+                }
+                if (value)
+                {
+                    formValues.push_back(value);
+                    formNames.push_back(elemName);
+                }
+            }
+
+            // Scan for bindinputs
+            size_t startOfInputs = formValues.size();
+            for (const mx::InputPtr& input : nodeDef->getInputs())
+            {
+                const std::string& elemName = input->getName();
+                mx::BindInputPtr bindInput = shaderRef->getBindInput(elemName);
+                mx::ValuePtr value = nullptr;
+                if (bindInput)
+                {
+                    if (!bindInput->getValueString().empty())
+                    {
+                        value = bindInput->getValue();
+                    }
+                }
+                //  Adding nodedef values if desired
+                if (!value && _showNonEditableInputs)
+                {
+                    value = input->getValue();
+                }
+                if (value)
+                {
+                    formValues.push_back(value);
+                    formNames.push_back(elemName);
+                }
+            }
+
+            if (formValues.size() && startOfInputs > 0)
+            {
+                _propertySheet->addGroup("Shader Parameters");
+            }
+            for (size_t i=0; i<formValues.size(); i++)
+            {
+                if (i == startOfInputs)
+                {
+                    _propertySheet->addGroup("Shader Inputs");
+                }
+
+                mx::ValuePtr value = formValues[i];
+                const std::string& name = formNames[i];
+                addValueToForm(value, name, *_propertySheet);
+            }
+        }
+    }
+
+    else
+    {
+        // Handle showing properties on node directly connected to an output
+        mx::OutputPtr graphOutput = element->asA<mx::Output>();
+        if (graphOutput && graphOutput->getParent())
+        {
+            mx::NodePtr node = graphOutput->getConnectedNode();
+            if (node)
+            {
+                for (auto input : node->getInputs())
+                {
+                    mx::ValuePtr value = input->getValue();
+                    std::string label = input->getName();
+                    addValueToForm(value, label, *_propertySheet);
+                }
+                for (auto param : node->getParameters())
+                {
+                    mx::ValuePtr value = param->getValue();
+                    std::string label = param->getName();
+                    addValueToForm(value, label, *_propertySheet);
+                }
+            }
+        }
+    }
+
+    performLayout();
 }
