@@ -68,7 +68,7 @@ class Viewer : public ng::Screen
     mx::DocumentPtr _stdLib;
     mx::DocumentPtr _materialDocument;
 
-    std::vector<mx::ElementPtr> _elementSelections;
+    std::vector<mx::TypedElementPtr> _elementSelections;
     int _elementSelectionIndex;
     ng::ComboBox* _elementSelectionBox;
 
@@ -77,7 +77,7 @@ class Viewer : public ng::Screen
     ng::Window* _propertySheetWindow;
     bool _showNonEditableInputs;
 
-    mx::ImageLoaderPtr _imageLoader;
+    mx::GLTextureHandlerPtr _imageHandler;
 };
 
 #endif // MATERIALXVIEW_VIEWER_H

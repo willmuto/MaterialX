@@ -519,14 +519,30 @@ ShaderNode* ShaderGraph::addNode(const Node& node, ShaderGenerator& shadergen)
         }
     }
 
+    // Check whether this node has a color output.
+    bool hasColorOutput = false;
+    for (ShaderOutput* output : newNode->getOutputs())
+    {
+        if (output->type == Type::COLOR3 || output->type == Type::COLOR4)
+        {
+            hasColorOutput = true;
+            break;
+        }
+    }
+
+    // Check whether this node has a graph implementation.
+    ShaderNodeImpl* impl = newNode->getImplementation();
+    bool hasGraphImpl = impl && impl->getGraph();
+
     // Check if this is a file texture node that requires color transformation.
-    if (newNode->hasClassification(ShaderNode::Classification::FILETEXTURE))
+    if (hasColorOutput && !hasGraphImpl &&
+        newNode->hasClassification(ShaderNode::Classification::FILETEXTURE))
     {
         ParameterPtr file = node.getParameter("file");
-        const string& colorSpace = file ? file->getAttribute("colorspace") : EMPTY_STRING;
+        const string& colorSpace = file ? file->getActiveColorSpace() : EMPTY_STRING;
 
         // TODO: Handle more color transforms
-        if (colorSpace == "sRGB")
+        if (colorSpace == "sRGB" || colorSpace == "srgb_texture")
         {
             // Store the node and it's color transform so we can create this
             // color transformation later when finalizing the graph.

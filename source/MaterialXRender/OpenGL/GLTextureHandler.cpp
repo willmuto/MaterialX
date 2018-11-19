@@ -29,7 +29,7 @@ bool GLTextureHandler::createColorImage(float color[4],
     return false;
 }
 
-bool GLTextureHandler::acquireImage(std::string& fileName,
+bool GLTextureHandler::acquireImage(const std::string& fileName,
                                     ImageDesc &imageDesc,
                                     bool generateMipMaps)
 {
@@ -55,29 +55,40 @@ bool GLTextureHandler::acquireImage(std::string& fileName,
     bool textureLoaded = false;
     if (ParentClass::acquireImage(fileName, imageDesc, generateMipMaps))
     {
-
         imageDesc.resourceId = MaterialX::GlslProgram::UNDEFINED_OPENGL_RESOURCE_ID;
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glGenTextures(1, &imageDesc.resourceId);
         glActiveTexture(GL_TEXTURE0 + imageDesc.resourceId);
         glBindTexture(GL_TEXTURE_2D, imageDesc.resourceId);
 
-        GLint internalFormat = GL_RGBA;
+        GLint internalFormat = imageDesc.floatingPoint ? GL_RGBA32F : GL_RGBA;
         GLint format = GL_RGBA;
         switch (imageDesc.channelCount)
         {
         case 3:
-            internalFormat = GL_RGB;
+        {
             format = GL_RGB;
+            // Map {RGB} to {RGB, 1} at shader access time
+            GLint swizzleMasRGB[] = { GL_RED, GL_GREEN, GL_BLUE, GL_ONE };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMasRGB);
             break;
+        }
         case 2:
-            internalFormat = GL_RG;
+        {
             format = GL_RG;
+            // Map {red, green} to {red, alpha} at shader access time
+            GLint swizzleMasRG[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMasRG);
             break;
+        }
         case 1:
-            internalFormat = GL_R;
-            format = GL_R;
+        {
+            format = GL_RED;
+            // Map { red } to {red, green, blue, 1} at shader access time
+            GLint swizzleMaskR[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMaskR);
             break;
+        }
         default:
             break;
         }
@@ -117,7 +128,6 @@ bool GLTextureHandler::acquireImage(std::string& fileName,
 
             cacheImage(BLACK_TEXTURE, desc);
         }
-        fileName = BLACK_TEXTURE;
         textureLoaded = true;
     }
 
@@ -157,7 +167,7 @@ bool GLTextureHandler::bindImage(const string &identifier, const ImageSamplingPr
         GLint magFilterType = (minFilterType == GL_LINEAR || minFilterType == GL_REPEAT) ? minFilterType : GL_LINEAR;
         GLint uaddressMode = mapAddressModeToGL(samplingProperties.uaddressMode);
         GLint vaddressMode = mapAddressModeToGL(samplingProperties.vaddressMode);
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, samplingProperties.defaultColor);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, samplingProperties.defaultColor.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, uaddressMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, vaddressMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterType);

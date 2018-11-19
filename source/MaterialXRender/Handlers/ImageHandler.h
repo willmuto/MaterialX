@@ -1,13 +1,11 @@
 #ifndef MATERIALX_IMAGEHANDLER_H
 #define MATERIALX_IMAGEHANDLER_H
 
-#include <algorithm>
-#include <string>
-#include <memory>
+#include <MaterialXCore/Types.h>
+
 #include <cmath>
-#include <unordered_map>
-#include <vector>
 #include <map>
+#include <memory>
 
 namespace MaterialX
 {
@@ -44,13 +42,13 @@ class ImageSamplingProperties
 {
   public:
     /// Address mode in U
-    int uaddressMode;
+    int uaddressMode = -1;
     /// Address mode in V
-    int vaddressMode;
+    int vaddressMode = -1;
     /// Filter type
-    int filterType;
+    int filterType = -1;
     /// Default color
-    float defaultColor[4];
+    Color4 defaultColor = { 0, 0, 0, 1 };
 };
 
 /// Image description cache
@@ -149,7 +147,7 @@ class ImageHandler
     /// @param imageDesc Description of image updated during load.
     /// @param generateMipMaps Generate mip maps if supported.
     /// @return if load succeeded
-    virtual bool acquireImage(std::string& fileName, ImageDesc& desc, bool generateMipMaps);
+    virtual bool acquireImage(const std::string& fileName, ImageDesc& desc, bool generateMipMaps);
 
     /// Utility to create a solid color color image 
     /// @param color Color to set

@@ -7,7 +7,7 @@
 #include <MaterialXFormat/XmlIo.h>
 #include <MaterialXFormat/File.h>
 
-#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
+#include <MaterialXRender/OpenGL/GLTextureHandler.h>
 #include <MaterialXGenShader/HwShader.h>
 
 #include <nanogui/common.h>
@@ -36,15 +36,15 @@ class Material
     void bindMesh(MeshPtr& mesh);
 
     /// Bind uniforms to shader
-    void bindUniforms(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath, int envSamples,
+    void bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
                       mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj);
 
-    /// Bind texture to shader
-    bool bindTexture(const std::string& fileName, const std::string& uniformName,
-                     mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc);
+    /// Bind image to shader
+    bool bindImage(const std::string& filename, const std::string& uniformName,
+                   mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc);
 
-    /// Bind required file textures to shader
-    void bindTextures(mx::ImageLoaderPtr imageLoader, mx::FilePath imagePath);
+    /// Bind required images to shader
+    void bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath);
 
     /// Return if the shader is has transparency
     bool hasTransparency() const { return _hasTransparency; }
@@ -56,16 +56,13 @@ class Material
         _mxShader = mxshader;
     }
 
-    // Acquire a texture. Return information in image description
-    bool acquireTexture(const std::string& filename, mx::ImageLoaderPtr imageLoader, mx::ImageDesc& desc);
-
     GLShaderPtr _ngShader;
     mx::HwShaderPtr _mxShader;
     bool _hasTransparency;
 };
 
 void loadLibraries(const mx::StringVec& libraryNames, const mx::FilePath& searchPath, mx::DocumentPtr doc);
-void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr& document, mx::DocumentPtr stdLib, std::vector<mx::ElementPtr>& elements);
+void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr& document, mx::DocumentPtr stdLib, std::vector<mx::TypedElementPtr>& elements);
 
 StringPair generateSource(const mx::FilePath& searchPath, mx::HwShaderPtr& hwShader, mx::ElementPtr elem);
 
