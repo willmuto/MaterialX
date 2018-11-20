@@ -127,7 +127,8 @@ bool Material::bindImage(const std::string& filename, const std::string& uniform
     _ngShader->bind();
 
     // Acquire the given image.
-    if (!imageHandler->acquireImage(filename, desc, true))
+    std::array<float, 4> defaultColor{0, 0, 0, 1};
+    if (!imageHandler->acquireImage(filename, desc, true, &defaultColor))
     {
         std::cerr << "Failed to load image: " << filename << std::endl;
         return false;
