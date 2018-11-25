@@ -73,7 +73,7 @@ StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr&
 
 MaterialPtr Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
 {
-    mx::HwShaderPtr hwShader = nullptr;
+    mx::HwShaderPtr hwShader;
     StringPair source = generateSource(searchPath, hwShader, elem);
     if (!source.first.empty() && !source.second.empty())
     {
@@ -95,7 +95,6 @@ void Material::bindMesh(MeshPtr& mesh)
         return;
     }
 
-    // TODO: This needs to be reversed to examine the MaterialX shader for required attributes
     _ngShader->bind();
     if (_ngShader->attrib("i_position") != -1)
     {
@@ -170,7 +169,7 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
 }
 
 void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, int envSamples,
-                            mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj)
+                            const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
 {
     GLShaderPtr shader = ngShader();
     mx::HwShaderPtr hwShader = mxShader();

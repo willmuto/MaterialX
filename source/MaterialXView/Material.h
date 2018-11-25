@@ -37,7 +37,7 @@ class Material
 
     /// Bind uniforms to shader
     void bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, int envSamples,
-                      mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj);
+                      const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
 
     /// Bind image to shader
     bool bindImage(const std::string& filename, const std::string& uniformName,

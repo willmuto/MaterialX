@@ -2,16 +2,16 @@
 
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
+#include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/messagedialog.h>
-#include <nanogui/label.h>
 
 #include <iostream>
 #include <fstream>
 #include <math.h>
 
-#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 #include <MaterialXRender/Handlers/stbImageLoader.h>
+#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 
 const float PI = std::acos(-1.0f);
 
@@ -218,7 +218,6 @@ Viewer::Viewer(const mx::FileSearchPath& searchPath) :
     });
 
     _stdLib = mx::createDocument();
-    _searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries"));
     _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
 
     mx::ImageLoaderPtr exrImageLoader = mx::TinyEXRImageLoader::create();
@@ -334,8 +333,9 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                     StringPair source = generateSource(_searchPath, hwShader, elem);
                     std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
                     mx::StringVec splitName = mx::splitString(baseName, ".");
-                    writeTextFile(source.first, _searchPath[0] / (baseName + "_vs.glsl"));
-                    writeTextFile(source.second, _searchPath[0]  / (baseName + "_ps.glsl"));
+                    mx::FilePath startPath = _searchPath[_searchPath.size() - 1];
+                    writeTextFile(source.first, startPath / (baseName + "_vs.glsl"));
+                    writeTextFile(source.second, startPath  / (baseName + "_ps.glsl"));
                 }
             }
             catch (std::exception& e)
