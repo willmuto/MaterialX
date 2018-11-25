@@ -10,12 +10,12 @@
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
-void loadLibraries(const mx::StringVec& libraryNames, const mx::FilePath& searchPath, mx::DocumentPtr doc)
+void loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath, mx::DocumentPtr doc)
 {
     const std::string MTLX_EXTENSION("mtlx");
     for (const std::string& library : libraryNames)
     {
-        mx::FilePath path = searchPath / library;
+        mx::FilePath path = searchPath.find(library);
         mx::StringVec filenames;
         mx::getFilesInDirectory(path.asString(), filenames, MTLX_EXTENSION);
 
@@ -44,7 +44,7 @@ void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr& doc, mx::Docume
     mx::findRenderableElements(doc, elements); 
 }
 
-StringPair generateSource(const mx::FilePath& searchPath, mx::HwShaderPtr& hwShader, mx::ElementPtr elem)
+StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr& hwShader, mx::ElementPtr elem)
 {  
     if (!elem)
     {
@@ -52,7 +52,12 @@ StringPair generateSource(const mx::FilePath& searchPath, mx::HwShaderPtr& hwSha
     }
 
     mx::ShaderGeneratorPtr shaderGenerator = mx::GlslShaderGenerator::create();
-    shaderGenerator->registerSourceCodeSearchPath(searchPath);
+    for (int i = 0; i < searchPath.size(); i++)
+    {
+        // TODO: The registerSourceCodeSearchPath method should probably take a
+        //       full FileSearchPath rather than a single FilePath.
+        shaderGenerator->registerSourceCodeSearchPath(searchPath[i]);
+    }
 
     mx::GenOptions options;
     options.hwTransparency = isTransparentSurface(elem, *shaderGenerator);
@@ -66,7 +71,7 @@ StringPair generateSource(const mx::FilePath& searchPath, mx::HwShaderPtr& hwSha
     return StringPair(vertexShader, pixelShader);
 }
 
-MaterialPtr Material::generateShader(const mx::FilePath& searchPath, mx::ElementPtr elem)
+MaterialPtr Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
 {
     mx::HwShaderPtr hwShader = nullptr;
     StringPair source = generateSource(searchPath, hwShader, elem);
@@ -142,7 +147,7 @@ bool Material::bindImage(const std::string& filename, const std::string& uniform
     return true;
 }
 
-void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath)
+void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath)
 {
     mx::HwShaderPtr hwShader = mxShader();
     const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
@@ -156,15 +161,7 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath ima
         std::string filename;
         if (uniform->value)
         {
-            mx::FilePath uniformPath(uniform->value->getValueString());
-            if (uniformPath.isAbsolute())
-            {
-                filename = uniformPath;
-            }
-            else
-            {
-                filename = imagePath / uniformPath;
-            }
+            filename = searchPath.find(uniform->value->getValueString());
         }
 
         mx::ImageDesc desc;
@@ -172,7 +169,7 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, mx::FilePath ima
     }
 }
 
-void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath imagePath, int envSamples,
+void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, int envSamples,
                             mx::Matrix44& world, mx::Matrix44& view, mx::Matrix44& proj)
 {
     GLShaderPtr shader = ngShader();
@@ -196,7 +193,7 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath i
     }
 
     // Bind images.
-    bindImages(imageHandler, imagePath);
+    bindImages(imageHandler, searchPath);
 
     // Bind light properties.
     if (shader->uniform("u_envSamples", false) != -1)
@@ -212,7 +209,7 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, mx::FilePath i
         if (shader->uniform(pair.first, false) != -1)
         {
             // Access cached image or load from disk.
-            mx::FilePath path = imagePath / mx::FilePath(pair.second);
+            mx::FilePath path = searchPath.find(pair.second);
             const std::string filename = path.asString();
 
             mx::ImageDesc desc;
