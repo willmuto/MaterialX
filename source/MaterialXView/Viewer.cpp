@@ -333,9 +333,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                     StringPair source = generateSource(_searchPath, hwShader, elem);
                     std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
                     mx::StringVec splitName = mx::splitString(baseName, ".");
-                    mx::FilePath startPath = _searchPath[_searchPath.size() - 1];
-                    writeTextFile(source.first, startPath / (baseName + "_vs.glsl"));
-                    writeTextFile(source.second, startPath  / (baseName + "_ps.glsl"));
+                    writeTextFile(source.first, _searchPath[0] / (baseName + "_vs.glsl"));
+                    writeTextFile(source.second, _searchPath[0]  / (baseName + "_ps.glsl"));
                 }
             }
             catch (std::exception& e)

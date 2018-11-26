@@ -20,7 +20,7 @@ int main(int argc, char* const argv[])
             searchPath = mx::FileSearchPath(nextToken);
         }
     }
-    searchPath.prepend(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries"));
+    searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries"));
 
     try
     {
