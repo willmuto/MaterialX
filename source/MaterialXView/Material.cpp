@@ -10,12 +10,12 @@
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
-void loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath, mx::DocumentPtr doc)
+void loadLibraries(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath, mx::DocumentPtr doc)
 {
     const std::string MTLX_EXTENSION("mtlx");
-    for (const std::string& library : libraryNames)
+    for (const std::string& libraryFolder : libraryFolders)
     {
-        mx::FilePath path = searchPath.find(library);
+        mx::FilePath path = searchPath.find(libraryFolder);
         mx::StringVec filenames;
         mx::getFilesInDirectory(path.asString(), filenames, MTLX_EXTENSION);
 
