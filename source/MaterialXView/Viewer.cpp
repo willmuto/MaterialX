@@ -2,16 +2,16 @@
 
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
+#include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/messagedialog.h>
-#include <nanogui/label.h>
 
 #include <iostream>
 #include <fstream>
 #include <math.h>
 
-#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 #include <MaterialXRender/Handlers/stbImageLoader.h>
+#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 
 const float PI = std::acos(-1.0f);
 
@@ -120,8 +120,10 @@ void addValueToForm(mx::ValuePtr value, const std::string& label, ng::FormHelper
 // Viewer methods
 //
 
-Viewer::Viewer() :
+Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath) :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
+    _libraryFolders(libraryFolders),
+    _searchPath(searchPath),
     _translationActive(false),
     _translationStart(0, 0),
     _envSamples(MIN_ENV_SAMPLES)
@@ -217,15 +219,13 @@ Viewer::Viewer() :
     });
 
     _stdLib = mx::createDocument();
-    _startPath = mx::FilePath::getCurrentPath();
-    _searchPath = _startPath / mx::FilePath("documents/Libraries");
     _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
 
     mx::ImageLoaderPtr exrImageLoader = mx::TinyEXRImageLoader::create();
     mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
     _imageHandler = mx::GLTextureHandler::create(exrImageLoader);
     _imageHandler->addLoader(stbImageLoader);
-    loadLibraries({"stdlib", "sxpbrlib"}, _searchPath, _stdLib);
+    loadLibraries(_libraryFolders, _searchPath, _stdLib);
 
     _mesh = MeshPtr(new Mesh());
     _mesh->loadMesh("documents/TestSuite/Geometry/teapot.obj");
@@ -334,8 +334,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                     StringPair source = generateSource(_searchPath, hwShader, elem);
                     std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
                     mx::StringVec splitName = mx::splitString(baseName, ".");
-                    writeTextFile(source.first, _startPath / (baseName + "_vs.glsl"));
-                    writeTextFile(source.second, _startPath / (baseName + "_ps.glsl"));
+                    writeTextFile(source.first, _searchPath[0] / (baseName + "_vs.glsl"));
+                    writeTextFile(source.second, _searchPath[0]  / (baseName + "_ps.glsl"));
                 }
             }
             catch (std::exception& e)
@@ -395,7 +395,7 @@ void Viewer::drawContents()
     GLShaderPtr shader = _material->ngShader();
     shader->bind();
 
-    _material->bindUniforms(_imageHandler, _startPath, _envSamples, world, view, proj);
+    _material->bindUniforms(_imageHandler, _searchPath, _envSamples, world, view, proj);
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
