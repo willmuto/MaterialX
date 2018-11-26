@@ -11,11 +11,16 @@ int main(int argc, char* const argv[])
     }
 
     mx::FileSearchPath searchPath;
+    mx::StringVec libraries = { "stdlib", "sxpbrlib" };
     for (int i = 0; i < tokens.size(); i++)
     {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
-        if (token == "-s")
+        if (token == "-l" && !nextToken.empty())
+        {
+            libraries.push_back(nextToken);
+        }
+        if (token == "-s" && !nextToken.empty())
         {
             searchPath = mx::FileSearchPath(nextToken);
         }
@@ -26,7 +31,7 @@ int main(int argc, char* const argv[])
     {
         ng::init();
         {
-            ng::ref<Viewer> viewer = new Viewer(searchPath);
+            ng::ref<Viewer> viewer = new Viewer(libraries, searchPath);
             viewer->setVisible(true);
             ng::mainloop(-1);
         }

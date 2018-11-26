@@ -31,7 +31,7 @@ class CameraParameters
 class Viewer : public ng::Screen
 {
   public:
-    Viewer(const mx::FileSearchPath& searchPath);
+    Viewer(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath);
     ~Viewer() { }
 
     void drawContents() override;
@@ -60,6 +60,7 @@ class Viewer : public ng::Screen
     bool _translationActive;
     ng::Vector2i _translationStart;
 
+    mx::StringVec _libraryNames;
     mx::FileSearchPath _searchPath;
     mx::FilePath _materialFilename;
     int _envSamples;

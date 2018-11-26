@@ -120,9 +120,10 @@ void addValueToForm(mx::ValuePtr value, const std::string& label, ng::FormHelper
 // Viewer methods
 //
 
-Viewer::Viewer(const mx::FileSearchPath& searchPath) :
+Viewer::Viewer(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath) :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
     _searchPath(searchPath),
+    _libraryNames(libraryNames),
     _translationActive(false),
     _translationStart(0, 0),
     _envSamples(MIN_ENV_SAMPLES)
@@ -224,7 +225,7 @@ Viewer::Viewer(const mx::FileSearchPath& searchPath) :
     mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
     _imageHandler = mx::GLTextureHandler::create(exrImageLoader);
     _imageHandler->addLoader(stbImageLoader);
-    loadLibraries({"stdlib", "sxpbrlib"}, _searchPath, _stdLib);
+    loadLibraries(_libraryNames, _searchPath, _stdLib);
 
     _mesh = MeshPtr(new Mesh());
     _mesh->loadMesh("documents/TestSuite/Geometry/teapot.obj");
