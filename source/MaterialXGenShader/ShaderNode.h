@@ -25,16 +25,28 @@ using ShaderInputSet = std::set<ShaderInput*>;
 class ShaderInput
 {
   public:
+    /// Input type.
     const TypeDesc* type;
+
+    /// Input name.
     string name;
+
+    /// Variable name as used in generated code.
+    string variable;
+
+    /// Parent node.
     ShaderNode* node;
+
+    /// A value, or nullptr if not assigned.
     ValuePtr value;
+
+    /// A connection to an upstream node output, or nullptr if not connected.
     ShaderOutput* connection;
 
-    /// Make a connection from the given source output to this input
+    /// Make a connection from the given source output to this input.
     void makeConnection(ShaderOutput* src);
 
-    /// Break any connection to this input
+    /// Break the connection to this input.
     void breakConnection();
 };
 
@@ -42,10 +54,22 @@ class ShaderInput
 class ShaderOutput
 {
   public:
+    /// Output type.
     const TypeDesc* type;
+
+    /// Output name.
     string name;
+
+    /// Variable name as used in generated code.
+    string variable;
+
+    /// Parent node.
     ShaderNode* node;
+
+    /// A value, or nullptr if not assigned.
     ValuePtr value;
+
+    /// A set of connections to downstream node inputs, empty if not connected.
     ShaderInputSet connections;
 
     /// Make a connection from this output to the given input
@@ -75,11 +99,11 @@ class ShaderNode
         static const unsigned int CONDITIONAL = 1 << 4;  // A conditional node
         static const unsigned int CONSTANT    = 1 << 5;  // A constant node
         // Specific closure types
-        static const unsigned int BSDF        = 1 << 6;  // A BDFS node 
+        static const unsigned int BSDF        = 1 << 6;  // A BDFS node
         static const unsigned int BSDF_R      = 1 << 7;  // A BDFS node only for reflection
         static const unsigned int BSDF_T      = 1 << 8;  // A BDFS node only for transmission
         static const unsigned int EDF         = 1 << 9;  // A EDF node
-        static const unsigned int VDF         = 1 << 10; // A VDF node 
+        static const unsigned int VDF         = 1 << 10; // A VDF node
         // Specific shader types
         static const unsigned int SURFACE     = 1 << 11;  // A surface shader node
         static const unsigned int VOLUME      = 1 << 12; // A volume shader node
@@ -91,6 +115,10 @@ class ShaderNode
         static const unsigned int SAMPLE2D    = 1 << 16; // Can be sampled in 2D (uv space)
         static const unsigned int SAMPLE3D    = 1 << 17; // Can be sampled in 3D (position)
         static const unsigned int CONVOLUTION2D = 1 << 18; // Performs a convolution in 2D (uv space)
+
+        static const unsigned int COLOR_SPACE_TRANSFORM = 1 << 19; // Performs color space transformation
+
+        static const unsigned int DO_NOT_OPTIMIZE = 1 << 20; // Flag that this should not be optimized
     };
 
     /// Information on source code scope for the node.
@@ -132,8 +160,11 @@ class ShaderNode
     /// Constructor.
     ShaderNode(const string& name);
 
-    /// Create a new node from a nodedef and an optional node instance.
-    static ShaderNodePtr create(const string& name, const NodeDef& nodeDef, ShaderGenerator& shadergen, const Node* nodeInstance = nullptr);
+    /// Create a new node from a nodedef
+    static ShaderNodePtr create(const string& name, const NodeDef& nodeDef, ShaderGenerator& shadergen, const GenOptions& options);
+
+    /// Create a new color transform node from a ShaderNodeImpl and type.
+    static ShaderNodePtr createColorTransformNode(const string& name, ShaderNodeImplPtr shaderImpl, const TypeDesc* type, ShaderGenerator& shadergen);
 
     /// Return true if this node is a graph.
     virtual bool isAGraph() const { return false; }
@@ -177,6 +208,9 @@ class ShaderNode
         return _usedClosures.count(node) > 0;
     }
 
+    /// Set input values from the given node and nodedef.
+    void setValues(const Node& node, const NodeDef& nodeDef, ShaderGenerator& shadergen);
+
     /// Add inputs/outputs
     ShaderInput* addInput(const string& name, const TypeDesc* type);
     ShaderOutput* addOutput(const string& name, const TypeDesc* type);
@@ -200,10 +234,6 @@ class ShaderNode
     /// Get vector of inputs/outputs
     const vector<ShaderInput*>& getInputs() const { return _inputOrder; }
     const vector<ShaderOutput*>& getOutputs() const { return _outputOrder; }
-
-    /// Rename inputs/outputs
-    void renameInput(const string& name, const string& newName);
-    void renameOutput(const string& name, const string& newName);
 
     /// Get input which is used for sampling. If there is none
     /// then a null pointer is returned.
@@ -234,7 +264,7 @@ class ShaderNode
     /// Return the set of contexts id's for the contexts used for this node.
     const std::set<int>& getContextIDs() const { return _contextIDs; }
 
-  protected:      
+  protected:
     string _name;
     unsigned int _classification;
 
