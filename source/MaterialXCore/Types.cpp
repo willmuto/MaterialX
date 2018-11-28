@@ -33,10 +33,10 @@ const Matrix44 Matrix44::IDENTITY(1, 0, 0, 0,
                                   0, 0, 1, 0,
                                   0, 0, 0, 1);
 
-
 //
 // Vector methods
 //
+
 template <> float VectorN<Vector2, float, 2>::getMagnitude() const
 {
     return std::sqrt(_arr[0]*_arr[0] + _arr[1]*_arr[1]);
@@ -232,6 +232,21 @@ Matrix44 Matrix44::createRotationZ(float angle)
                     sine, cosine, 0.0f, 0.0f,
                     0.0f, 0.0f, 1.0f, 0.0f,
                     0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+Matrix44 Matrix44::createView(const Vector3& eye,
+                              const Vector3& target,
+                              const Vector3& up)
+{
+    Vector3 z = (target - eye).getNormalized();
+    Vector3 x = z.cross(up).getNormalized();
+    Vector3 y = x.cross(z);
+
+    return Matrix44(
+         x[0],  x[1],  x[2], -x.dot(eye),
+         y[0],  y[1],  y[2], -y.dot(eye),
+        -z[0], -z[1], -z[2],  z.dot(eye),
+         0.0f,  0.0f,  0.0f,  1.0f);
 }
 
 } // namespace MaterialX

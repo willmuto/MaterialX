@@ -506,13 +506,11 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     float fH = std::tan(_cameraParams.viewAngle / 360.0f * PI) * _cameraParams.dnear;
     float fW = fH * (float) mSize.x() / (float) mSize.y();
 
-    ng::Matrix4f ngView = ng::lookAt(ng::Vector3f(&_cameraParams.eye[0]),
-                                     ng::Vector3f(&_cameraParams.center[0]),
-                                     ng::Vector3f(&_cameraParams.up[0]));
-    ngView *= _cameraParams.arcball.matrix();
+    ng::Matrix4f ngArcball = _cameraParams.arcball.matrix();
     ng::Matrix4f ngProj = ng::frustum(-fW, fW, -fH, fH, _cameraParams.dnear, _cameraParams.dfar);
+    mx::Matrix44 arcball = mx::Matrix44(ngArcball.data(), ngArcball.data() + ngArcball.size()).getTranspose();
 
-    view = mx::Matrix44(ngView.data(), ngView.data() + ngView.size()).getTranspose();
+    view = mx::Matrix44::createView(_cameraParams.eye, _cameraParams.center, _cameraParams.up) * arcball;
     proj = mx::Matrix44(ngProj.data(), ngProj.data() + ngProj.size()).getTranspose();
     world = mx::Matrix44::createScale(mx::Vector3(_cameraParams.zoom * _cameraParams.modelZoom));
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
