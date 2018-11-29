@@ -1,5 +1,6 @@
 #include <MaterialXView/Material.h>
 
+#include <MaterialXGenShader/DefaultColorManagementSystem.h>
 #include <MaterialXGenShader/Util.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 #include <MaterialXGenShader/HwShader.h>
@@ -52,15 +53,19 @@ StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr&
     }
 
     mx::ShaderGeneratorPtr shaderGenerator = mx::GlslShaderGenerator::create();
+    mx::DefaultColorManagementSystemPtr cms = mx::DefaultColorManagementSystem::create(shaderGenerator->getLanguage());
+    cms->loadLibrary(elem->getDocument());
     for (int i = 0; i < searchPath.size(); i++)
     {
         // TODO: The registerSourceCodeSearchPath method should probably take a
         //       full FileSearchPath rather than a single FilePath.
         shaderGenerator->registerSourceCodeSearchPath(searchPath[i]);
     }
+    shaderGenerator->setColorManagementSystem(cms);
 
     mx::GenOptions options;
     options.hwTransparency = isTransparentSurface(elem, *shaderGenerator);
+    options.targetColorSpaceOverride = "lin_rec709";
     mx::ShaderPtr sgShader = shaderGenerator->generate("Shader", elem, options);
 
     std::string vertexShader = sgShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
