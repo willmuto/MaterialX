@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <math.h>
 
 #include <MaterialXRender/Handlers/stbImageLoader.h>
 #include <MaterialXRender/Handlers/TinyExrImageLoader.h>
@@ -19,6 +18,32 @@ const int MIN_ENV_SAMPLES = 16;
 const int MAX_ENV_SAMPLES = 256;
 
 namespace {
+
+mx::Matrix44 createViewMatrix(const mx::Vector3& eye,
+                              const mx::Vector3& target,
+                              const mx::Vector3& up)
+{
+    mx::Vector3 z = (target - eye).getNormalized();
+    mx::Vector3 x = z.cross(up).getNormalized();
+    mx::Vector3 y = x.cross(z);
+
+    return mx::Matrix44(
+         x[0],  x[1],  x[2], -x.dot(eye),
+         y[0],  y[1],  y[2], -y.dot(eye),
+        -z[0], -z[1], -z[2],  z.dot(eye),
+         0.0f,  0.0f,  0.0f,  1.0f);
+}
+
+mx::Matrix44 createPerspectiveMatrix(float left, float right,
+                                     float bottom, float top,
+                                     float near, float far)
+{
+    return mx::Matrix44(
+        (2.0f * near) / (right - left), 0.0f, (right + left) / (right - left), 0.0f,
+        0.0f, (2.0f * near) / (top - bottom), (top + bottom) / (top - bottom), 0.0f,
+        0.0f, 0.0f, -(far + near) / (far - near), -(2.0f * far * near) / (far - near),
+        0.0f, 0.0f, -1.0f, 0.0f);
+}
 
 void writeTextFile(const std::string& text, const std::string& filePath)
 {
@@ -507,11 +532,10 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     float fW = fH * (float) mSize.x() / (float) mSize.y();
 
     ng::Matrix4f ngArcball = _cameraParams.arcball.matrix();
-    ng::Matrix4f ngProj = ng::frustum(-fW, fW, -fH, fH, _cameraParams.dnear, _cameraParams.dfar);
     mx::Matrix44 arcball = mx::Matrix44(ngArcball.data(), ngArcball.data() + ngArcball.size()).getTranspose();
 
-    view = mx::Matrix44::createView(_cameraParams.eye, _cameraParams.center, _cameraParams.up) * arcball;
-    proj = mx::Matrix44(ngProj.data(), ngProj.data() + ngProj.size()).getTranspose();
+    view = createViewMatrix(_cameraParams.eye, _cameraParams.center, _cameraParams.up) * arcball;
+    proj = createPerspectiveMatrix(-fW, fW, -fH, fH, _cameraParams.dnear, _cameraParams.dfar);
     world = mx::Matrix44::createScale(mx::Vector3(_cameraParams.zoom * _cameraParams.modelZoom));
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
 }

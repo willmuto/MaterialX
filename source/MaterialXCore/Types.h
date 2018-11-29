@@ -604,13 +604,6 @@ class Matrix44 : public MatrixN<Matrix44, float, 4>
     /// @param angle Angle in radians
     static Matrix44 createRotationZ(float angle);
 
-    /// Create a matrix that transforms from world coordinates to a view space
-    /// with its negative Z axis pointing from the given eye position to the
-    /// given target, and with its X axis orthogonal to the given up vector.
-    static Matrix44 createView(const Vector3& eye,
-                               const Vector3& target,
-                               const Vector3& up);
-
     /// @}
 
   public:
