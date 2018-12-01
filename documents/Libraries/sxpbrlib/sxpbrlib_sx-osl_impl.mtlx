@@ -32,7 +32,7 @@
   <implementation name="IM_scalebsdf_sx_osl" nodedef="ND_scalebsdf" file="sxpbrlib/sx-osl/sx_scalebsdf.osl" function="sx_scalebsdf" language="sx-osl"/>
 
   <!-- <add> -->
-  <implementation name="IM_add_bsdf_sx_osl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-osl/sx_add.osl" function="sx_add_bsdf" language="sx-osl"/>
+  <implementation name="IM_add_bsdf_sx_osl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-osl/sx_add_bsdf.osl" function="sx_add_bsdf" language="sx-osl"/>
 
   <!-- <mixedf> -->
   <implementation name="IM_mixedf_sx_osl" nodedef="ND_mixedf" file="sxpbrlib/sx-osl/sx_mixedf.osl" function="sx_mixedf" language="sx-osl"/>

@@ -29,7 +29,7 @@
   <implementation name="IM_scalebsdf_sx_glsl" nodedef="ND_scalebsdf" file="sxpbrlib/sx-glsl/sx_scalebsdf.glsl" function="sx_scalebsdf" language="sx-glsl"/>
 
   <!-- <add> -->
-  <implementation name="IM_add_bsdf_sx_glsl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-glsl/sx_add.glsl" function="sx_add_bsdf" language="sx-glsl"/>
+  <implementation name="IM_add_bsdf_sx_glsl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-glsl/sx_add_bsdf.glsl" function="sx_add_bsdf" language="sx-glsl"/>
 
   <!-- <uniformedf> -->
   <implementation name="IM_uniformedf_sx_glsl" nodedef="ND_uniformedf" file="sxpbrlib/sx-glsl/sx_uniformedf.glsl" function="sx_uniformedf" language="sx-glsl"/>
