@@ -13,6 +13,9 @@
   <!-- <conductorbrdf> -->
   <implementation name="IM_conductorbrdf_sx_osl" nodedef="ND_conductorbrdf" file="sxpbrlib/sx-osl/sx_conductorbrdf.osl" function="sx_conductorbrdf" language="sx-osl"/>
 
+  <!-- <glossybrdf> -->
+  <implementation name="IM_glossybrdf_sx_osl" nodedef="ND_glossybrdf" file="sxpbrlib/sx-osl/sx_glossybrdf.osl" function="sx_glossybrdf" language="sx-osl"/>
+
   <!-- <dielectricbtdf> -->
   <implementation name="IM_dielectricbtdf_sx_osl" nodedef="ND_dielectricbtdf" file="sxpbrlib/sx-osl/sx_dielectricbtdf.osl" function="sx_dielectricbtdf" language="sx-osl"/>
 
@@ -30,9 +33,6 @@
 
   <!-- <scalebsdf> -->
   <implementation name="IM_scalebsdf_sx_osl" nodedef="ND_scalebsdf" file="sxpbrlib/sx-osl/sx_scalebsdf.osl" function="sx_scalebsdf" language="sx-osl"/>
-
-  <!-- <add> -->
-  <implementation name="IM_add_bsdf_sx_osl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-osl/sx_add_bsdf.osl" function="sx_add_bsdf" language="sx-osl"/>
 
   <!-- <mixedf> -->
   <implementation name="IM_mixedf_sx_osl" nodedef="ND_mixedf" file="sxpbrlib/sx-osl/sx_mixedf.osl" function="sx_mixedf" language="sx-osl"/>
@@ -62,4 +62,7 @@
   <implementation name="IM_srgb_linear_color3_sx_osl" nodedef="ND_srgb_linear_color3" file="sxpbrlib/sx-osl/sx_srgb_linear_color3.osl" function="sx_srgb_linear_color3" language="sx-osl"/>
   <implementation name="IM_srgb_linear_color4_sx_osl" nodedef="ND_srgb_linear_color4" file="sxpbrlib/sx-osl/sx_srgb_linear_color4.osl" function="sx_srgb_linear_color4" language="sx-osl"/>
 
+  <!-- <add> -->
+  <implementation name="IM_add_bsdf_sx_osl" nodedef="ND_add_bsdf" file="sxpbrlib/sx-osl/sx_add_bsdf.osl" function="sx_add_bsdf" language="sx-osl"/>
+    
 </materialx>
