@@ -53,91 +53,7 @@ void writeTextFile(const std::string& text, const std::string& filePath)
     file.close();
 }
  
-void addValueToForm(mx::ValuePtr value, const std::string& label, ng::FormHelper& form)
-{
-    if (!value)
-    {
-        return;
-    }
-    if (value->isA<int>())
-    {
-        int v = value->asA<int>();
-        form.addVariable(label, v, false);
-    }
-    else if (value->isA<float>())
-    {
-        float v = value->asA<float>();
-        form.addVariable(label, v, false);
-    }
-    else if (value->isA<mx::Color2>())
-    {
-        mx::Color2 v = value->asA<mx::Color2>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = 0.0f;
-        c.b() = 0.0f;
-        c.w() = v[1];
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<mx::Color3>())
-    {
-        mx::Color3 v = value->asA<mx::Color3>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = 1.0;
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<mx::Color4>())
-    {
-        mx::Color4 v = value->asA<mx::Color4>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = v[3];
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<mx::Vector2>())
-    {
-        mx::Vector2 v = value->asA<mx::Vector2>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = 0.0f;
-        c.w() = 1.0f;
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<mx::Vector3>())
-    {
-        mx::Vector3 v = value->asA<mx::Vector3>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = 1.0;
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<mx::Vector4>())
-    {
-        mx::Vector4 v = value->asA<mx::Vector4>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = v[3];
-        form.addVariable(label, c, false);
-    }
-    else if (value->isA<std::string>())
-    {
-        std::string v = value->asA<std::string>();
-        if (!v.empty())
-        {
-            form.addVariable(label, v, false);
-        }
-    }
-}
+
 
 } // anonymous namespace
 
@@ -540,6 +456,223 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
 }
 
+void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
+    const std::string& path, ng::FormHelper& form)
+{
+    if (!value)
+    {
+        return;
+    }
+    if (value->isA<int>())
+    {
+        int v = value->asA<int>();
+        nanogui::detail::FormWidget<int, std::true_type>* intVar =
+            form.addVariable(label, v, true);
+        intVar->setCallback([this, path](int v)
+        {
+            if (_material)
+            {
+                GLShaderPtr shader = _material->ngShader();
+                mx::HwShaderPtr hwShader = _material->mxShader();
+                if (hwShader && shader)
+                {
+                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+                    for (auto uniform : publicUniforms.variableOrder)
+                    {
+                        if (uniform->path == path)
+                        {
+                            std::cout << "Path: " << path << std::endl;
+                            std::cout << "Value: " << v << std::endl;
+                            shader->setUniform(uniform->name, v);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    else if (value->isA<float>())
+    {
+        float v = value->asA<float>();
+        nanogui::detail::FormWidget<float, std::true_type>* floatVar =
+            form.addVariable(label, v, true);
+        floatVar->setCallback([this, path](float v)
+        {
+            if (_material)
+            {
+                GLShaderPtr shader = _material->ngShader();
+                mx::HwShaderPtr hwShader = _material->mxShader();
+                if (hwShader && shader)
+                {
+                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+                    for (auto uniform : publicUniforms.variableOrder)
+                    {
+                        if (uniform->path == path)
+                        {
+                            std::cout << "Path: " << path << std::endl;
+                            std::cout << "Value: " << v << std::endl;
+                            shader->bind();
+                            shader->setUniform(uniform->name, v);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+    else if (value->isA<mx::Color2>())
+    {
+        mx::Color2 v = value->asA<mx::Color2>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = 0.0f;
+        c.b() = 0.0f;
+        c.w() = v[1];
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, false);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            std::cout << "Path: " << path << std::endl;
+            std::cout << "Value: ["
+                << c.r() << ", "
+                << c.g() << ", "
+                << c.b() << ", "
+                << c.w() << "]" << std::endl;
+        });
+    }
+    else if (value->isA<mx::Color3>())
+    {
+        mx::Color3 v = value->asA<mx::Color3>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = 1.0;
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, true);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            if (_material)
+            {
+                GLShaderPtr shader = _material->ngShader();
+                mx::HwShaderPtr hwShader = _material->mxShader();
+                if (hwShader && shader)
+                {
+                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+                    for (auto uniform : publicUniforms.variableOrder)
+                    {
+                        if (uniform->path == path)
+                        {
+                            std::cout << "Path: " << path << std::endl;
+                            std::cout << "Value: ["
+                                << c.r() << ", "
+                                << c.g() << ", "
+                                << c.b() << ", "
+                                << c.w() << "]" << std::endl;
+                            shader->bind();
+                            shader->setUniform(uniform->name, c);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+    else if (value->isA<mx::Color4>())
+    {
+        mx::Color4 v = value->asA<mx::Color4>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = v[3];
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, true);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            std::cout << "Path: " << path << std::endl;
+            std::cout << "Value: ["
+                << c.r() << ", "
+                << c.g() << ", "
+                << c.b() << ", "
+                << c.w() << "]" << std::endl;
+        });
+    }
+    else if (value->isA<mx::Vector2>())
+    {
+        mx::Vector2 v = value->asA<mx::Vector2>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = 0.0f;
+        c.w() = 1.0f;
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, true);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            std::cout << "Path: " << path << std::endl;
+            std::cout << "Value: ["
+                << c.r() << ", "
+                << c.g() << ", "
+                << c.b() << ", "
+                << c.w() << "]" << std::endl;
+        });
+    }
+    else if (value->isA<mx::Vector3>())
+    {
+        mx::Vector3 v = value->asA<mx::Vector3>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = 1.0;
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, true);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            std::cout << "Path: " << path << std::endl;
+            std::cout << "Value: ["
+                << c.r() << ", "
+                << c.g() << ", "
+                << c.b() << ", "
+                << c.w() << "]" << std::endl;
+        });
+    }
+    else if (value->isA<mx::Vector4>())
+    {
+        mx::Vector4 v = value->asA<mx::Vector4>();
+        ng::Color c;
+        c.r() = v[0];
+        c.g() = v[1];
+        c.b() = v[2];
+        c.w() = v[3];
+        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
+            form.addVariable(label, c, true);
+        colorVar->setFinalCallback([this, path](const ng::Color &c)
+        {
+            std::cout << "Path: " << path << std::endl;
+            std::cout << "Value: ["
+                << c.r() << ", "
+                << c.g() << ", "
+                << c.b() << ", "
+                << c.w() << "]" << std::endl;
+        });
+    }
+    else if (value->isA<std::string>())
+    {
+        std::string v = value->asA<std::string>();
+        if (!v.empty())
+        {
+            nanogui::detail::FormWidget<std::string, std::true_type>* stringVar =
+                form.addVariable(label, v, true);
+            stringVar->setCallback([this, path](const std::string &v)
+            {
+                std::cout << "Path: " << path << std::endl;
+                std::cout << "Value: " << v << std::endl;
+            });
+        }
+    }
+}
+
 void Viewer::updatePropertySheet()
 {
     if (!_propertySheet)
@@ -591,6 +724,7 @@ void Viewer::updatePropertySheet()
         {
             std::vector<mx::ValuePtr> formValues;
             std::vector<mx::string> formNames;
+            std::vector<std::string> paths;
 
             // Scan for bindinputs
             for (mx::ParameterPtr elem : nodeDef->getParameters())
@@ -614,6 +748,7 @@ void Viewer::updatePropertySheet()
                 {
                     formValues.push_back(value);
                     formNames.push_back(elemName);
+                    paths.push_back(bindParam->getNamePath());
                 }
             }
 
@@ -640,6 +775,7 @@ void Viewer::updatePropertySheet()
                 {
                     formValues.push_back(value);
                     formNames.push_back(elemName);
+                    paths.push_back(bindInput->getNamePath());
                 }
             }
 
@@ -656,7 +792,7 @@ void Viewer::updatePropertySheet()
 
                 mx::ValuePtr value = formValues[i];
                 const std::string& name = formNames[i];
-                addValueToForm(value, name, *_propertySheet);
+                addValueToForm(value, name, paths[i], *_propertySheet);
             }
         }
     }
@@ -674,13 +810,13 @@ void Viewer::updatePropertySheet()
                 {
                     mx::ValuePtr value = input->getValue();
                     std::string label = input->getName();
-                    addValueToForm(value, label, *_propertySheet);
+                    addValueToForm(value, label, input->getNamePath(), *_propertySheet);
                 }
                 for (auto param : node->getParameters())
                 {
                     mx::ValuePtr value = param->getValue();
                     std::string label = param->getName();
-                    addValueToForm(value, label, *_propertySheet);
+                    addValueToForm(value, label, param->getNamePath(), *_propertySheet);
                 }
             }
         }
