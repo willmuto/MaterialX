@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<materialx version="1.36" colorspace="srgb_texture">
-  <nodegraph name="nodegraph1">
+<materialx version="1.36">
+  <nodegraph name="nodegraph1" colorspace="sRGB">
     <tiledimage name="image_base_color" type="color3">
       <parameter name="file" type="filename" value="documents/TestSuite/Images/wood_base_color.jpg" />
       <parameter name="uvtiling" type="vector2" value="1.0, 1.0"/>

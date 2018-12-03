@@ -1,0 +1,4 @@
+void sx_add_bsdf(BSDF in1, BSDF in2, output BSDF result)
+{
+    result = in1 + in2;
+}

@@ -5,7 +5,6 @@
 #include <MaterialXView/Mesh.h>
 #include <MaterialXGenShader/HwShader.h>
 
-#include <nanogui/glutil.h>
 #include <nanogui/screen.h>
 #include <nanogui/formhelper.h>
 
