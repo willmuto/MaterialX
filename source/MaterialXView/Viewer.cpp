@@ -653,7 +653,7 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
                         const std::string& uniformName = uniform->name;
                         const std::string& filename = _searchPath.find(v);
                         mx::ImageDesc desc;
-                        //uniform->value = mx::Value::createValue<std::string>(filename);
+                        uniform->value = mx::Value::createValue<std::string>(filename);
                         _material->ngShader()->bind();
                         _material->bindImage(filename, uniformName, _imageHandler, desc);
                     }
@@ -710,112 +710,25 @@ void Viewer::updatePropertySheet()
         return;
     }
 
-    // Update to show properties for a shader reference
-    mx::ShaderRefPtr shaderRef = element->asA<mx::ShaderRef>();
-    if (shaderRef)
+    if (_material && _materialDocument)
     {
-        mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
-        if (nodeDef)
+        GLShaderPtr shader = _material->ngShader();
+        mx::HwShaderPtr hwShader = _material->mxShader();
+        if (hwShader && shader)
         {
-            std::vector<mx::ValuePtr> formValues;
-            std::vector<mx::string> formNames;
-            std::vector<std::string> paths;
-
-            // Scan for bindinputs
-            for (mx::ParameterPtr elem : nodeDef->getParameters())
+            const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+            for (auto uniform : publicUniforms.variableOrder)
             {
-                const std::string& elemName = elem->getName();
-                mx::BindParamPtr bindParam = shaderRef->getBindParam(elemName);
-                mx::ValuePtr value = nullptr;
-                if (bindParam)
+                if (uniform->path.size() && uniform->value)
                 {
-                    if (!bindParam->getValueString().empty())
+                    mx::ElementPtr uniformElement = _materialDocument->getDescendant(uniform->path);
+                    if (uniformElement && uniformElement->isA<mx::ValueElement>())
                     {
-                         value = bindParam->getValue();
+                        addValueToForm(uniform->value, uniformElement->getName(), uniform->path, *_propertySheet);
                     }
-                }
-                // Adding nodedef values if desired
-                if (!value && _showNonEditableInputs)
-                {
-                    value = elem->getValue();
-                }
-                if (value)
-                {
-                    formValues.push_back(value);
-                    formNames.push_back(elemName);
-                    paths.push_back(bindParam->getNamePath());
-                }
-            }
-
-            // Scan for bindinputs
-            size_t startOfInputs = formValues.size();
-            for (const mx::InputPtr& input : nodeDef->getInputs())
-            {
-                const std::string& elemName = input->getName();
-                mx::BindInputPtr bindInput = shaderRef->getBindInput(elemName);
-                mx::ValuePtr value = nullptr;
-                if (bindInput)
-                {
-                    if (!bindInput->getValueString().empty())
-                    {
-                        value = bindInput->getValue();
-                    }
-                }
-                //  Adding nodedef values if desired
-                if (!value && _showNonEditableInputs)
-                {
-                    value = input->getValue();
-                }
-                if (value)
-                {
-                    formValues.push_back(value);
-                    formNames.push_back(elemName);
-                    paths.push_back(bindInput->getNamePath());
-                }
-            }
-
-            if (formValues.size() && startOfInputs > 0)
-            {
-                _propertySheet->addGroup("Shader Parameters");
-            }
-            for (size_t i=0; i<formValues.size(); i++)
-            {
-                if (i == startOfInputs)
-                {
-                    _propertySheet->addGroup("Shader Inputs");
-                }
-
-                mx::ValuePtr value = formValues[i];
-                const std::string& name = formNames[i];
-                addValueToForm(value, name, paths[i], *_propertySheet);
-            }
-        }
-    }
-
-    else
-    {
-        // Handle showing properties on node directly connected to an output
-        mx::OutputPtr graphOutput = element->asA<mx::Output>();
-        if (graphOutput && graphOutput->getParent())
-        {
-            mx::NodePtr node = graphOutput->getConnectedNode();
-            if (node)
-            {
-                for (auto input : node->getInputs())
-                {
-                    mx::ValuePtr value = input->getValue();
-                    std::string label = input->getName();
-                    addValueToForm(value, label, input->getNamePath(), *_propertySheet);
-                }
-                for (auto param : node->getParameters())
-                {
-                    mx::ValuePtr value = param->getValue();
-                    std::string label = param->getName();
-                    addValueToForm(value, label, param->getNamePath(), *_propertySheet);
                 }
             }
         }
     }
-
     performLayout();
 }
