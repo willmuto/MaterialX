@@ -461,6 +461,7 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
         int v = value->asA<int>();
         nanogui::detail::FormWidget<int, std::true_type>* intVar =
             form.addVariable(label, v, true);
+        intVar->setSpinnable(true);
         intVar->setCallback([this, path](int v)
         {
             if (_material)
@@ -479,6 +480,7 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
         float v = value->asA<float>();
         nanogui::detail::FormWidget<float, std::true_type>* floatVar =
             form.addVariable(label, v, true);
+        floatVar->setSpinnable(true);
         floatVar->setCallback([this, path](float v)
         {
             if (_material)
