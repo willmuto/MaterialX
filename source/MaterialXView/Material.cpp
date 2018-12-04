@@ -85,10 +85,10 @@ MaterialPtr Material::generateShader(const mx::FileSearchPath& searchPath, mx::E
         GLShaderPtr ngShader = GLShaderPtr(new ng::GLShader());
         ngShader->init(elem->getNamePath(), source.first, source.second);
 
-        MaterialPtr shader = MaterialPtr(new Material(ngShader, hwShader));
-        shader->_hasTransparency = hwShader ? hwShader->hasTransparency() : false;
+        MaterialPtr material = MaterialPtr(new Material(ngShader, hwShader));
+        material->_hasTransparency = hwShader ? hwShader->hasTransparency() : false;
 
-        return shader;
+        return material;
     }
     return nullptr;
 }
@@ -173,8 +173,46 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
     }
 }
 
-void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, int envSamples,
-                            const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
+void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples)
+{
+    if (!_ngShader)
+    {
+        return;
+    }
+
+    _ngShader->bind();
+
+    // Bind light properties.
+    if (_ngShader->uniform("u_envSamples", false) != -1)
+    {
+        _ngShader->setUniform("u_envSamples", envSamples);
+    }
+    mx::StringMap lightTextures = {
+        { "u_envRadiance", "documents/TestSuite/Images/san_giuseppe_bridge.exr" },
+        { "u_envIrradiance", "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.exr" }
+    };
+    for (auto pair : lightTextures)
+    {
+        if (_ngShader->uniform(pair.first, false) != -1)
+        {
+            // Access cached image or load from disk.
+            mx::FilePath path = imagePath.find(pair.second);
+            const std::string filename = path.asString();
+
+            mx::ImageDesc desc;
+            if (bindImage(filename, pair.first, imageHandler, desc))
+            {
+                // Bind any associated uniforms.
+                if (pair.first == "u_envRadiance")
+                {
+                    _ngShader->setUniform("u_envRadianceMips", desc.mipCount);
+                }
+            }
+        }
+    }
+}
+
+void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
 {
     GLShaderPtr shader = ngShader();
     mx::HwShaderPtr hwShader = mxShader();
@@ -196,37 +234,7 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::File
         shader->setUniform("u_viewPosition", ng::Vector3f(viewPosition.data()));
     }
 
-    // Bind images.
-    bindImages(imageHandler, searchPath);
-
-    // Bind light properties.
-    if (shader->uniform("u_envSamples", false) != -1)
-    {
-        shader->setUniform("u_envSamples", envSamples);
-    }
-    mx::StringMap lightTextures = {
-        {"u_envRadiance", "documents/TestSuite/Images/san_giuseppe_bridge.exr" },
-        {"u_envIrradiance", "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.exr" }
-    };
-    for (auto pair : lightTextures)
-    {
-        if (shader->uniform(pair.first, false) != -1)
-        {
-            // Access cached image or load from disk.
-            mx::FilePath path = searchPath.find(pair.second);
-            const std::string filename = path.asString();
-
-            mx::ImageDesc desc;
-            if (bindImage(filename, pair.first, imageHandler, desc))
-            {
-                // Bind any associated uniforms.
-                if (pair.first == "u_envRadiance")
-                {
-                    shader->setUniform("u_envRadianceMips", desc.mipCount);
-                }
-            }
-        }
-    }
+    
 }
 
 mx::Shader::Variable* Material::findUniform(const std::string path) const
@@ -244,5 +252,6 @@ mx::Shader::Variable* Material::findUniform(const std::string path) const
             }
         }
     }
+    return nullptr;
 }
 

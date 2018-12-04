@@ -109,10 +109,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& se
             try
             {
                 loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
-                _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
                 updateElementSelections();
+                setElementSelection(0);
                 updatePropertySheet();
-                setElementSelection(_elementSelectionIndex);
             }
             catch (std::exception& e)
             {
@@ -126,13 +125,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& se
     _elementSelectionBox->setChevronIcon(-1);
     _elementSelectionBox->setCallback([this](int choice)
     {
-        mx::ElementPtr elem = choice >= 0 ? _elementSelections[choice] : nullptr;
-        _material = Material::generateShader(_searchPath, elem);
-        if (_material)
-        {
-            _material->bindMesh(_mesh);
-            _elementSelectionIndex = choice;
-        }
+        setElementSelection(choice);
         updatePropertySheet();
     });
 
@@ -182,9 +175,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& se
     }
     try
     {
-        _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
         updateElementSelections();
-        setElementSelection(_elementSelectionIndex);
+        setElementSelection(0);
     }
     catch (std::exception& e)
     {
@@ -226,7 +218,9 @@ bool Viewer::setElementSelection(int index)
         _material = Material::generateShader(_searchPath, elem);
         if (_material)
         {
+            _material->bindImages(_imageHandler, _searchPath);
             _material->bindMesh(_mesh);
+            _elementSelectionIndex = index;
             return true;
         }
     }
@@ -251,10 +245,9 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         }
         try
         {
-            _elementSelectionIndex = _elementSelections.size() ? 0 : -1;
             updateElementSelections();
+            setElementSelection(0);
             updatePropertySheet();
-            setElementSelection(_elementSelectionIndex);
         }
         catch (std::exception& e)
         {
@@ -307,7 +300,6 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                 if (setElementSelection(newIndex))
                 {
                     _elementSelectionBox->setSelectedIndex(newIndex);
-                    _elementSelectionIndex = newIndex;
                     updateElementSelections();
                     updatePropertySheet();
                 }
@@ -336,7 +328,8 @@ void Viewer::drawContents()
     GLShaderPtr shader = _material->ngShader();
     shader->bind();
 
-    _material->bindUniforms(_imageHandler, _searchPath, _envSamples, world, view, proj);
+    _material->bindViewInformation(world, view, proj);
+    _material->bindLights(_imageHandler, _searchPath, _envSamples);
 
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -658,8 +651,10 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
                     if (uniform->type == MaterialX::Type::FILENAME)
                     {
                         const std::string& uniformName = uniform->name;
-                        std::string filename = _searchPath.find(v);
+                        const std::string& filename = _searchPath.find(v);
                         mx::ImageDesc desc;
+                        //uniform->value = mx::Value::createValue<std::string>(filename);
+                        _material->ngShader()->bind();
                         _material->bindImage(filename, uniformName, _imageHandler, desc);
                     }
                     else

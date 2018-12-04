@@ -35,9 +35,8 @@ class Material
     /// Bind mesh inputs to shader
     void bindMesh(MeshPtr& mesh);
 
-    /// Bind uniforms to shader
-    void bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, int envSamples,
-                      const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
+    /// Bind viewing information to shader
+    void bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
 
     /// Bind image to shader
     bool bindImage(const std::string& filename, const std::string& uniformName,
@@ -45,6 +44,9 @@ class Material
 
     /// Bind required images to shader
     void bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath);
+
+    /// Bind lights to shader
+    void bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples);
 
     /// Return if the shader is has transparency
     bool hasTransparency() const { return _hasTransparency; }
