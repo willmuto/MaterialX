@@ -21,15 +21,22 @@ using ShaderOutputPtr = shared_ptr<class ShaderOutput>;
 using ShaderNodePtr = shared_ptr<class ShaderNode>;
 using ShaderInputSet = std::set<ShaderInput*>;
 
-/// An input on a ShaderNode
-class ShaderInput
+/// An input or output port on a ShaderNode
+class ShaderPort
 {
   public:
-    /// Input type.
+    static const unsigned int VARIABLE_NOT_RENAMABLE = 1 << 0; // Variable should not be automatically named
+
+    /// Port type.
     const TypeDesc* type;
 
-    /// Input name.
+    /// Port name.
     string name;
+
+    // Path to the origin (input/parameter element) for this shader port.
+    // Can be used to map client side node inputs to uniforms on the generated shader,
+    // if input values change during rendering.
+    string path;
 
     /// Variable name as used in generated code.
     string variable;
@@ -40,6 +47,14 @@ class ShaderInput
     /// A value, or nullptr if not assigned.
     ValuePtr value;
 
+    /// Property flags
+    unsigned int flags;
+};
+
+/// An input on a ShaderNode
+class ShaderInput : public ShaderPort
+{
+  public:  
     /// A connection to an upstream node output, or nullptr if not connected.
     ShaderOutput* connection;
 
@@ -51,24 +66,9 @@ class ShaderInput
 };
 
 /// An output on a ShaderNode
-class ShaderOutput
+class ShaderOutput : public ShaderPort
 {
   public:
-    /// Output type.
-    const TypeDesc* type;
-
-    /// Output name.
-    string name;
-
-    /// Variable name as used in generated code.
-    string variable;
-
-    /// Parent node.
-    ShaderNode* node;
-
-    /// A value, or nullptr if not assigned.
-    ValuePtr value;
-
     /// A set of connections to downstream node inputs, empty if not connected.
     ShaderInputSet connections;
 
@@ -210,6 +210,9 @@ class ShaderNode
 
     /// Set input values from the given node and nodedef.
     void setValues(const Node& node, const NodeDef& nodeDef, ShaderGenerator& shadergen);
+
+    /// Set input element paths for the given node and nodedef.
+    void setPaths(const Node& node, const NodeDef& nodeDef, bool includeNodeDefInputs=true);
 
     /// Add inputs/outputs
     ShaderInput* addInput(const string& name, const TypeDesc* type);
