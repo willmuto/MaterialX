@@ -472,20 +472,11 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
         {
             if (_material)
             {
-                GLShaderPtr shader = _material->ngShader();
-                mx::HwShaderPtr hwShader = _material->mxShader();
-                if (hwShader && shader)
+                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+                if (uniform)
                 {
-                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
-                    for (auto uniform : publicUniforms.variableOrder)
-                    {
-                        if (uniform->path == path)
-                        {
-                            std::cout << "Path: " << path << std::endl;
-                            std::cout << "Value: " << v << std::endl;
-                            shader->setUniform(uniform->name, v);
-                        }
-                    }
+                    _material->ngShader()->bind();
+                    _material->ngShader()->setUniform(uniform->name, v);
                 }
             }
         });
@@ -499,23 +490,12 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
         {
             if (_material)
             {
-                GLShaderPtr shader = _material->ngShader();
-                mx::HwShaderPtr hwShader = _material->mxShader();
-                if (hwShader && shader)
+                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+                if (uniform)
                 {
-                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
-                    for (auto uniform : publicUniforms.variableOrder)
-                    {
-                        if (uniform->path == path)
-                        {
-                            std::cout << "Path: " << path << std::endl;
-                            std::cout << "Value: " << v << std::endl;
-                            shader->bind();
-                            shader->setUniform(uniform->name, v);
-                            break;
-                        }
-                    }
-                }
+                    _material->ngShader()->bind();
+                    _material->ngShader()->setUniform(uniform->name, v);
+                }                
             }
         });
     }
@@ -531,12 +511,15 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, false);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            std::cout << "Path: " << path << std::endl;
-            std::cout << "Value: ["
-                << c.r() << ", "
-                << c.g() << ", "
-                << c.b() << ", "
-                << c.w() << "]" << std::endl;
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            {
+                _material->ngShader()->bind();
+                ng::Vector2f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                _material->ngShader()->setUniform(uniform->name, v);
+            }
         });
     }
     else if (value->isA<mx::Color3>())
@@ -551,29 +534,15 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            if (_material)
-            {
-                GLShaderPtr shader = _material->ngShader();
-                mx::HwShaderPtr hwShader = _material->mxShader();
-                if (hwShader && shader)
-                {
-                    const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
-                    for (auto uniform : publicUniforms.variableOrder)
-                    {
-                        if (uniform->path == path)
-                        {
-                            std::cout << "Path: " << path << std::endl;
-                            std::cout << "Value: ["
-                                << c.r() << ", "
-                                << c.g() << ", "
-                                << c.b() << ", "
-                                << c.w() << "]" << std::endl;
-                            shader->bind();
-                            shader->setUniform(uniform->name, c);
-                            break;
-                        }
-                    }
-                }
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            { 
+                _material->ngShader()->bind();
+                ng::Vector3f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                v.z() = c.b();
+                _material->ngShader()->setUniform(uniform->name, v);
             }
         });
     }
@@ -589,12 +558,17 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            std::cout << "Path: " << path << std::endl;
-            std::cout << "Value: ["
-                << c.r() << ", "
-                << c.g() << ", "
-                << c.b() << ", "
-                << c.w() << "]" << std::endl;
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            {
+                _material->ngShader()->bind();
+                ng::Vector4f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                v.z() = c.b();
+                v.w() = c.w();
+                _material->ngShader()->setUniform(uniform->name, v);
+            }
         });
     }
     else if (value->isA<mx::Vector2>())
@@ -609,12 +583,15 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            std::cout << "Path: " << path << std::endl;
-            std::cout << "Value: ["
-                << c.r() << ", "
-                << c.g() << ", "
-                << c.b() << ", "
-                << c.w() << "]" << std::endl;
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            {
+                _material->ngShader()->bind();
+                ng::Vector2f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                _material->ngShader()->setUniform(uniform->name, v);
+            }
         });
     }
     else if (value->isA<mx::Vector3>())
@@ -629,12 +606,16 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            std::cout << "Path: " << path << std::endl;
-            std::cout << "Value: ["
-                << c.r() << ", "
-                << c.g() << ", "
-                << c.b() << ", "
-                << c.w() << "]" << std::endl;
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            {
+                _material->ngShader()->bind();
+                ng::Vector3f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                v.z() = c.b();
+                _material->ngShader()->setUniform(uniform->name, v);
+            }
         });
     }
     else if (value->isA<mx::Vector4>())
@@ -649,12 +630,17 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path](const ng::Color &c)
         {
-            std::cout << "Path: " << path << std::endl;
-            std::cout << "Value: ["
-                << c.r() << ", "
-                << c.g() << ", "
-                << c.b() << ", "
-                << c.w() << "]" << std::endl;
+            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+            if (uniform)
+            {
+                _material->ngShader()->bind();
+                ng::Vector4f v;
+                v.x() = c.r();
+                v.y() = c.g();
+                v.z() = c.b();
+                v.w() = c.w();
+                _material->ngShader()->setUniform(uniform->name, v);
+            }
         });
     }
     else if (value->isA<std::string>())
@@ -666,8 +652,22 @@ void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
                 form.addVariable(label, v, true);
             stringVar->setCallback([this, path](const std::string &v)
             {
-                std::cout << "Path: " << path << std::endl;
-                std::cout << "Value: " << v << std::endl;
+                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
+                if (uniform)
+                {
+                    if (uniform->type == MaterialX::Type::FILENAME)
+                    {
+                        const std::string& uniformName = uniform->name;
+                        std::string filename = _searchPath.find(v);
+                        mx::ImageDesc desc;
+                        _material->bindImage(filename, uniformName, _imageHandler, desc);
+                    }
+                    else
+                    {
+                        // TO-DO: Need remapping information from string to integer which is currently
+                        // not available. 
+                    }
+                }   
             });
         }
     }

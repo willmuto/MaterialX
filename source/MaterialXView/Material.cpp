@@ -228,3 +228,21 @@ void Material::bindUniforms(mx::GLTextureHandlerPtr imageHandler, const mx::File
         }
     }
 }
+
+mx::Shader::Variable* Material::findUniform(const std::string path) const
+{
+    GLShaderPtr shader = ngShader();
+    mx::HwShaderPtr hwShader = mxShader();
+    if (hwShader && shader)
+    {
+        const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+        for (auto uniform : publicUniforms.variableOrder)
+        {
+            if (uniform->path == path)
+            {
+                return uniform;
+            }
+        }
+    }
+}
+

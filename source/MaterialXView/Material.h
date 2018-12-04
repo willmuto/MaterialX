@@ -49,6 +49,9 @@ class Material
     /// Return if the shader is has transparency
     bool hasTransparency() const { return _hasTransparency; }
 
+    /// Find a variable (uniform) based on MaterialX path
+    mx::Shader::Variable* findUniform(const std::string path) const;
+
   protected:
     Material(GLShaderPtr ngshader, mx::HwShaderPtr mxshader)
     {
