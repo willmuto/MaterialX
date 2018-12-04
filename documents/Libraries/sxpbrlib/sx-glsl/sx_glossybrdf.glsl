@@ -1,10 +1,10 @@
 #include "sxpbrlib/sx-glsl/lib/sx_bsdfs.glsl"
 
-void sx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void sx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
-        result = base;
+        result = BSDF(0.0);
         return;
     }
 
@@ -12,7 +12,7 @@ void sx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 co
     float NdotV = dot(normal,V);
     if (NdotL <= 0.0 || NdotV <= 0.0)
     {
-        result = base;
+        result = BSDF(0.0);
         return;
     }
 
@@ -25,48 +25,26 @@ void sx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 co
     float G = sx_microfacet_ggx_smith_G(NdotL, NdotV, roughness.alpha);
 
     float VdotH = dot(V, H);
-    float F = sx_fresnel_schlick(VdotH, color0, color90, exponent);
+    vec3 F = sx_fresnel_schlick(VdotH, color0, color90, exponent);
     F *= weight;
 
     // Note: NdotL is cancelled out
-    result = tint * D * G * F / (4 * NdotV) // Top layer reflection
-           + base * (1.0 - F);              // Base layer reflection attenuated by top fresnel
+    result = F * D * G / (4 * NdotV);
 }
 
-void sx_glossybrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void sx_glossybrdf_indirect(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
-        result = base;
-        return;
-    }
-
-    // Dielectric BRDF has no transmission but we must 
-    // attenuate the base layer transmission by the 
-    // inverse of top layer reflectance.
-
-    // Abs here to allow transparency through backfaces
-    float NdotV = abs(dot(normal,V)); 
-    float F = sx_fresnel_schlick(NdotV, color0, color90, exponent);
-    F *= weight;
-
-    result = base * (1.0 - F); // Base layer transmission attenuated by top fresnel
-}
-
-void sx_glossybrdf_indirect(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
-{
-    if (weight < M_FLOAT_EPS)
-    {
-        result = base;
+        result = vec3(0.0);
         return;
     }
 
     vec3 Li = sx_environment_specular(normal, V, tangent, roughness);
 
     float NdotV = dot(normal,V);
-    float F = sx_fresnel_schlick_roughness(NdotV, color0, color90, exponent);
+    vec3 F = sx_fresnel_schlick(NdotV, color0, color90, exponent);
     F *= weight;
 
-    result = Li * tint * F     // Top layer reflection
-           + base * (1.0 - F); // Base layer reflection attenuated by top fresnel
-}
+    result = Li * F;
+;}
