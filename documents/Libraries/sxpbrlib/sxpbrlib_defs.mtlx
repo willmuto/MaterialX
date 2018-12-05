@@ -100,7 +100,7 @@
     Node: <glossybrdf>
     A reflection BSDF node based on a microfacet model and a generic Fresnel curve.
   -->
-  <nodedef name="ND_glossybrdf" node="glossybrdf" type="BSDF" bsdf="R" nodegroup="pbr"
+  <nodedef name="ND_glossybrdf" node="glossybrdf" type="BSDF" nodegroup="pbr"
            doc="A reflection BSDF node based on a microfacet model and a generic Fresnel curve.">
     <input name="weight" type="float" value="1.0"/>
     <input name="color0" type="color3" value="1.0, 1.0, 1.0"/>
@@ -114,7 +114,8 @@
       <geomprop name="tangent" type="vector3" space="world"/>
     </input>
     <input name="distribution" type="string" value="ggx" enum="ggx"/>
-  </nodedef>
+    <input name="base" type="BSDF"/>
+</nodedef>
 
   <!--
     Node: <subsurfacebrdf>
