@@ -34,7 +34,7 @@ void sx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 co
            + base * (1.0 - avgF);       // Base layer reflection attenuated by top fresnel
 }
 
-void sx_dielectricbrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void sx_glossybrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
