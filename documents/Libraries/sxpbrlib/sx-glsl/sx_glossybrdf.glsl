@@ -42,7 +42,7 @@ void sx_glossybrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90,
         return;
     }
 
-    // Dielectric BRDF has no transmission but we must 
+    // Glossy BRDF has no transmission but we must 
     // attenuate the base layer transmission by the 
     // inverse of top layer reflectance.
 
