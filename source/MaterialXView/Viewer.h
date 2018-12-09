@@ -30,7 +30,9 @@ class CameraParameters
 class Viewer : public ng::Screen
 {
   public:
-    Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath);
+    Viewer(const mx::StringVec& libraryFolders,
+           const mx::FileSearchPath& searchPath,
+           const mx::StringMap& nodeRemap);
     ~Viewer() { }
 
     void drawContents() override;
@@ -51,6 +53,7 @@ class Viewer : public ng::Screen
     void updatePropertySheet();
     void addValueToForm(mx::ValuePtr value, const std::string& label,
         const std::string& path, ng::FormHelper& form);
+
   private:
     ng::Window* _window;
     std::unique_ptr<Mesh> _mesh;
@@ -62,6 +65,8 @@ class Viewer : public ng::Screen
 
     mx::StringVec _libraryFolders;
     mx::FileSearchPath _searchPath;
+    mx::StringMap _nodeRemap;
+
     mx::FilePath _materialFilename;
     int _envSamples;
 

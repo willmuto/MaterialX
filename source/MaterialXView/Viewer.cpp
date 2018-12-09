@@ -52,8 +52,6 @@ void writeTextFile(const std::string& text, const std::string& filePath)
     file << text;
     file.close();
 }
- 
-
 
 } // anonymous namespace
 
@@ -61,10 +59,13 @@ void writeTextFile(const std::string& text, const std::string& filePath)
 // Viewer methods
 //
 
-Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath) :
+Viewer::Viewer(const mx::StringVec& libraryFolders,
+               const mx::FileSearchPath& searchPath,
+               const mx::StringMap& nodeRemap) :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
     _libraryFolders(libraryFolders),
     _searchPath(searchPath),
+    _nodeRemap(nodeRemap),
     _translationActive(false),
     _translationStart(0, 0),
     _envSamples(MIN_ENV_SAMPLES)
@@ -109,6 +110,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& se
             try
             {
                 loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+                remapNodes(_materialDocument, _nodeRemap);
                 updateElementSelections();
                 setElementSelection(0);
                 updatePropertySheet();
@@ -168,6 +170,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders, const mx::FileSearchPath& se
     try
     {
         loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+        remapNodes(_materialDocument, _nodeRemap);
     }
     catch (std::exception& e)
     {
@@ -238,6 +241,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         try
         {
             loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
+            remapNodes(_materialDocument, _nodeRemap);
         }
         catch (std::exception& e)
         {
