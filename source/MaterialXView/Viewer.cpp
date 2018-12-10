@@ -88,7 +88,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                 {
                     _material->bindMesh(_mesh);
                 }
-                recenterCamera();
+                initCamera();
             }
             else
             {
@@ -165,7 +165,12 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     _mesh = MeshPtr(new Mesh());
     _mesh->loadMesh("documents/TestSuite/Geometry/teapot.obj");
-    recenterCamera();
+    initCamera();
+
+    setResizeCallback([this](ng::Vector2i size)
+    {
+        _cameraParams.arcball.setSize(size);
+    });
 
     try
     {
@@ -429,7 +434,7 @@ bool Viewer::mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int 
     return true;
 }
 
-void Viewer::recenterCamera()
+void Viewer::initCamera()
 {
     _cameraParams.arcball = ng::Arcball();
     _cameraParams.arcball.setSize(mSize);
