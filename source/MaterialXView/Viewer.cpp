@@ -9,12 +9,13 @@
 #include <iostream>
 #include <fstream>
 
+#include <MaterialXGenShader/Util.h>
 #include <MaterialXRender/Handlers/stbImageLoader.h>
 #include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 
 const float PI = std::acos(-1.0f);
 
-const int MIN_ENV_SAMPLES = 16;
+const int MIN_ENV_SAMPLES = 4;
 const int MAX_ENV_SAMPLES = 256;
 
 namespace {
@@ -135,8 +136,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     propertySheetButton->setFlags(ng::Button::ToggleButton);
     propertySheetButton->setChangeCallback([this](bool state)
     { 
-        _showPropertySheet = state;
-        this->_propertySheetWindow->setVisible(_showPropertySheet);
+        this->_propertySheet.setVisible(state);
         performLayout();
     });
 
@@ -191,14 +191,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
     }
 
-    // By default hind inputs which cannot be edited. e.g. for a shader ref there may be a lot of inputs
-    // which have not been overridden and thus are just the defaults.
-    _showNonEditableInputs = false;
-    _propertySheet = nullptr;
-    _propertySheetWindow = nullptr;
-    _showPropertySheet = false; // Start up with property sheet hidden
     updatePropertySheet();
-
+    _propertySheet.setVisible(false);
     performLayout();
 }
 
@@ -276,7 +270,6 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                     mx::HwShaderPtr hwShader = nullptr;
                     StringPair source = generateSource(_searchPath, hwShader, elem);
                     std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
-                    mx::StringVec splitName = mx::splitString(baseName, ".");
                     writeTextFile(source.first, _searchPath[0] / (baseName + "_vs.glsl"));
                     writeTextFile(source.second, _searchPath[0]  / (baseName + "_ps.glsl"));
                 }
@@ -338,6 +331,7 @@ void Viewer::drawContents()
     shader->bind();
 
     _material->bindViewInformation(world, view, proj);
+    _material->bindImages(_imageHandler, _searchPath);
     _material->bindLights(_imageHandler, _searchPath, _envSamples);
 
     glEnable(GL_DEPTH_TEST);
@@ -458,288 +452,7 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
 }
 
-void Viewer::addValueToForm(mx::ValuePtr value, const std::string& label,
-    const std::string& path, ng::FormHelper& form)
-{
-    if (!value)
-    {
-        return;
-    }
-    if (value->isA<int>())
-    {
-        int v = value->asA<int>();
-        nanogui::detail::FormWidget<int, std::true_type>* intVar =
-            form.addVariable(label, v, true);
-        intVar->setSpinnable(true);
-        intVar->setCallback([this, path](int v)
-        {
-            if (_material)
-            {
-                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-                if (uniform)
-                {
-                    _material->ngShader()->bind();
-                    _material->ngShader()->setUniform(uniform->name, v);
-                }
-            }
-        });
-    }
-    else if (value->isA<float>())
-    {
-        float v = value->asA<float>();
-        nanogui::detail::FormWidget<float, std::true_type>* floatVar =
-            form.addVariable(label, v, true);
-        floatVar->setSpinnable(true);
-        floatVar->setCallback([this, path](float v)
-        {
-            if (_material)
-            {
-                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-                if (uniform)
-                {
-                    _material->ngShader()->bind();
-                    _material->ngShader()->setUniform(uniform->name, v);
-                }                
-            }
-        });
-    }
-    else if (value->isA<mx::Color2>())
-    {
-        mx::Color2 v = value->asA<mx::Color2>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = 0.0f;
-        c.b() = 0.0f;
-        c.w() = v[1];
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, false);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            {
-                _material->ngShader()->bind();
-                ng::Vector2f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<mx::Color3>())
-    {
-        mx::Color3 v = value->asA<mx::Color3>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = 1.0;
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            { 
-                _material->ngShader()->bind();
-                ng::Vector3f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                v.z() = c.b();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<mx::Color4>())
-    {
-        mx::Color4 v = value->asA<mx::Color4>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = v[3];
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            {
-                _material->ngShader()->bind();
-                ng::Vector4f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                v.z() = c.b();
-                v.w() = c.w();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<mx::Vector2>())
-    {
-        mx::Vector2 v = value->asA<mx::Vector2>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = 0.0f;
-        c.w() = 1.0f;
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            {
-                _material->ngShader()->bind();
-                ng::Vector2f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<mx::Vector3>())
-    {
-        mx::Vector3 v = value->asA<mx::Vector3>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = 1.0;
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            {
-                _material->ngShader()->bind();
-                ng::Vector3f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                v.z() = c.b();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<mx::Vector4>())
-    {
-        mx::Vector4 v = value->asA<mx::Vector4>();
-        ng::Color c;
-        c.r() = v[0];
-        c.g() = v[1];
-        c.b() = v[2];
-        c.w() = v[3];
-        nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
-            form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path](const ng::Color &c)
-        {
-            mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-            if (uniform)
-            {
-                _material->ngShader()->bind();
-                ng::Vector4f v;
-                v.x() = c.r();
-                v.y() = c.g();
-                v.z() = c.b();
-                v.w() = c.w();
-                _material->ngShader()->setUniform(uniform->name, v);
-            }
-        });
-    }
-    else if (value->isA<std::string>())
-    {
-        std::string v = value->asA<std::string>();
-        if (!v.empty())
-        {
-            nanogui::detail::FormWidget<std::string, std::true_type>* stringVar =
-                form.addVariable(label, v, true);
-            stringVar->setCallback([this, path](const std::string &v)
-            {
-                mx::Shader::Variable* uniform = _material ? _material->findUniform(path) : nullptr;
-                if (uniform)
-                {
-                    if (uniform->type == MaterialX::Type::FILENAME)
-                    {
-                        const std::string& uniformName = uniform->name;
-                        const std::string& filename = _searchPath.find(v);
-                        mx::ImageDesc desc;
-                        uniform->value = mx::Value::createValue<std::string>(filename);
-                        _material->ngShader()->bind();
-                        _material->bindImage(filename, uniformName, _imageHandler, desc);
-                    }
-                    else
-                    {
-                        // TO-DO: Need remapping information from string to integer which is currently
-                        // not available. 
-                    }
-                }   
-            });
-        }
-    }
-}
-
 void Viewer::updatePropertySheet()
 {
-    if (!_propertySheet)
-    {
-        _propertySheet = new ng::FormHelper(this);
-    }
-   
-    // Remove the window associated with the form.
-    // This is done by explicitly creating and owning the window
-    // as opposed to having it being done by the form
-    ng::Vector2i previousPosition(15, _window->height() + 60);
-    if (_propertySheetWindow)
-    {
-        for (int i = 0; i < _propertySheetWindow->childCount(); i++)
-        {
-            _propertySheetWindow->removeChild(i);
-        }
-        // We don't want the property sheet to move when
-        // we update it's contents so cache any previous position
-        // to use when we create a new window.
-        previousPosition = _propertySheetWindow->position();
-        this->removeChild(_propertySheetWindow);
-    }
-    _propertySheetWindow = new ng::Window(this, "Property Sheet");
-    ng::AdvancedGridLayout* layout = new ng::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
-    layout->setMargin(10);
-    layout->setColStretch(2, 1);
-    _propertySheetWindow->setPosition(previousPosition);
-    _propertySheetWindow->setVisible(_showPropertySheet);
-    _propertySheetWindow->setLayout(layout);
-    _propertySheet->setWindow(_propertySheetWindow);
-
-    mx::ElementPtr element = nullptr;
-    if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
-    {
-        element = _elementSelections[_elementSelectionIndex];
-    }
-    if (!element)
-    {
-        return;
-    }
-
-    if (_material && _materialDocument)
-    {
-        GLShaderPtr shader = _material->ngShader();
-        mx::HwShaderPtr hwShader = _material->mxShader();
-        if (hwShader && shader)
-        {
-            const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
-            for (auto uniform : publicUniforms.variableOrder)
-            {
-                if (uniform->path.size() && uniform->value)
-                {
-                    mx::ElementPtr uniformElement = _materialDocument->getDescendant(uniform->path);
-                    if (uniformElement && uniformElement->isA<mx::ValueElement>())
-                    {
-                        addValueToForm(uniform->value, uniformElement->getName(), uniform->path, *_propertySheet);
-                    }
-                }
-            }
-        }
-    }
-    performLayout();
+    _propertySheet.updateContents(this);
 }

@@ -8,6 +8,8 @@
 #include <nanogui/screen.h>
 #include <nanogui/formhelper.h>
 
+#include <MaterialXView/PropertySheet.h>
+
 namespace mx = MaterialX;
 namespace ng = nanogui;
 
@@ -41,7 +43,42 @@ class Viewer : public ng::Screen
     bool scrollEvent(const ng::Vector2i& p, const ng::Vector2f& rel) override;
     bool mouseMotionEvent(const ng::Vector2i& p, const ng::Vector2i& rel, int button, int modifiers) override;
     bool mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int modifiers) override;
-  
+
+    mx::ElementPtr getSelectedElement() const
+    {
+        mx::ElementPtr element = nullptr;
+        if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
+        {
+            element = _elementSelections[_elementSelectionIndex];
+        }
+        return element;
+    }
+
+    Material* getMaterial() const
+    {
+        return _material.get();
+    }
+
+    mx::DocumentPtr getMaterialDocument() const
+    {
+        return _materialDocument;
+    }
+
+    ng::Window* getWindow() const
+    {
+        return _window;
+    }
+
+    const mx::FileSearchPath& getSearchPath() const
+    {
+        return _searchPath;
+    }
+
+    const mx::GLTextureHandlerPtr getImageHandler() const
+    {
+        return _imageHandler;
+    }
+
   private:
     void initCamera();
     void computeCameraMatrices(mx::Matrix44& world,
@@ -51,8 +88,6 @@ class Viewer : public ng::Screen
     bool setElementSelection(int index);
     void updateElementSelections();
     void updatePropertySheet();
-    void addValueToForm(mx::ValuePtr value, const std::string& label,
-        const std::string& path, ng::FormHelper& form);
 
   private:
     ng::Window* _window;
@@ -77,10 +112,7 @@ class Viewer : public ng::Screen
     int _elementSelectionIndex;
     ng::ComboBox* _elementSelectionBox;
 
-    ng::FormHelper* _propertySheet;
-    bool _showPropertySheet;
-    ng::Window* _propertySheetWindow;
-    bool _showNonEditableInputs;
+    PropertySheet _propertySheet;
 
     mx::GLTextureHandlerPtr _imageHandler;
 };
