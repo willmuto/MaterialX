@@ -69,7 +69,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _nodeRemap(nodeRemap),
     _translationActive(false),
     _translationStart(0, 0),
-    _envSamples(MIN_ENV_SAMPLES)
+    _envSamples(16)
 {
     _window = new ng::Window(this, "Viewer Options");
     _window->setPosition(ng::Vector2i(15, 15));
