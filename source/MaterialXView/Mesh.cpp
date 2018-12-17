@@ -1,6 +1,6 @@
 #include <MaterialXView/Mesh.h>
 
-#include <TinyObjLoader/tiny_obj_loader.h>
+#include <MaterialXView/TinyObjLoader/tiny_obj_loader.h>
 
 #include <iostream>
 

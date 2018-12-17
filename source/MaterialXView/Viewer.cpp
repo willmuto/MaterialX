@@ -17,6 +17,7 @@ const float PI = std::acos(-1.0f);
 
 const int MIN_ENV_SAMPLES = 4;
 const int MAX_ENV_SAMPLES = 256;
+const int DEFAULT_ENV_SAMPLES = 16;
 
 namespace {
 
@@ -69,7 +70,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _nodeRemap(nodeRemap),
     _translationActive(false),
     _translationStart(0, 0),
-    _envSamples(16)
+    _envSamples(DEFAULT_ENV_SAMPLES)
 {
     _window = new ng::Window(this, "Viewer Options");
     _window->setPosition(ng::Vector2i(15, 15));
@@ -149,6 +150,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     }
     ng::ComboBox* sampleBox = new ng::ComboBox(_window, sampleOptions);
     sampleBox->setChevronIcon(-1);
+    sampleBox->setSelectedIndex((int) std::log2(DEFAULT_ENV_SAMPLES / MIN_ENV_SAMPLES));
     sampleBox->setCallback([this](int index)
     {
         _envSamples = MIN_ENV_SAMPLES * (int) std::pow(2, index);
