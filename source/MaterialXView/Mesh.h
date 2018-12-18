@@ -17,42 +17,42 @@ class Mesh
     bool loadMesh(const std::string& filename);
     void generateTangents();
 
-    size_t getFaceCount()
+    size_t getFaceCount() const
     {
         return _faceCount;
     }
 
-    const std::vector<mx::Vector3>& getPositions()
+    const std::vector<mx::Vector3>& getPositions() const
     {
         return _positions;
     }
 
-    const std::vector<mx::Vector3>& getNormals()
+    const std::vector<mx::Vector3>& getNormals() const
     {
         return _normals;
     }
 
-    const std::vector<mx::Vector2>& getTexcoords()
+    const std::vector<mx::Vector2>& getTexcoords() const
     {
         return _texcoords;
     }
   
-    const std::vector<mx::Vector3>& getTangents()
+    const std::vector<mx::Vector3>& getTangents() const
     {
         return _tangents;
     }
   
-    const std::vector<uint32_t>& getIndices()
+    const std::vector<uint32_t>& getIndices() const
     {
         return _indices;
     }
 
-    const mx::Vector3& getSphereCenter()
+    const mx::Vector3& getSphereCenter() const
     {
         return _sphereCenter;
     }
 
-    float getSphereRadius()
+    float getSphereRadius() const
     {
         return _sphereRadius;
     }

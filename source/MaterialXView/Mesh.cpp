@@ -38,9 +38,9 @@ bool Mesh::loadMesh(const std::string& filename)
         return false;
     }
 
-    for (size_t i = 0; i < shapes.size(); i++)
+    for (const tinyobj::shape_t& shape : shapes)
     {
-        _faceCount += shapes[i].mesh.indices.size() / 3;
+        _faceCount += shape.mesh.indices.size() / 3;
     }
 
     _positions.resize(_vertCount);
@@ -49,21 +49,22 @@ bool Mesh::loadMesh(const std::string& filename)
     _tangents.resize(_vertCount);
     _indices.resize(_faceCount * 3);
 
+    size_t shapeIndexOffset = 0;
     for (const tinyobj::shape_t& shape : shapes)
     {
-        for (size_t f = 0; f < shape.mesh.indices.size() / 3; f++)
+        for (size_t faceIndex = 0; faceIndex < shape.mesh.indices.size() / 3; faceIndex++)
         {
-            tinyobj::index_t idx0 = shape.mesh.indices[3 * f + 0];
-            tinyobj::index_t idx1 = shape.mesh.indices[3 * f + 1];
-            tinyobj::index_t idx2 = shape.mesh.indices[3 * f + 2];
+            tinyobj::index_t idx0 = shape.mesh.indices[faceIndex * 3 + 0];
+            tinyobj::index_t idx1 = shape.mesh.indices[faceIndex * 3 + 1];
+            tinyobj::index_t idx2 = shape.mesh.indices[faceIndex * 3 + 2];
   
             // Copy positions and compute bounding box.
             mx::Vector3 v[3];
             for (int k = 0; k < 3; k++)
             {
-                _indices[f * 3 + 0] = idx0.vertex_index;
-                _indices[f * 3 + 1] = idx1.vertex_index;
-                _indices[f * 3 + 2] = idx2.vertex_index;
+                _indices[shapeIndexOffset + faceIndex * 3 + 0] = idx0.vertex_index;
+                _indices[shapeIndexOffset + faceIndex * 3 + 1] = idx1.vertex_index;
+                _indices[shapeIndexOffset + faceIndex * 3 + 2] = idx2.vertex_index;
 
                 v[0][k] = attrib.vertices[3 * idx0.vertex_index + k];
                 v[1][k] = attrib.vertices[3 * idx1.vertex_index + k];
@@ -83,7 +84,9 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy or compute normals
             mx::Vector3 n[3];
-            if (attrib.normals.size() > 0 && idx0.normal_index >= 0)
+            if (idx0.normal_index >= 0 &&
+                idx1.normal_index >= 0 &&
+                idx2.normal_index >= 0)
             {
                 for (int k = 0; k < 3; k++)
                 {
@@ -102,7 +105,9 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy texture coordinates.
             mx::Vector2 t[3];
-            if (attrib.texcoords.size() > 0 && idx0.texcoord_index >= 0)
+            if (idx0.texcoord_index >= 0 &&
+                idx1.texcoord_index >= 0 &&
+                idx2.texcoord_index >= 0)
             {
                 for (int k = 0; k < 2; k++)
                 {
@@ -124,6 +129,8 @@ bool Mesh::loadMesh(const std::string& filename)
             _texcoords[idx1.vertex_index] = t[1];
             _texcoords[idx2.vertex_index] = t[2];
         }
+
+        shapeIndexOffset += shape.mesh.indices.size();
     }
 
     generateTangents();
