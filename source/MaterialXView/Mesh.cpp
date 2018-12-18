@@ -83,7 +83,7 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy or compute normals
             mx::Vector3 n[3];
-            if (attrib.normals.size() > 0)
+            if (attrib.normals.size() > 0 && idx0.normal_index >= 0)
             {
                 for (int k = 0; k < 3; k++)
                 {
@@ -102,7 +102,7 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy texture coordinates.
             mx::Vector2 t[3];
-            if (attrib.texcoords.size() > 0)
+            if (attrib.texcoords.size() > 0 && idx0.texcoord_index >= 0)
             {
                 for (int k = 0; k < 2; k++)
                 {
