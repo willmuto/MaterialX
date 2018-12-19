@@ -142,11 +142,11 @@ void Mesh::generateTangents()
 {
     // Based on Eric Lengyel at http://www.terathon.com/code/tangent.html
 
-    for (size_t f = 0; f < _faceCount; f++)
+    for (size_t faceIndex = 0; faceIndex < _faceCount; faceIndex++)
     {
-        int i1 = _indices[f * 3 + 0];
-        int i2 = _indices[f * 3 + 1];
-        int i3 = _indices[f * 3 + 2];
+        int i1 = _indices[faceIndex * 3 + 0];
+        int i2 = _indices[faceIndex * 3 + 1];
+        int i3 = _indices[faceIndex * 3 + 2];
 
         const mx::Vector3& v1 = _positions[i1];
         const mx::Vector3& v2 = _positions[i2];
@@ -168,7 +168,8 @@ void Mesh::generateTangents()
         float t1 = w2[1] - w1[1];
         float t2 = w3[1] - w1[1];
         
-        float r = 1 / (s1 * t2 - s2 * t1);
+        float denom = s1 * t2 - s2 * t1;
+        float r = denom ? 1.0f / denom : 0.0f;
         mx::Vector3 dir((t2 * x1 - t1 * x2) * r,
                         (t2 * y1 - t1 * y2) * r,
                         (t2 * z1 - t1 * z2) * r);
@@ -182,8 +183,11 @@ void Mesh::generateTangents()
     {
         const mx::Vector3& n = _normals[v];
         mx::Vector3& t = _tangents[v];
-        
+
         // Gram-Schmidt orthogonalize
-        t = (t - n * n.dot(t)).getNormalized();
+        if (t != mx::Vector3(0.0f))
+        {
+            t = (t - n * n.dot(t)).getNormalized();
+        }
     }
 }
