@@ -106,11 +106,7 @@ MaterialPtr Material::generateShader(const mx::FileSearchPath& searchPath, mx::E
     {
         GLShaderPtr ngShader = GLShaderPtr(new ng::GLShader());
         ngShader->init(elem->getNamePath(), source.first, source.second);
-
-        MaterialPtr material = MaterialPtr(new Material(ngShader, hwShader));
-        material->_hasTransparency = hwShader ? hwShader->hasTransparency() : false;
-
-        return material;
+        return MaterialPtr(new Material(ngShader, hwShader));
     }
     return nullptr;
 }

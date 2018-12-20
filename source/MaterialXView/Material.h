@@ -55,10 +55,11 @@ class Material
     mx::Shader::Variable* findUniform(const std::string path) const;
 
   protected:
-    Material(GLShaderPtr ngshader, mx::HwShaderPtr mxshader)
+    Material(GLShaderPtr ngshader, mx::HwShaderPtr mxshader) :
+        _ngShader(ngshader),
+        _mxShader(mxshader),
+        _hasTransparency(mxshader ? mxshader->hasTransparency() : false)
     {
-        _ngShader = ngshader;
-        _mxShader = mxshader;
     }
 
     GLShaderPtr _ngShader;
