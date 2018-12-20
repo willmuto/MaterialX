@@ -45,6 +45,7 @@ namespace mx = MaterialX;
 
 #define LOG_TO_FILE
 
+extern void loadLibrary(const mx::FilePath& file, mx::DocumentPtr doc);
 extern void loadLibraries(const mx::StringVec& libraryNames, const mx::FilePath& searchPath, mx::DocumentPtr doc,
                           const std::set<std::string>* excludeFiles = nullptr);
 extern void createLightRig(mx::DocumentPtr doc, mx::HwLightHandler& lightHandler, mx::HwShaderGenerator& shadergen, const mx::GenOptions& options);
@@ -172,7 +173,13 @@ public:
             output << overrideFile << " ";
         }
         output << std::endl;
+        output << "\tLight Setup Files: ";
+        for (auto lightFile : lightFiles)
+        {
+            output << lightFile << " ";
+        }
         output << "\tColor Management Files: ";
+        output << std::endl;
         for (auto cmsFile : cmsFiles)
         {
             output << cmsFile << " ";
@@ -184,6 +191,7 @@ public:
         output << "\tCheck Implementation Usage Count: " << checkImplCount << std::endl;
         output << "\tDump Generated Code: " << dumpGeneratedCode << std::endl;
         output << "\tShader Interfaces: " << shaderInterfaces << std::endl;
+        output << "\tValidate Element To Render: " << validateElementToRender << std::endl;
         output << "\tCompile code: " << compileCode << std::endl;
         output << "\tRender Images: " << renderImages << std::endl;
         output << "\tSave Images: " << saveImages << std::endl;
@@ -194,6 +202,9 @@ public:
 
     // Filter list of files to only run validation on.
     MaterialX::StringVec overrideFiles;
+
+    // Comma separated list of light setup files
+    std::vector<std::string> lightFiles;
 
     // List of comma separated file names which require color management.
     std::set<std::string> cmsFiles;
@@ -218,6 +229,9 @@ public:
     // - 2 = run complete only (default)
     // - 1 = run reduced only.
     int shaderInterfaces = 2;
+
+    // Validate element before attempting to generate code. Default is false.
+    bool validateElementToRender = false;
 
     // Perform source code compilation validation test
     bool compileCode = true;
@@ -350,6 +364,7 @@ void getGenerationOptions(const ShaderValidTestOptions& testOptions, std::vector
     {
         mx::GenOptions reducedOption;
         reducedOption.shaderInterfaceType = mx::SHADER_INTERFACE_REDUCED;
+        reducedOption.validate = testOptions.validateElementToRender;
         optionsList.push_back(reducedOption);
     }
     // Alway fallback to complete if no options specified.
@@ -357,6 +372,7 @@ void getGenerationOptions(const ShaderValidTestOptions& testOptions, std::vector
     {
         mx::GenOptions completeOption;
         completeOption.shaderInterfaceType = mx::SHADER_INTERFACE_COMPLETE;
+        completeOption.validate = testOptions.validateElementToRender;
         optionsList.push_back(completeOption);
     }
 }
@@ -604,7 +620,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
                     program->printUniforms(log);
                     log << "* Attributes:" << std::endl;
                     program->printAttributes(log);
-                    
+
                     log << "* Uniform UI Properties:" << std::endl;
                     const std::string& target = shaderGenerator.getTarget();
                     const MaterialX::GlslProgram::InputMap& uniforms = program->getUniformsList();
@@ -826,8 +842,27 @@ static void runOSLValidation(const std::string& shaderName, mx::TypedElementPtr 
 }
 #endif
 
+
 bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& options)
 {
+    const std::string SHADER_VALID_TEST_OPTIONS_STRING("ShaderValidTestOptions");
+    const std::string OVERRIDE_FILES_STRING("overrideFiles");
+    const std::string LIGHT_FILES_STRING("lightFiles");
+    const std::string CMS_FILES_STRING("cmsFiles");    
+    const std::string SHADER_INTERFACES_STRING("shaderInterfaces");
+    const std::string VALIDATE_ELEMENT_TO_RENDER_STRING("validateElementToRender");
+    const std::string COMPILE_CODE_STRING("compileCode");
+    const std::string RENDER_IMAGES_STRING("renderImages");
+    const std::string SAVE_IMAGES_STRING("saveImages");
+    const std::string DUMP_GLSL_UNIFORMS_AND_ATTRIBUTES_STRING("dumpGlslUniformsAndAttributes");
+    const std::string RUN_OSL_TESTS_STRING("runOSLTests");
+    const std::string RUN_GLSL_TESTS_STRING("runGLSLTests");
+    const std::string RUN_OGSFX_TESTS_STRING("runOGSFXTests");
+    const std::string CHECK_IMPL_COUNT_STRING("checkImplCount");
+    const std::string DUMP_GENERATED_CODE_STRING("dumpGeneratedCode");
+    const std::string GLSL_NONSHADER_GEOMETRY_STRING("glslNonShaderGeometry");
+    const std::string GLSL_SHADER_GEOMETRY_STRING("glslShaderGeometry");
+
     options.overrideFiles.clear();
     options.dumpGeneratedCode = false;
     options.cmsFiles.clear();
@@ -836,7 +871,7 @@ bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& optio
     try {
         MaterialX::readFromXmlFile(doc, optionFile);
 
-        MaterialX::NodeDefPtr optionDefs = doc->getNodeDef("ShaderValidTestOptions");
+        MaterialX::NodeDefPtr optionDefs = doc->getNodeDef(SHADER_VALID_TEST_OPTIONS_STRING);
         if (optionDefs)
         {
             for (MaterialX::ParameterPtr p : optionDefs->getParameters())
@@ -845,11 +880,15 @@ bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& optio
                 MaterialX::ValuePtr val = p->getValue();
                 if (val)
                 {
-                    if (name == "overrideFiles")
+                    if (name == OVERRIDE_FILES_STRING)
                     {
                         options.overrideFiles = MaterialX::splitString(p->getValueString(), ",");
                     }
-                    if (name == "cmsFiles")
+                    if (name == LIGHT_FILES_STRING)
+                    {
+                        options.lightFiles  = MaterialX::splitString(p->getValueString(), ",");
+                    }
+                    if (name == CMS_FILES_STRING)
                     {
                         MaterialX::StringVec cmsStrings = MaterialX::splitString(p->getValueString(), ",");
                         for (auto cmsString : cmsStrings)
@@ -857,51 +896,55 @@ bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& optio
                             options.cmsFiles.insert(cmsString);
                         }
                     }
-                    else if (name == "shaderInterfaces")
+                    else if (name == SHADER_INTERFACES_STRING)
                     {
                         options.shaderInterfaces = val->asA<int>();
                     }
-                    else if (name == "compileCode")
+                    else if (name == VALIDATE_ELEMENT_TO_RENDER_STRING)
+                    {
+                        options.validateElementToRender = val->asA<bool>();
+                    }
+                    else if (name == COMPILE_CODE_STRING)
                     {
                         options.compileCode = val->asA<bool>();
                     }
-                    else if (name == "renderImages")
+                    else if (name == RENDER_IMAGES_STRING)
                     {
                         options.renderImages = val->asA<bool>();
                     }
-                    else if (name == "saveImages")
+                    else if (name == SAVE_IMAGES_STRING)
                     {
                         options.saveImages = val->asA<bool>();
                     }
-                    else if (name == "dumpGlslUniformsAndAttributes")
+                    else if (name == DUMP_GLSL_UNIFORMS_AND_ATTRIBUTES_STRING)
                     {
                         options.dumpGlslUniformsAndAttributes = val->asA<bool>();
                     }
-                    else if (name == "runOSLTests")
+                    else if (name == RUN_OSL_TESTS_STRING)
                     {
                         options.runOSLTests = val->asA<bool>();
                     }
-                    else if (name == "runGLSLTests")
+                    else if (name == RUN_GLSL_TESTS_STRING)
                     {
                         options.runGLSLTests = val->asA<bool>();
                     }
-                    else if (name == "runOGSFXTests")
+                    else if (name == RUN_OGSFX_TESTS_STRING)
                     {
                         options.runOGSFXTests = val->asA<bool>();
                     }
-                    else if (name == "checkImplCount")
+                    else if (name == CHECK_IMPL_COUNT_STRING)
                     {
                         options.checkImplCount = val->asA<bool>();
                     }
-                    else if (name == "dumpGeneratedCode")
+                    else if (name == DUMP_GENERATED_CODE_STRING)
                     {
                         options.dumpGeneratedCode = val->asA<bool>();
                     }
-                    else if (name == "glslNonShaderGeometry")
+                    else if (name == GLSL_NONSHADER_GEOMETRY_STRING)
                     {
                         options.glslNonShaderGeometry = p->getValueString();
                     }
-                    else if (name == "glslShaderGeometry")
+                    else if (name == GLSL_SHADER_GEOMETRY_STRING)
                     {
                         options.glslShaderGeometry = p->getValueString();
                     }
@@ -1212,8 +1255,23 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
     {
         excludeFiles.insert("cm_impl.mtlx");
     }
+    
     const mx::StringVec libraries = { "stdlib", "sxpbrlib" };
     loadLibraries(libraries, searchPath, dependLib, &excludeFiles);
+    mx::FilePath lightDir = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Utilities/Lights");
+    if (options.lightFiles.size() == 0)
+    {
+        loadLibrary(lightDir / mx::FilePath("lightcompoundtest.mtlx"), dependLib);
+        loadLibrary(lightDir / mx::FilePath("lightcompoundtest_ng.mtlx"), dependLib);
+        loadLibrary(lightDir / mx::FilePath("light_rig.mtlx"), dependLib);
+    }
+    else
+    {
+        for (auto lightFile : options.lightFiles)
+        {
+            loadLibrary(lightDir / mx::FilePath(lightFile), dependLib);
+        }
+    }
     ioTimer.endTimer();
 
     mx::CopyOptions importOptions;
@@ -1253,6 +1311,7 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
     std::set<std::string> usedImpls;
 
     const std::string MTLX_EXTENSION("mtlx");
+    const std::string OPTIONS_FILENAME("_options.mtlx");
     for (auto dir : dirs)
     {
         ioTimer.startTimer();
@@ -1262,7 +1321,8 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
 
         for (const std::string& file : files)
         {
-            if (file == "_options.mtlx")
+
+            if (file == OPTIONS_FILENAME)
             {
                 continue;
             }

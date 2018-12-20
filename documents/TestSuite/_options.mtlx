@@ -11,6 +11,10 @@
         <!-- List of comma separated file names which require color management  -->
         <parameter name="cmsFiles" type="string" value="color_management.mtlx" />
 
+        <!-- Comma separated list of light setup files -->
+        <parameter name="lightFiles" type="string" value=
+            "lightcompoundtest_ng.mtlx,lightcompoundtest.mtlx,light_rig.mtlx" />
+
         <!-- Set to false to disable execution of OSL tests. Default is true. -->
         <parameter name="runOSLTests" type="boolean" value="true" />
 
@@ -34,6 +38,9 @@
             - 3 = run complete + reduced.
         -->
         <parameter name="shaderInterfaces" type="integer" value="2" />
+
+        <!-- Validate element before attempting to generate code. Default is false  -->
+        <parameter name="validateElementToRender" type="boolean" value="false" />
 
         <!-- Perform source code compilation validation test -->
         <parameter name="compileCode" type="boolean" value="true" />
