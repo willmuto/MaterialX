@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+NANOGUI_FORCE_DISCRETE_GPU();
+
 int main(int argc, char* const argv[])
 {  
     std::vector<std::string> tokens;
