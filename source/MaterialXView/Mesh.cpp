@@ -25,15 +25,17 @@ bool Mesh::loadMesh(const std::string& filename)
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-    bool load = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str());
+    std::string err;
+    bool load = tinyobj::LoadObj(&attrib, &shapes, &materials, nullptr, &err,
+                                 filename.c_str(), nullptr, true, false);
     if (!load)
     {
         std::cerr << err << std::endl;
         return false;
     }
 
-    _vertCount = attrib.vertices.size() / 3;
+    size_t vertComponentCount = std::max(attrib.vertices.size(), attrib.normals.size());
+    _vertCount = vertComponentCount / 3;
     if (!_vertCount)
     {
         return false;
@@ -55,21 +57,35 @@ bool Mesh::loadMesh(const std::string& filename)
     {
         for (size_t faceIndex = 0; faceIndex < shape.mesh.indices.size() / 3; faceIndex++)
         {
-            tinyobj::index_t idx0 = shape.mesh.indices[faceIndex * 3 + 0];
-            tinyobj::index_t idx1 = shape.mesh.indices[faceIndex * 3 + 1];
-            tinyobj::index_t idx2 = shape.mesh.indices[faceIndex * 3 + 2];
+            const tinyobj::index_t& indexObj0 = shape.mesh.indices[faceIndex * 3 + 0];
+            const tinyobj::index_t& indexObj1 = shape.mesh.indices[faceIndex * 3 + 1];
+            const tinyobj::index_t& indexObj2 = shape.mesh.indices[faceIndex * 3 + 2];
+
+            int writeIndex0, writeIndex1, writeIndex2;
+            if (vertComponentCount == attrib.vertices.size())
+            {
+                writeIndex0 = indexObj0.vertex_index;
+                writeIndex1 = indexObj1.vertex_index;
+                writeIndex2 = indexObj2.vertex_index;
+            }
+            else
+            {
+                writeIndex0 = indexObj0.normal_index;
+                writeIndex1 = indexObj1.normal_index;
+                writeIndex2 = indexObj2.normal_index;
+            }
   
             // Copy positions and compute bounding box.
             mx::Vector3 v[3];
             for (int k = 0; k < 3; k++)
             {
-                _indices[shapeIndexOffset + faceIndex * 3 + 0] = idx0.vertex_index;
-                _indices[shapeIndexOffset + faceIndex * 3 + 1] = idx1.vertex_index;
-                _indices[shapeIndexOffset + faceIndex * 3 + 2] = idx2.vertex_index;
+                _indices[shapeIndexOffset + faceIndex * 3 + 0] = writeIndex0;
+                _indices[shapeIndexOffset + faceIndex * 3 + 1] = writeIndex1;
+                _indices[shapeIndexOffset + faceIndex * 3 + 2] = writeIndex2;
 
-                v[0][k] = attrib.vertices[3 * idx0.vertex_index + k];
-                v[1][k] = attrib.vertices[3 * idx1.vertex_index + k];
-                v[2][k] = attrib.vertices[3 * idx2.vertex_index + k];
+                v[0][k] = attrib.vertices[3 * indexObj0.vertex_index + k];
+                v[1][k] = attrib.vertices[3 * indexObj1.vertex_index + k];
+                v[2][k] = attrib.vertices[3 * indexObj2.vertex_index + k];
         
                 _boxMin[k] = std::min(v[0][k], _boxMin[k]);
                 _boxMin[k] = std::min(v[1][k], _boxMin[k]);
@@ -85,15 +101,15 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy or compute normals
             mx::Vector3 n[3];
-            if (idx0.normal_index >= 0 &&
-                idx1.normal_index >= 0 &&
-                idx2.normal_index >= 0)
+            if (indexObj0.normal_index >= 0 &&
+                indexObj1.normal_index >= 0 &&
+                indexObj2.normal_index >= 0)
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    n[0][k] = attrib.normals[3 * idx0.normal_index + k];
-                    n[1][k] = attrib.normals[3 * idx1.normal_index + k];
-                    n[2][k] = attrib.normals[3 * idx2.normal_index + k];
+                    n[0][k] = attrib.normals[3 * indexObj0.normal_index + k];
+                    n[1][k] = attrib.normals[3 * indexObj1.normal_index + k];
+                    n[2][k] = attrib.normals[3 * indexObj2.normal_index + k];
                 }
             }
             else
@@ -106,29 +122,29 @@ bool Mesh::loadMesh(const std::string& filename)
 
             // Copy texture coordinates.
             mx::Vector2 t[3];
-            if (idx0.texcoord_index >= 0 &&
-                idx1.texcoord_index >= 0 &&
-                idx2.texcoord_index >= 0)
+            if (indexObj0.texcoord_index >= 0 &&
+                indexObj1.texcoord_index >= 0 &&
+                indexObj2.texcoord_index >= 0)
             {
                 for (int k = 0; k < 2; k++)
                 {
-                    t[0][k] = attrib.texcoords[2 * idx0.texcoord_index + k];
-                    t[1][k] = attrib.texcoords[2 * idx1.texcoord_index + k];
-                    t[2][k] = attrib.texcoords[2 * idx2.texcoord_index + k];
+                    t[0][k] = attrib.texcoords[2 * indexObj0.texcoord_index + k];
+                    t[1][k] = attrib.texcoords[2 * indexObj1.texcoord_index + k];
+                    t[2][k] = attrib.texcoords[2 * indexObj2.texcoord_index + k];
                 }
             }
 
-            _positions[idx0.vertex_index] = v[0];
-            _positions[idx1.vertex_index] = v[1];
-            _positions[idx2.vertex_index] = v[2];
+            _positions[writeIndex0] = v[0];
+            _positions[writeIndex1] = v[1];
+            _positions[writeIndex2] = v[2];
 
-            _normals[idx0.vertex_index] = n[0];
-            _normals[idx1.vertex_index] = n[1];
-            _normals[idx2.vertex_index] = n[2];
+            _normals[writeIndex0] = n[0];
+            _normals[writeIndex1] = n[1];
+            _normals[writeIndex2] = n[2];
 
-            _texcoords[idx0.vertex_index] = t[0];
-            _texcoords[idx1.vertex_index] = t[1];
-            _texcoords[idx2.vertex_index] = t[2];
+            _texcoords[writeIndex0] = t[0];
+            _texcoords[writeIndex1] = t[1];
+            _texcoords[writeIndex2] = t[2];
         }
 
         shapeIndexOffset += shape.mesh.indices.size();
