@@ -84,21 +84,20 @@ bool Mesh::loadMesh(const std::string& filename)
             mx::Vector3 v[3];
             for (int k = 0; k < 3; k++)
             {
-                v[0][k] = attrib.vertices[3 * indexObj0.vertex_index + k];
-                v[1][k] = attrib.vertices[3 * indexObj1.vertex_index + k];
-                v[2][k] = attrib.vertices[3 * indexObj2.vertex_index + k];
-        
+                v[0][k] = attrib.vertices[indexObj0.vertex_index * 3 + k];
+                v[1][k] = attrib.vertices[indexObj1.vertex_index * 3 + k];
+                v[2][k] = attrib.vertices[indexObj2.vertex_index * 3 + k];
+
                 _boxMin[k] = std::min(v[0][k], _boxMin[k]);
                 _boxMin[k] = std::min(v[1][k], _boxMin[k]);
                 _boxMin[k] = std::min(v[2][k], _boxMin[k]);
- 
+
                 _boxMax[k] = std::max(v[0][k], _boxMax[k]);
                 _boxMax[k] = std::max(v[1][k], _boxMax[k]);
                 _boxMax[k] = std::max(v[2][k], _boxMax[k]);
             }
-
-            _sphereCenter = (_boxMax + _boxMin) / 2;
-            _sphereRadius = (_sphereCenter - _boxMin).getMagnitude();
+        
+            // Update bounding box.
 
             // Copy or compute normals
             mx::Vector3 n[3];
@@ -108,9 +107,9 @@ bool Mesh::loadMesh(const std::string& filename)
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    n[0][k] = attrib.normals[3 * indexObj0.normal_index + k];
-                    n[1][k] = attrib.normals[3 * indexObj1.normal_index + k];
-                    n[2][k] = attrib.normals[3 * indexObj2.normal_index + k];
+                    n[0][k] = attrib.normals[indexObj0.normal_index * 3 + k];
+                    n[1][k] = attrib.normals[indexObj1.normal_index * 3 + k];
+                    n[2][k] = attrib.normals[indexObj2.normal_index * 3 + k];
                 }
             }
             else
@@ -129,9 +128,9 @@ bool Mesh::loadMesh(const std::string& filename)
             {
                 for (int k = 0; k < 2; k++)
                 {
-                    t[0][k] = attrib.texcoords[2 * indexObj0.texcoord_index + k];
-                    t[1][k] = attrib.texcoords[2 * indexObj1.texcoord_index + k];
-                    t[2][k] = attrib.texcoords[2 * indexObj2.texcoord_index + k];
+                    t[0][k] = attrib.texcoords[indexObj0.texcoord_index * 2 + k];
+                    t[1][k] = attrib.texcoords[indexObj1.texcoord_index * 2 + k];
+                    t[2][k] = attrib.texcoords[indexObj2.texcoord_index * 2 + k];
                 }
             }
 
@@ -150,6 +149,9 @@ bool Mesh::loadMesh(const std::string& filename)
 
         shapeIndexOffset += shape.mesh.indices.size();
     }
+
+    _sphereCenter = (_boxMax + _boxMin) / 2;
+    _sphereRadius = (_sphereCenter - _boxMin).getMagnitude();
 
     generateTangents();
 
