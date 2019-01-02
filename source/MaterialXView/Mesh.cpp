@@ -75,14 +75,15 @@ bool Mesh::loadMesh(const std::string& filename)
                 writeIndex2 = indexObj2.normal_index;
             }
   
+            // Copy indices.
+            _indices[shapeIndexOffset + faceIndex * 3 + 0] = writeIndex0;
+            _indices[shapeIndexOffset + faceIndex * 3 + 1] = writeIndex1;
+            _indices[shapeIndexOffset + faceIndex * 3 + 2] = writeIndex2;
+
             // Copy positions and compute bounding box.
             mx::Vector3 v[3];
             for (int k = 0; k < 3; k++)
             {
-                _indices[shapeIndexOffset + faceIndex * 3 + 0] = writeIndex0;
-                _indices[shapeIndexOffset + faceIndex * 3 + 1] = writeIndex1;
-                _indices[shapeIndexOffset + faceIndex * 3 + 2] = writeIndex2;
-
                 v[0][k] = attrib.vertices[3 * indexObj0.vertex_index + k];
                 v[1][k] = attrib.vertices[3 * indexObj1.vertex_index + k];
                 v[2][k] = attrib.vertices[3 * indexObj2.vertex_index + k];
