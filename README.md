@@ -9,10 +9,10 @@ This repository contains the **Prototype MaterialX Viewer** (MaterialXView), whi
 ### Example Images
 
 **Standard Surface Shader with procedural and uniform materials**
-<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_01.png" width="800">
+<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_01.png" width="900">
 
 **Standard Surface Shader with tiled texture materials**
-<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_02.png" width="600">
+<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_02.png" width="500">
 
 ### Quick Start for Developers
 
@@ -22,6 +22,7 @@ This repository contains the **Prototype MaterialX Viewer** (MaterialXView), whi
 
 ### Additional Resources
 
+- The main [MaterialX repository](https://github.com/materialx/MaterialX)
 - The latest [ShaderX specification](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Specification/ShaderX.Draft.pdf)
 - The MaterialX graph for the [Standard Surface shader](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Specification/ShaderX.Draft.pdf)
 - An example MaterialX graph for [procedural marble](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/TestSuite/sxpbrlib/materials/standard_surface_marble_solid.mtlx)
