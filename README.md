@@ -8,11 +8,11 @@ This repository contains the **Prototype MaterialX Viewer** (MaterialXView), whi
 
 ### Example Images
 
-**Standard Surface with procedural and uniform materials**
-<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_01.png" width="512">
+**Standard Surface Shader with procedural and uniform materials**
+<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_01.png" width="800">
 
-**Standard Surface with tiled texture materials**
-<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_02.png" width="512">
+**Standard Surface Shader with tiled texture materials**
+<img src="https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Images/MaterialXView_StandardSurface_02.png" width="600">
 
 ### Quick Start for Developers
 
