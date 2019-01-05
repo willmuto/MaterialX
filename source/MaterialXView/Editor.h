@@ -1,30 +1,28 @@
-#ifndef MATERIALXVIEW_PROPERTYSHEET_H
-#define MATERIALXVIEW_PROPERTYSHEET_H
+#ifndef MATERIALXVIEW_EDITOR_H
+#define MATERIALXVIEW_EDITOR_H
 
 #include <MaterialXGenShader/HwShader.h>
 #include <MaterialXGenShader/Util.h>
 
-#include <nanogui/screen.h>
 #include <nanogui/formhelper.h>
+#include <nanogui/screen.h>
 
 namespace mx = MaterialX;
 namespace ng = nanogui;
 
 class Viewer;
 
-// Property sheet item information
-struct PropertySheetItem
+struct EditorItem
 {
     std::string label;
     mx::Shader::Variable* variable = nullptr;
     mx::UIProperties ui;
 };
 
-// Property sheet
-class PropertySheet 
+class PropertyEditor 
 {
   public:
-    PropertySheet();
+    PropertyEditor();
     void updateContents(Viewer* viewer);
 
     bool visible() const
@@ -43,7 +41,7 @@ class PropertySheet
 
   protected:
     void create(Viewer& parent);
-    void addItemToForm(const PropertySheetItem& pitem, const std::string& group,
+    void addItemToForm(const EditorItem& item, const std::string& group,
                        ng::FormHelper& form, Viewer* viewer);
       
     bool _visible;
@@ -52,7 +50,4 @@ class PropertySheet
     bool _fileDialogsForImages;
 };
 
-// Property sheet items grouped based on a string identifier
-using PropertySheetGroups = std::multimap <std::string, PropertySheetItem>;
-
-#endif // MATERIALXVIEW_PROPERTYSHEET_H
+#endif // MATERIALXVIEW_EDITOR_H

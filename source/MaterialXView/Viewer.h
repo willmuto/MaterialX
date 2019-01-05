@@ -1,9 +1,9 @@
 #ifndef MATERIALXVIEW_VIEWER_H
 #define MATERIALXVIEW_VIEWER_H
 
+#include <MaterialXView/Editor.h>
 #include <MaterialXView/Material.h>
 #include <MaterialXView/Mesh.h>
-#include <MaterialXView/PropertySheet.h>
 
 namespace mx = MaterialX;
 namespace ng = nanogui;
@@ -82,7 +82,7 @@ class Viewer : public ng::Screen
 
     bool setElementSelection(int index);
     void updateElementSelections();
-    void updatePropertySheet();
+    void updatePropertyEditor();
 
   private:
     ng::Window* _window;
@@ -107,7 +107,7 @@ class Viewer : public ng::Screen
     int _elementSelectionIndex;
     ng::ComboBox* _elementSelectionBox;
 
-    PropertySheet _propertySheet;
+    PropertyEditor _propertyEditor;
 
     mx::GLTextureHandlerPtr _imageHandler;
 };

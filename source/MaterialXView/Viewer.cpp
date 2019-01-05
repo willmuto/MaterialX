@@ -115,7 +115,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                 remapNodes(_materialDocument, _nodeRemap);
                 updateElementSelections();
                 setElementSelection(0);
-                updatePropertySheet();
+                updatePropertyEditor();
             }
             catch (std::exception& e)
             {
@@ -130,14 +130,14 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _elementSelectionBox->setCallback([this](int choice)
     {
         setElementSelection(choice);
-        updatePropertySheet();
+        updatePropertyEditor();
     });
 
-    ng::Button* propertySheetButton = new ng::Button(_window, "Property Sheet");
-    propertySheetButton->setFlags(ng::Button::ToggleButton);
-    propertySheetButton->setChangeCallback([this](bool state)
+    ng::Button* editorButton = new ng::Button(_window, "Property Editor");
+    editorButton->setFlags(ng::Button::ToggleButton);
+    editorButton->setChangeCallback([this](bool state)
     { 
-        this->_propertySheet.setVisible(state);
+        _propertyEditor.setVisible(state);
         performLayout();
     });
 
@@ -193,8 +193,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
     }
 
-    updatePropertySheet();
-    _propertySheet.setVisible(false);
+    updatePropertyEditor();
+    _propertyEditor.setVisible(false);
     performLayout();
 }
 
@@ -252,7 +252,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         {
             updateElementSelections();
             setElementSelection(0);
-            updatePropertySheet();
+            updatePropertyEditor();
         }
         catch (std::exception& e)
         {
@@ -305,7 +305,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                 {
                     _elementSelectionBox->setSelectedIndex(newIndex);
                     updateElementSelections();
-                    updatePropertySheet();
+                    updatePropertyEditor();
                 }
             }
             catch (std::exception& e)
@@ -454,7 +454,7 @@ void Viewer::computeCameraMatrices(mx::Matrix44& world,
     world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
 }
 
-void Viewer::updatePropertySheet()
+void Viewer::updatePropertyEditor()
 {
-    _propertySheet.updateContents(this);
+    _propertyEditor.updateContents(this);
 }

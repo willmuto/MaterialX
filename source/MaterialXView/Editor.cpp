@@ -1,58 +1,47 @@
+#include <MaterialXView/Editor.h>
 #include <MaterialXView/Viewer.h>
-#include <MaterialXView/PropertySheet.h>
-
-#include <MaterialXGenShader/Util.h>
 
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
-#include <nanogui/messagedialog.h>
 
 namespace {
 
-// Local derived class helper to allow for access to override some additional
-// parameters
-class myFormHelper : public ng::FormHelper
+class EditorFormHelper : public ng::FormHelper
 {
   public:
-    myFormHelper(ng::Screen *screen) :
-        ng::FormHelper(screen)
-    {
-    }
+    EditorFormHelper(ng::Screen *screen) : ng::FormHelper(screen) { }
+    ~EditorFormHelper() { }
 
-    void setPreGroupSpacing(int val)
-    {
-        mPreGroupSpacing = val;
-    }
-
-    void setPostGroupSpacing(int val)
-    {
-        mPostGroupSpacing = val;
-    }
-
-    void setVariableSpacing(int val)
-    {
-        mVariableSpacing = val;
-    }
+    void setPreGroupSpacing(int val) { mPreGroupSpacing = val; }
+    void setPostGroupSpacing(int val) { mPostGroupSpacing = val; }
+    void setVariableSpacing(int val) { mVariableSpacing = val; }
 };
 
 } // anonymous namespace
 
-PropertySheet::PropertySheet()
-    : _form(nullptr),
+// Property editor items grouped based on a string identifier
+using EditorGroups = std::multimap<std::string, EditorItem>;
+
+//
+// PropertyEditor methods
+//
+
+PropertyEditor::PropertyEditor() :
+    _form(nullptr),
     _formWindow(nullptr),
-    _visible(false), // Start up with property sheet hidden
-    _fileDialogsForImages(true) // By default use file dialogs for setting image file name inputs
+    _visible(false),
+    _fileDialogsForImages(true)
 {
 }
 
-void PropertySheet::create(Viewer& parent)
+void PropertyEditor::create(Viewer& parent)
 {
     ng::Window* parentWindow = parent.getWindow();
     if (!_form)
     {
-        myFormHelper* form = new myFormHelper(&parent);
+        EditorFormHelper* form = new EditorFormHelper(&parent);
         form->setPreGroupSpacing(2);
         form->setPostGroupSpacing(2);
         form->setVariableSpacing(2);
@@ -69,14 +58,14 @@ void PropertySheet::create(Viewer& parent)
         {
             _formWindow->removeChild(i);
         }
-        // We don't want the property sheet to move when
+        // We don't want the property editor to move when
         // we update it's contents so cache any previous position
         // to use when we create a new window.
         previousPosition = _formWindow->position();
         parent.removeChild(_formWindow);
     }
 
-    _formWindow = new ng::Window(&parent, "Property Sheet");
+    _formWindow = new ng::Window(&parent, "Property Editor");
     ng::AdvancedGridLayout* layout = new ng::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(2);
     layout->setColStretch(2, 0);
@@ -90,13 +79,13 @@ void PropertySheet::create(Viewer& parent)
     _form->setWindow(_formWindow);
 }
 
-void PropertySheet::addItemToForm(const PropertySheetItem& pitem, const std::string& group,
-                                  ng::FormHelper& form, Viewer* viewer)
+void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& group,
+                                   ng::FormHelper& form, Viewer* viewer)
 {
-    const mx::UIProperties& ui = pitem.ui;
-    mx::ValuePtr value = pitem.variable->value;
-    const std::string& label = pitem.label;
-    const std::string& path = pitem.variable->path;
+    const mx::UIProperties& ui = item.ui;
+    mx::ValuePtr value = item.variable->value;
+    const std::string& label = item.label;
+    const std::string& path = item.variable->path;
     mx::ValuePtr min = ui.uiMin;
     mx::ValuePtr max = ui.uiMax;
     const mx::StringVec& enumeration = ui.enumeration;
@@ -502,7 +491,7 @@ void PropertySheet::addItemToForm(const PropertySheetItem& pitem, const std::str
         std::string v = value->asA<std::string>();
         if (!v.empty())
         {
-            if (_fileDialogsForImages && pitem.variable->type == MaterialX::Type::FILENAME)
+            if (_fileDialogsForImages && item.variable->type == MaterialX::Type::FILENAME)
             {
                 ng::Button* buttonVar = new ng::Button(form.window(), v);
                 form.addWidget(label, buttonVar);
@@ -570,7 +559,7 @@ void PropertySheet::addItemToForm(const PropertySheetItem& pitem, const std::str
     }
 }
 
-void PropertySheet::updateContents(Viewer* viewer)
+void PropertyEditor::updateContents(Viewer* viewer)
 {
     create(*viewer);
 
@@ -593,8 +582,8 @@ void PropertySheet::updateContents(Viewer* viewer)
     {
         const MaterialX::Shader::VariableBlock publicUniforms = hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
 
-        PropertySheetGroups groups;
-        PropertySheetGroups unnamedGroups;
+        EditorGroups groups;
+        EditorGroups unnamedGroups;
         for (auto uniform : publicUniforms.variableOrder)
         {
             if (uniform->path.size() && uniform->value)
@@ -602,7 +591,7 @@ void PropertySheet::updateContents(Viewer* viewer)
                 mx::ElementPtr uniformElement = materialDocument->getDescendant(uniform->path);
                 if (uniformElement && uniformElement->isA<mx::ValueElement>())
                 {
-                    PropertySheetItem item;
+                    EditorItem item;
                     item.variable = uniform;
                     mx::getUIProperties(uniform->path, materialDocument, mx::EMPTY_STRING, item.ui);
 
@@ -632,12 +621,12 @@ void PropertySheet::updateContents(Viewer* viewer)
 
                     if (!item.ui.uiFolder.empty())
                     {
-                        groups.insert(std::pair<std::string, PropertySheetItem>
+                        groups.insert(std::pair<std::string, EditorItem>
                             (item.ui.uiFolder, item));
                     }
                     else
                     {
-                        unnamedGroups.insert(std::pair<std::string, PropertySheetItem>
+                        unnamedGroups.insert(std::pair<std::string, EditorItem>
                             (mx::EMPTY_STRING, item));
                     }
                 }
@@ -648,8 +637,8 @@ void PropertySheet::updateContents(Viewer* viewer)
         for (auto it = groups.begin(); it != groups.end(); ++it)
         {
             const std::string& folder = it->first;
-            const PropertySheetItem& pitem = it->second;
-            addItemToForm(pitem, (previousFolder == folder) ? mx::EMPTY_STRING : folder, *_form, viewer);
+            const EditorItem& item = it->second;
+            addItemToForm(item, (previousFolder == folder) ? mx::EMPTY_STRING : folder, *_form, viewer);
             previousFolder.assign(folder);
         }
         if (!unnamedGroups.empty())
