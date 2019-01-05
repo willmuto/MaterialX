@@ -32,8 +32,11 @@ class Material
     /// Get MaterialX shader
     mx::HwShaderPtr mxShader() const { return _mxShader; }
 
-    /// Bind mesh inputs to shader
+    /// Bind mesh geometry to shader
     void bindMesh(MeshPtr& mesh);
+
+    /// Bind mesh partition to shader
+    void bindPartition(const Partition& part);
 
     /// Bind viewing information to shader
     void bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);

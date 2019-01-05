@@ -139,7 +139,17 @@ void Material::bindMesh(MeshPtr& mesh)
         MatrixXfProxy texcoords(&mesh->getTexcoords()[0][0], 2, mesh->getTexcoords().size());
         _ngShader->uploadAttrib("i_texcoord_0", texcoords);
     }
-    MatrixXuProxy indices(&mesh->getIndices()[0], 3, mesh->getIndices().size() / 3);
+}
+
+void Material::bindPartition(const Partition& part)
+{
+    if (!_ngShader)
+    {
+        return;
+    }
+
+    _ngShader->bind();
+    MatrixXuProxy indices(&part.getIndices()[0], 3, part.getIndices().size() / 3);
     _ngShader->uploadIndices(indices);
 }
 

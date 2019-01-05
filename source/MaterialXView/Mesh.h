@@ -2,25 +2,55 @@
 #define MATERIALXVIEW_MESH_H
 
 #include <MaterialXCore/Types.h>
+#include <MaterialXFormat/File.h>
 
 #include <string>
 #include <vector>
 
 namespace mx = MaterialX;
 
-class Mesh
+const float MAX_FLOAT = std::numeric_limits<float>::max();
+
+class Partition
 {
   public:
-    Mesh();
-    ~Mesh();
-  
-    bool loadMesh(const std::string& filename);
-    void generateTangents();
+    Partition() :
+        _faceCount(0)
+    {
+    }
+    ~Partition() { }
+
+    const std::vector<uint32_t>& getIndices() const
+    {
+        return _indices;
+    }
 
     size_t getFaceCount() const
     {
         return _faceCount;
     }
+
+  private:
+    friend class Mesh;
+
+    std::vector<uint32_t> _indices;
+    size_t _faceCount;
+};
+
+class Mesh
+{
+  public:
+    Mesh() :
+        _vertCount(0),
+        _boxMin(MAX_FLOAT, MAX_FLOAT, MAX_FLOAT),
+        _boxMax(-MAX_FLOAT, -MAX_FLOAT, -MAX_FLOAT),
+        _sphereRadius(0.0f)
+    {
+    }
+    ~Mesh() { }
+
+    bool loadMesh(const mx::FilePath& filename);
+    void generateTangents();
 
     const std::vector<mx::Vector3>& getPositions() const
     {
@@ -42,11 +72,6 @@ class Mesh
         return _tangents;
     }
   
-    const std::vector<uint32_t>& getIndices() const
-    {
-        return _indices;
-    }
-
     const mx::Vector3& getSphereCenter() const
     {
         return _sphereCenter;
@@ -57,20 +82,30 @@ class Mesh
         return _sphereRadius;
     }
 
+    size_t getPartitionCount() const
+    {
+        return _partitions.size();
+    }
+
+    const Partition& getPartition(size_t partIndex) const
+    {
+        return _partitions[partIndex];
+    }
+
   private:
-    size_t _vertCount;
-    size_t _faceCount;
-  
     std::vector<mx::Vector3> _positions;
     std::vector<mx::Vector3> _normals;
     std::vector<mx::Vector3> _tangents;
     std::vector<mx::Vector2> _texcoords;
-    std::vector<uint32_t> _indices;
+    size_t _vertCount;
 
     mx::Vector3 _boxMin;
     mx::Vector3 _boxMax;
+
     mx::Vector3 _sphereCenter;
     float _sphereRadius;
+
+    std::vector<Partition> _partitions;
 };
 
 using MeshPtr = std::unique_ptr<Mesh>;

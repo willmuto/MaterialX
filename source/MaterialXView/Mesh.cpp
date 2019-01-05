@@ -5,29 +5,14 @@
 
 #include <iostream>
 
-const float MAX_FLOAT = std::numeric_limits<float>::max();
-
-Mesh::Mesh() :
-    _vertCount(0),
-    _faceCount(0),
-    _boxMin(MAX_FLOAT, MAX_FLOAT, MAX_FLOAT),
-    _boxMax(-MAX_FLOAT, -MAX_FLOAT, -MAX_FLOAT),
-    _sphereRadius(0.0f)
-{
-}
-
-Mesh::~Mesh()
-{
-}
-
-bool Mesh::loadMesh(const std::string& filename)
+bool Mesh::loadMesh(const mx::FilePath& filename)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string err;
     bool load = tinyobj::LoadObj(&attrib, &shapes, &materials, nullptr, &err,
-                                 filename.c_str(), nullptr, true, false);
+                                 filename.asString().c_str(), nullptr, true, false);
     if (!load)
     {
         std::cerr << err << std::endl;
@@ -41,21 +26,21 @@ bool Mesh::loadMesh(const std::string& filename)
         return false;
     }
 
-    for (const tinyobj::shape_t& shape : shapes)
-    {
-        _faceCount += shape.mesh.indices.size() / 3;
-    }
-
     _positions.resize(_vertCount);
     _normals.resize(_vertCount);
     _texcoords.resize(_vertCount);
     _tangents.resize(_vertCount);
-    _indices.resize(_faceCount * 3);
+    _partitions.resize(shapes.size());
 
-    size_t shapeIndexOffset = 0;
-    for (const tinyobj::shape_t& shape : shapes)
+    for (size_t partIndex = 0; partIndex < shapes.size(); partIndex++)
     {
-        for (size_t faceIndex = 0; faceIndex < shape.mesh.indices.size() / 3; faceIndex++)
+        const tinyobj::shape_t& shape = shapes[partIndex];
+        Partition& part = _partitions[partIndex];
+
+        part._indices.resize(shape.mesh.indices.size());
+        part._faceCount = shape.mesh.indices.size() / 3;
+
+        for (size_t faceIndex = 0; faceIndex < part._faceCount; faceIndex++)
         {
             const tinyobj::index_t& indexObj0 = shape.mesh.indices[faceIndex * 3 + 0];
             const tinyobj::index_t& indexObj1 = shape.mesh.indices[faceIndex * 3 + 1];
@@ -76,9 +61,9 @@ bool Mesh::loadMesh(const std::string& filename)
             }
   
             // Copy indices.
-            _indices[shapeIndexOffset + faceIndex * 3 + 0] = writeIndex0;
-            _indices[shapeIndexOffset + faceIndex * 3 + 1] = writeIndex1;
-            _indices[shapeIndexOffset + faceIndex * 3 + 2] = writeIndex2;
+            part._indices[faceIndex * 3 + 0] = writeIndex0;
+            part._indices[faceIndex * 3 + 1] = writeIndex1;
+            part._indices[faceIndex * 3 + 2] = writeIndex2;
 
             // Copy positions and compute bounding box.
             mx::Vector3 v[3];
@@ -97,8 +82,6 @@ bool Mesh::loadMesh(const std::string& filename)
                 _boxMax[k] = std::max(v[2][k], _boxMax[k]);
             }
         
-            // Update bounding box.
-
             // Copy or compute normals
             mx::Vector3 n[3];
             if (indexObj0.normal_index >= 0 &&
@@ -146,8 +129,6 @@ bool Mesh::loadMesh(const std::string& filename)
             _texcoords[writeIndex1] = t[1];
             _texcoords[writeIndex2] = t[2];
         }
-
-        shapeIndexOffset += shape.mesh.indices.size();
     }
 
     _sphereCenter = (_boxMax + _boxMin) / 2;
@@ -162,41 +143,45 @@ void Mesh::generateTangents()
 {
     // Based on Eric Lengyel at http://www.terathon.com/code/tangent.html
 
-    for (size_t faceIndex = 0; faceIndex < _faceCount; faceIndex++)
+    for (size_t partIndex = 0; partIndex < getPartitionCount(); partIndex++)
     {
-        int i1 = _indices[faceIndex * 3 + 0];
-        int i2 = _indices[faceIndex * 3 + 1];
-        int i3 = _indices[faceIndex * 3 + 2];
+        const Partition& part = getPartition(partIndex);
+        for (size_t faceIndex = 0; faceIndex < part.getFaceCount(); faceIndex++)
+        {
+            int i1 = part.getIndices()[faceIndex * 3 + 0];
+            int i2 = part.getIndices()[faceIndex * 3 + 1];
+            int i3 = part.getIndices()[faceIndex * 3 + 2];
 
-        const mx::Vector3& v1 = _positions[i1];
-        const mx::Vector3& v2 = _positions[i2];
-        const mx::Vector3& v3 = _positions[i3];
+            const mx::Vector3& v1 = _positions[i1];
+            const mx::Vector3& v2 = _positions[i2];
+            const mx::Vector3& v3 = _positions[i3];
 
-        const mx::Vector2& w1 = _texcoords[i1];
-        const mx::Vector2& w2 = _texcoords[i2];
-        const mx::Vector2& w3 = _texcoords[i3];
+            const mx::Vector2& w1 = _texcoords[i1];
+            const mx::Vector2& w2 = _texcoords[i2];
+            const mx::Vector2& w3 = _texcoords[i3];
 
-        float x1 = v2[0] - v1[0];
-        float x2 = v3[0] - v1[0];
-        float y1 = v2[1] - v1[1];
-        float y2 = v3[1] - v1[1];
-        float z1 = v2[2] - v1[2];
-        float z2 = v3[2] - v1[2];
+            float x1 = v2[0] - v1[0];
+            float x2 = v3[0] - v1[0];
+            float y1 = v2[1] - v1[1];
+            float y2 = v3[1] - v1[1];
+            float z1 = v2[2] - v1[2];
+            float z2 = v3[2] - v1[2];
         
-        float s1 = w2[0] - w1[0];
-        float s2 = w3[0] - w1[0];
-        float t1 = w2[1] - w1[1];
-        float t2 = w3[1] - w1[1];
+            float s1 = w2[0] - w1[0];
+            float s2 = w3[0] - w1[0];
+            float t1 = w2[1] - w1[1];
+            float t2 = w3[1] - w1[1];
         
-        float denom = s1 * t2 - s2 * t1;
-        float r = denom ? 1.0f / denom : 0.0f;
-        mx::Vector3 dir((t2 * x1 - t1 * x2) * r,
-                        (t2 * y1 - t1 * y2) * r,
-                        (t2 * z1 - t1 * z2) * r);
+            float denom = s1 * t2 - s2 * t1;
+            float r = denom ? 1.0f / denom : 0.0f;
+            mx::Vector3 dir((t2 * x1 - t1 * x2) * r,
+                            (t2 * y1 - t1 * y2) * r,
+                            (t2 * z1 - t1 * z2) * r);
         
-        _tangents[i1] += dir;
-        _tangents[i2] += dir;
-        _tangents[i3] += dir;
+            _tangents[i1] += dir;
+            _tangents[i2] += dir;
+            _tangents[i3] += dir;
+        }
     }
     
     for (size_t v = 0; v < _vertCount; v++)

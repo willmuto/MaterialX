@@ -165,8 +165,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _imageHandler->addLoader(stbImageLoader);
     loadLibraries(_libraryFolders, _searchPath, _stdLib);
 
+    std::string meshFilename("documents/TestSuite/Geometry/teapot.obj");
     _mesh = MeshPtr(new Mesh());
-    _mesh->loadMesh("documents/TestSuite/Geometry/teapot.obj");
+    _mesh->loadMesh(meshFilename);
     initCamera();
 
     setResizeCallback([this](ng::Vector2i size)
@@ -349,7 +350,12 @@ void Viewer::drawContents()
         glDisable(GL_BLEND);
     }
 
-    shader->drawIndexed(GL_TRIANGLES, 0, (uint32_t) _mesh->getFaceCount());
+    for (size_t partIndex = 0; partIndex < _mesh->getPartitionCount(); partIndex++)
+    {
+        const Partition& part = _mesh->getPartition(partIndex);
+        _material->bindPartition(part);
+        shader->drawIndexed(GL_TRIANGLES, 0, (uint32_t) part.getFaceCount());
+    }
 
     glDisable(GL_BLEND);
     glDisable(GL_FRAMEBUFFER_SRGB);
