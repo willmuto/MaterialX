@@ -1,9 +1,9 @@
 #include <MaterialXView/Editor.h>
+
 #include <MaterialXView/Viewer.h>
 
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
-#include <nanogui/label.h>
 #include <nanogui/layout.h>
 
 namespace {

@@ -1,5 +1,9 @@
 #include <MaterialXView/Viewer.h>
 
+#include <MaterialXRender/Handlers/stbImageLoader.h>
+#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
+#include <MaterialXGenShader/Util.h>
+
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
 #include <nanogui/label.h>
@@ -8,10 +12,6 @@
 
 #include <iostream>
 #include <fstream>
-
-#include <MaterialXGenShader/Util.h>
-#include <MaterialXRender/Handlers/stbImageLoader.h>
-#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 
 const float PI = std::acos(-1.0f);
 

@@ -1,9 +1,9 @@
 #include <MaterialXView/Material.h>
 
-#include <MaterialXGenShader/DefaultColorManagementSystem.h>
-#include <MaterialXGenShader/Util.h>
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
+#include <MaterialXGenShader/DefaultColorManagementSystem.h>
 #include <MaterialXGenShader/HwShader.h>
+#include <MaterialXGenShader/Util.h>
 
 #include <iostream>
 #include <unordered_set>
