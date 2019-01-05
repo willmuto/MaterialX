@@ -1,30 +1,25 @@
 #include <MaterialXView/Viewer.h>
 #include <MaterialXView/PropertySheet.h>
 
+#include <MaterialXGenShader/Util.h>
+
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/messagedialog.h>
 
-#include <MaterialXGenShader/Util.h>
-
-PropertySheet::PropertySheet()
-    : _form(nullptr),
-    _formWindow(nullptr),
-    _visible(false), // Start up with property sheet hidden
-    _fileDialogsForImages(true) // By default use file dialogs for setting image file name inputs
-{
-}
-
+namespace {
 
 // Local derived class helper to allow for access to override some additional
 // parameters
 class myFormHelper : public ng::FormHelper
 {
-public:
-    myFormHelper(ng::Screen *screen) : ng::FormHelper(screen)
-    {}
+  public:
+    myFormHelper(ng::Screen *screen) :
+        ng::FormHelper(screen)
+    {
+    }
 
     void setPreGroupSpacing(int val)
     {
@@ -41,6 +36,16 @@ public:
         mVariableSpacing = val;
     }
 };
+
+} // anonymous namespace
+
+PropertySheet::PropertySheet()
+    : _form(nullptr),
+    _formWindow(nullptr),
+    _visible(false), // Start up with property sheet hidden
+    _fileDialogsForImages(true) // By default use file dialogs for setting image file name inputs
+{
+}
 
 void PropertySheet::create(Viewer& parent)
 {

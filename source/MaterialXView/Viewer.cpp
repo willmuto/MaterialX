@@ -16,7 +16,7 @@
 const float PI = std::acos(-1.0f);
 
 const int MIN_ENV_SAMPLES = 4;
-const int MAX_ENV_SAMPLES = 256;
+const int MAX_ENV_SAMPLES = 1024;
 const int DEFAULT_ENV_SAMPLES = 16;
 
 namespace {
@@ -142,7 +142,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     });
 
     mx::StringVec sampleOptions;
-    for (int i = MIN_ENV_SAMPLES; i <= MAX_ENV_SAMPLES; i *= 2)
+    for (int i = MIN_ENV_SAMPLES; i <= MAX_ENV_SAMPLES; i *= 4)
     {
         mProcessEvents = false;
         sampleOptions.push_back("Samples " + std::to_string(i));
@@ -150,10 +150,10 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     }
     ng::ComboBox* sampleBox = new ng::ComboBox(_window, sampleOptions);
     sampleBox->setChevronIcon(-1);
-    sampleBox->setSelectedIndex((int) std::log2(DEFAULT_ENV_SAMPLES / MIN_ENV_SAMPLES));
+    sampleBox->setSelectedIndex((int) std::log2(DEFAULT_ENV_SAMPLES / MIN_ENV_SAMPLES) / 2);
     sampleBox->setCallback([this](int index)
     {
-        _envSamples = MIN_ENV_SAMPLES * (int) std::pow(2, index);
+        _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
     });
 
     _stdLib = mx::createDocument();

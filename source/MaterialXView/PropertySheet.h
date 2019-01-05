@@ -3,7 +3,6 @@
 
 #include <MaterialXGenShader/HwShader.h>
 #include <MaterialXGenShader/Util.h>
-#include <MaterialXView/Material.h>
 
 #include <nanogui/screen.h>
 #include <nanogui/formhelper.h>
@@ -45,7 +44,7 @@ class PropertySheet
   protected:
     void create(Viewer& parent);
     void addItemToForm(const PropertySheetItem& pitem, const std::string& group,
-                        ng::FormHelper& form, Viewer* viewer);
+                       ng::FormHelper& form, Viewer* viewer);
       
     bool _visible;
     ng::FormHelper* _form;
@@ -53,9 +52,7 @@ class PropertySheet
     bool _fileDialogsForImages;
 };
 
-
 // Property sheet items grouped based on a string identifier
 using PropertySheetGroups = std::multimap <std::string, PropertySheetItem>;
 
-
-#endif // MATERIALXVIEW_VIEWER_H
+#endif // MATERIALXVIEW_PROPERTYSHEET_H

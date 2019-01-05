@@ -3,11 +3,6 @@
 
 #include <MaterialXView/Material.h>
 #include <MaterialXView/Mesh.h>
-#include <MaterialXGenShader/HwShader.h>
-
-#include <nanogui/screen.h>
-#include <nanogui/formhelper.h>
-
 #include <MaterialXView/PropertySheet.h>
 
 namespace mx = MaterialX;
