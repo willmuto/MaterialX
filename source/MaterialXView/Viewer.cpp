@@ -118,8 +118,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             _materialFilename = filename;
             try
             {
-                loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
-                remapNodes(_materialDocument, _nodeRemap);
+                _contentDocument = loadDocument(_materialFilename, _stdLib);
+                remapNodes(_contentDocument, _nodeRemap);
                 updateElementSelections();
                 setElementSelection(0);
                 updatePropertyEditor();
@@ -163,14 +163,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
     });
 
-    _stdLib = mx::createDocument();
     _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
 
     mx::ImageLoaderPtr exrImageLoader = mx::TinyEXRImageLoader::create();
     mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
     _imageHandler = mx::GLTextureHandler::create(exrImageLoader);
     _imageHandler->addLoader(stbImageLoader);
-    loadLibraries(_libraryFolders, _searchPath, _stdLib);
+    _stdLib = loadLibraries(_libraryFolders, _searchPath);
 
     std::string meshFilename("documents/TestSuite/Geometry/teapot.obj");
     _mesh = MeshPtr(new Mesh());
@@ -184,8 +183,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     try
     {
-        loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
-        remapNodes(_materialDocument, _nodeRemap);
+        _contentDocument = loadDocument(_materialFilename, _stdLib);
+        remapNodes(_contentDocument, _nodeRemap);
     }
     catch (std::exception& e)
     {
@@ -208,6 +207,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
 void Viewer::updateElementSelections()
 {
+    _elementSelections.clear();
+    mx::findRenderableElements(_contentDocument, _elementSelections);
+
     std::vector<std::string> items;
     for (size_t i = 0; i < _elementSelections.size(); i++)
     {
@@ -215,6 +217,7 @@ void Viewer::updateElementSelections()
     }
     _elementSelectionBox->setItems(items);
     _elementSelectionBox->setVisible(items.size() > 1);
+
     performLayout();
 }
 
@@ -227,7 +230,7 @@ bool Viewer::setElementSelection(int index)
     }
     if (elem)
     {
-        _material = Material::generateShader(_searchPath, elem);
+        _material = Material::generateMaterial(_searchPath, elem);
         if (_material)
         {
             _material->bindImages(_imageHandler, _searchPath);
@@ -249,8 +252,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     {
         try
         {
-            loadDocument(_materialFilename, _materialDocument, _stdLib, _elementSelections);
-            remapNodes(_materialDocument, _nodeRemap);
+            _contentDocument = loadDocument(_materialFilename, _stdLib);
+            remapNodes(_contentDocument, _nodeRemap);
         }
         catch (std::exception& e)
         {

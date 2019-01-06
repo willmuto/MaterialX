@@ -118,7 +118,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addWidget(label, comboBox);
             comboBox->setCallback([this, path, viewer, enumValues](int v)
             {
-                Material* material = viewer->getMaterial();
+                MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
                 if (uniform)
                 {
@@ -141,7 +141,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             intVar->setSpinnable(true);
             intVar->setCallback([this, path, viewer](int v)
             {
-                Material* material = viewer->getMaterial();
+                MaterialPtr material = viewer->getMaterial();
                 if (material)
                 {
                     mx::Shader::Variable* uniform = material->findUniform(path);
@@ -168,7 +168,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             floatVar->setMaxValue(max->asA<float>());
         floatVar->setCallback([this, path, viewer](float v)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             if (material)
             {
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -194,7 +194,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path, viewer, colorVar](const ng::Color &c)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -240,7 +240,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addWidget(label, comboBox);
             comboBox->setCallback([this, path, enumValues, viewer](int index)
             {
-                Material* material = viewer->getMaterial();
+                MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
                 if (uniform)
                 {
@@ -269,7 +269,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                 form.addVariable(label, c, true);
             colorVar->setFinalCallback([this, path, viewer](const ng::Color &c)
             {
-                Material* material = viewer->getMaterial();
+                MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
                 if (uniform)
                 {
@@ -297,7 +297,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label, c, true);
         colorVar->setFinalCallback([this, path, viewer](const ng::Color &c)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -322,7 +322,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".y", v[1], true);
         v1->setCallback([this, v1, v2, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -336,7 +336,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v1->setSpinnable(true);
         v2->setCallback([this, v1, v2, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -362,7 +362,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".z", v[2], true);
         v1->setCallback([this, v1, v2, v3, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -377,7 +377,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v1->setSpinnable(true);
         v2->setCallback([this, v1, v2, v3, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -392,7 +392,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v2->setSpinnable(true);
         v3->setCallback([this, v1, v2, v3, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -421,7 +421,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".w", v[3], true);
         v1->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -437,7 +437,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v1->setSpinnable(true);
         v2->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -453,7 +453,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v2->setSpinnable(true);
         v3->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -469,7 +469,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         v3->setSpinnable(true);
         v4->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
         {
-            Material* material = viewer->getMaterial();
+            MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
             if (uniform)
             {
@@ -498,7 +498,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                 buttonVar->setFontSize(form.widgetFontSize()-1);
                 buttonVar->setCallback([buttonVar, path, viewer]()
                 {
-                    Material* material = viewer->getMaterial();
+                    MaterialPtr material = viewer->getMaterial();
                     mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
                     if (uniform)
                     {
@@ -535,7 +535,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                     form.addVariable(label, v, true);
                 stringVar->setCallback([this, path, viewer](const std::string &v)
                 {
-                    Material* material = viewer->getMaterial();
+                    MaterialPtr material = viewer->getMaterial();
                     mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
                     if (uniform)
                     {
@@ -569,9 +569,9 @@ void PropertyEditor::updateContents(Viewer* viewer)
         return;
     }
 
-    Material* material = viewer->getMaterial();
-    mx::DocumentPtr materialDocument = viewer->getMaterialDocument();
-    if (!material || !materialDocument)
+    MaterialPtr material = viewer->getMaterial();
+    mx::DocumentPtr contentDocument = viewer->getContentDocument();
+    if (!material || !contentDocument)
     {
         return;
     }
@@ -588,16 +588,16 @@ void PropertyEditor::updateContents(Viewer* viewer)
         {
             if (uniform->path.size() && uniform->value)
             {
-                mx::ElementPtr uniformElement = materialDocument->getDescendant(uniform->path);
+                mx::ElementPtr uniformElement = contentDocument->getDescendant(uniform->path);
                 if (uniformElement && uniformElement->isA<mx::ValueElement>())
                 {
                     EditorItem item;
                     item.variable = uniform;
-                    mx::getUIProperties(uniform->path, materialDocument, mx::EMPTY_STRING, item.ui);
+                    mx::getUIProperties(uniform->path, contentDocument, mx::EMPTY_STRING, item.ui);
 
                     std::string parentLabel;
                     mx::ElementPtr parent = uniformElement->getParent();
-                    if (parent && parent != materialDocument && parent != element)
+                    if (parent && parent != contentDocument && parent != element)
                     {
                         parentLabel = parent->getNamePath();
                     }

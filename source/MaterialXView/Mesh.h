@@ -11,7 +11,7 @@ namespace mx = MaterialX;
 
 const float MAX_FLOAT = std::numeric_limits<float>::max();
 
-using MeshPtr = std::unique_ptr<class Mesh>;
+using MeshPtr = std::shared_ptr<class Mesh>;
 
 class Partition
 {

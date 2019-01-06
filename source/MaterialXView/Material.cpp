@@ -6,19 +6,27 @@
 #include <MaterialXGenShader/Util.h>
 
 #include <iostream>
-#include <unordered_set>
 
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
-void loadLibraries(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath, mx::DocumentPtr doc)
+mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib)
 {
-    const std::string MTLX_EXTENSION("mtlx");
+    mx::DocumentPtr doc = mx::createDocument();
+    mx::readFromXmlFile(doc, filePath);
+    doc->importLibrary(stdLib);
+
+    return doc;
+}
+
+mx::DocumentPtr loadLibraries(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath)
+{
+    mx::DocumentPtr doc = mx::createDocument();
     for (const std::string& libraryFolder : libraryFolders)
     {
         mx::FilePath path = searchPath.find(libraryFolder);
         mx::StringVec filenames;
-        mx::getFilesInDirectory(path.asString(), filenames, MTLX_EXTENSION);
+        mx::getFilesInDirectory(path.asString(), filenames, "mtlx");
 
         for (const std::string& filename : filenames)
         {
@@ -31,18 +39,7 @@ void loadLibraries(const mx::StringVec& libraryFolders, const mx::FileSearchPath
             doc->importLibrary(libDoc, &copyOptions);
         }
     }
-}
-
-void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr& doc, mx::DocumentPtr stdLib, std::vector<mx::TypedElementPtr>& elements)
-{
-    elements.clear();
-
-    doc = mx::createDocument();
-    mx::readFromXmlFile(doc, filePath);
-    doc->importLibrary(stdLib);
-
-    // Scan for a list of elements which can be rendered
-    mx::findRenderableElements(doc, elements); 
+    return doc;
 }
 
 void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap)
@@ -98,7 +95,7 @@ StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr&
     return StringPair(vertexShader, pixelShader);
 }
 
-MaterialPtr Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
+MaterialPtr Material::generateMaterial(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
 {
     mx::HwShaderPtr hwShader;
     StringPair source = generateSource(searchPath, hwShader, elem);

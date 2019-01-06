@@ -33,14 +33,14 @@ class Viewer : public ng::Screen
         return element;
     }
 
-    Material* getMaterial() const
+    MaterialPtr getMaterial() const
     {
-        return _material.get();
+        return _material;
     }
 
-    mx::DocumentPtr getMaterialDocument() const
+    mx::DocumentPtr getContentDocument() const
     {
-        return _materialDocument;
+        return _contentDocument;
     }
 
     ng::Window* getWindow() const
@@ -97,8 +97,8 @@ class Viewer : public ng::Screen
     mx::FilePath _materialFilename;
     int _envSamples;
 
+    mx::DocumentPtr _contentDocument;
     mx::DocumentPtr _stdLib;
-    mx::DocumentPtr _materialDocument;
 
     std::vector<mx::TypedElementPtr> _elementSelections;
     int _elementSelectionIndex;

@@ -16,17 +16,17 @@
 namespace mx = MaterialX;
 namespace ng = nanogui;
 
-using StringPair = std::pair<std::string, std::string>;
+using MaterialPtr = std::shared_ptr<class Material>;
 using GLShaderPtr = std::shared_ptr<ng::GLShader>;
 
-using MaterialPtr = std::unique_ptr<class Material>;
+using StringPair = std::pair<std::string, std::string>;
 
 class Material
 {
   public:
-    static MaterialPtr generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
+    static MaterialPtr generateMaterial(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
-    /// Get Nano-gui shader
+    /// Get NanoGUI shader
     GLShaderPtr ngShader() const { return _ngShader; }
     
     /// Get MaterialX shader
@@ -70,8 +70,8 @@ class Material
     bool _hasTransparency;
 };
 
-void loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath, mx::DocumentPtr doc);
-void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr& document, mx::DocumentPtr stdLib, std::vector<mx::TypedElementPtr>& elements);
+mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);
+mx::DocumentPtr loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath);
 void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap);
 
 StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr& hwShader, mx::ElementPtr elem);
