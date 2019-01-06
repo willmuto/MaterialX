@@ -11,6 +11,8 @@ namespace mx = MaterialX;
 
 const float MAX_FLOAT = std::numeric_limits<float>::max();
 
+using MeshPtr = std::unique_ptr<class Mesh>;
+
 class Partition
 {
   public:
@@ -19,6 +21,11 @@ class Partition
     {
     }
     ~Partition() { }
+
+    const std::string& getName() const
+    {
+        return _name;
+    }
 
     const std::vector<uint32_t>& getIndices() const
     {
@@ -33,6 +40,7 @@ class Partition
   private:
     friend class Mesh;
 
+    std::string _name;
     std::vector<uint32_t> _indices;
     size_t _faceCount;
 };
@@ -107,7 +115,5 @@ class Mesh
 
     std::vector<Partition> _partitions;
 };
-
-using MeshPtr = std::unique_ptr<Mesh>;
 
 #endif // MATERIALXVIEW_MESH_H

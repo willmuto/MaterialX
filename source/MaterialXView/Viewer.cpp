@@ -68,6 +68,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _libraryFolders(libraryFolders),
     _searchPath(searchPath),
     _nodeRemap(nodeRemap),
+    _eye(0.0f, 0.0f, 5.0f),
+    _up(0.0f, 1.0f, 0.0f),
+    _zoom(1.0f),
+    _viewAngle(45.0f),
+    _nearDist(0.05f),
+    _farDist(100.0f),
+    _modelZoom(1.0f),
     _translationActive(false),
     _translationStart(0, 0),
     _envSamples(DEFAULT_ENV_SAMPLES)
@@ -172,7 +179,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     setResizeCallback([this](ng::Vector2i size)
     {
-        _cameraParams.arcball.setSize(size);
+        _arcball.setSize(size);
     });
 
     try
@@ -365,7 +372,7 @@ bool Viewer::scrollEvent(const ng::Vector2i& p, const ng::Vector2f& rel)
 {
     if (!Screen::scrollEvent(p, rel))
     {
-        _cameraParams.zoom = std::max(0.1f, _cameraParams.zoom * ((rel.y() > 0) ? 1.1f : 0.9f));
+        _zoom = std::max(0.1f, _zoom * ((rel.y() > 0) ? 1.1f : 0.9f));
     }
     return true;
 }
@@ -377,7 +384,7 @@ bool Viewer::mouseMotionEvent(const ng::Vector2i& p,
 {
     if (!Screen::mouseMotionEvent(p, rel, button, modifiers))
     {
-        if (_cameraParams.arcball.motion(p))
+        if (_arcball.motion(p))
         {
         }
         else if (_translationActive)
@@ -402,8 +409,8 @@ bool Viewer::mouseMotionEvent(const ng::Vector2i& p,
                                               ng::Matrix4f(proj.getTranspose().data()),
                                               mSize);
             ng::Vector3f delta = pos1 - pos0;
-            _cameraParams.modelTranslation = _cameraParams.modelTranslationStart +
-                                             mx::Vector3(delta.data(), delta.data() + delta.size());
+            _modelTranslation = _modelTranslationStart +
+                                mx::Vector3(delta.data(), delta.data() + delta.size());
         }
     }
     return true;
@@ -415,19 +422,19 @@ bool Viewer::mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int 
     {
         if (button == GLFW_MOUSE_BUTTON_1 && !modifiers)
         {
-            _cameraParams.arcball.button(p, down);
+            _arcball.button(p, down);
         }
         else if (button == GLFW_MOUSE_BUTTON_2 ||
                 (button == GLFW_MOUSE_BUTTON_1 && modifiers == GLFW_MOD_SHIFT))
         {
-            _cameraParams.modelTranslationStart = _cameraParams.modelTranslation;
+            _modelTranslationStart = _modelTranslation;
             _translationActive = true;
             _translationStart = p;
         }
     }
     if (button == GLFW_MOUSE_BUTTON_1 && !down)
     {
-        _cameraParams.arcball.button(p, false);
+        _arcball.button(p, false);
     }
     if (!down)
     {
@@ -438,26 +445,26 @@ bool Viewer::mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int 
 
 void Viewer::initCamera()
 {
-    _cameraParams.arcball = ng::Arcball();
-    _cameraParams.arcball.setSize(mSize);
-    _cameraParams.modelZoom = 2.0f / _mesh->getSphereRadius();
-    _cameraParams.modelTranslation = _mesh->getSphereCenter() * -1.0f;
+    _arcball = ng::Arcball();
+    _arcball.setSize(mSize);
+    _modelZoom = 2.0f / _mesh->getSphereRadius();
+    _modelTranslation = _mesh->getSphereCenter() * -1.0f;
 }
 
 void Viewer::computeCameraMatrices(mx::Matrix44& world,
                                    mx::Matrix44& view,
                                    mx::Matrix44& proj)
 {
-    float fH = std::tan(_cameraParams.viewAngle / 360.0f * PI) * _cameraParams.dnear;
+    float fH = std::tan(_viewAngle / 360.0f * PI) * _nearDist;
     float fW = fH * (float) mSize.x() / (float) mSize.y();
 
-    ng::Matrix4f ngArcball = _cameraParams.arcball.matrix();
+    ng::Matrix4f ngArcball = _arcball.matrix();
     mx::Matrix44 arcball = mx::Matrix44(ngArcball.data(), ngArcball.data() + ngArcball.size()).getTranspose();
 
-    view = createViewMatrix(_cameraParams.eye, _cameraParams.center, _cameraParams.up) * arcball;
-    proj = createPerspectiveMatrix(-fW, fW, -fH, fH, _cameraParams.dnear, _cameraParams.dfar);
-    world = mx::Matrix44::createScale(mx::Vector3(_cameraParams.zoom * _cameraParams.modelZoom));
-    world *= mx::Matrix44::createTranslation(_cameraParams.modelTranslation).getTranspose();
+    view = createViewMatrix(_eye, _center, _up) * arcball;
+    proj = createPerspectiveMatrix(-fW, fW, -fH, fH, _nearDist, _farDist);
+    world = mx::Matrix44::createScale(mx::Vector3(_zoom * _modelZoom));
+    world *= mx::Matrix44::createTranslation(_modelTranslation).getTranspose();
 }
 
 void Viewer::updatePropertyEditor()

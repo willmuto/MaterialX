@@ -37,6 +37,7 @@ bool Mesh::loadMesh(const mx::FilePath& filename)
         const tinyobj::shape_t& shape = shapes[partIndex];
         Partition& part = _partitions[partIndex];
 
+        part._name = shape.name;
         part._indices.resize(shape.mesh.indices.size());
         part._faceCount = shape.mesh.indices.size() / 3;
 

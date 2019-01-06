@@ -8,22 +8,6 @@
 namespace mx = MaterialX;
 namespace ng = nanogui;
 
-class CameraParameters
-{
-  public:
-    ng::Arcball arcball;
-    float zoom = 1.0f;
-    float viewAngle = 45.0f;
-    float dnear = 0.05f;
-    float dfar = 100.0f;
-    mx::Vector3 eye = { 0.0f, 0.0f, 5.0f };
-    mx::Vector3 center = { 0.0f, 0.0f, 0.0f };
-    mx::Vector3 up = { 0.0f, 1.0f, 0.0f };
-    mx::Vector3 modelTranslation = { 0.0f, 0.0f, 0.0f };
-    mx::Vector3 modelTranslationStart = { 0.0f, 0.0f, 0.0f };
-    float modelZoom = 1.0f;
-};
-
 class Viewer : public ng::Screen
 {
   public:
@@ -86,10 +70,23 @@ class Viewer : public ng::Screen
 
   private:
     ng::Window* _window;
-    std::unique_ptr<Mesh> _mesh;
+    ng::Arcball _arcball;
+
+    MeshPtr _mesh;
     MaterialPtr _material;
 
-    CameraParameters _cameraParams;
+    mx::Vector3 _eye;
+    mx::Vector3 _center;
+    mx::Vector3 _up;
+    float _zoom;
+    float _viewAngle;
+    float _nearDist;
+    float _farDist;
+
+    mx::Vector3 _modelTranslation;
+    mx::Vector3 _modelTranslationStart;
+    float _modelZoom;
+
     bool _translationActive;
     ng::Vector2i _translationStart;
 
