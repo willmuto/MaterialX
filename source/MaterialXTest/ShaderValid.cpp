@@ -32,7 +32,9 @@
 #include <MaterialXRender/ShaderValidators/Osl/OslValidator.h>
 #endif
 
-#include <MaterialXRender/Handlers/TinyEXRImageLoader.h>
+#ifdef MATERIALX_BUILD_CONTRIB
+#include <MaterialXContrib/Handlers/TinyEXRImageLoader.h>
+#endif
 #include <MaterialXRender/Handlers/stbImageLoader.h>
 
 #include <fstream>
@@ -63,10 +65,12 @@ static mx::GlslValidatorPtr createGLSLValidator(bool& orthographicView, const st
     bool initialized = false;
     orthographicView = true;
     mx::GlslValidatorPtr validator = mx::GlslValidator::create();
-    mx::TinyEXRImageLoaderPtr imageLoader = mx::TinyEXRImageLoader::create();
-    mx::GLTextureHandlerPtr imageHandler = mx::GLTextureHandler::create(imageLoader);
     mx::stbImageLoaderPtr stbLoader = mx::stbImageLoader::create();
-    imageHandler->addLoader(stbLoader);
+    mx::GLTextureHandlerPtr imageHandler = mx::GLTextureHandler::create(stbLoader);
+#ifdef MATERIALX_BUILD_CONTRIB
+    mx::TinyEXRImageLoaderPtr exrLoader = mx::TinyEXRImageLoader::create();
+    imageHandler->addLoader(exrLoader);
+#endif
     try
     {
         validator->initialize();
@@ -848,7 +852,7 @@ bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& optio
     const std::string SHADER_VALID_TEST_OPTIONS_STRING("ShaderValidTestOptions");
     const std::string OVERRIDE_FILES_STRING("overrideFiles");
     const std::string LIGHT_FILES_STRING("lightFiles");
-    const std::string CMS_FILES_STRING("cmsFiles");    
+    const std::string CMS_FILES_STRING("cmsFiles");
     const std::string SHADER_INTERFACES_STRING("shaderInterfaces");
     const std::string VALIDATE_ELEMENT_TO_RENDER_STRING("validateElementToRender");
     const std::string COMPILE_CODE_STRING("compileCode");
@@ -1031,7 +1035,7 @@ void printRunLog(const ShaderValidProfileTimes &profileTimes, const ShaderValidT
             "geomattrvalue_integer", "geomattrvalue_boolean", "geomattrvalue_string"
         };
         const std::string OSL_STRING("osl");
-        const std::string SX_OSL_STRING("sx_osl");
+        const std::string GEN_OSL_STRING("gen_osl");
         unsigned int implementationUseCount = 0;
         for (auto libraryImpl : libraryImpls)
         {
@@ -1082,7 +1086,7 @@ void printRunLog(const ShaderValidProfileTimes &profileTimes, const ShaderValidT
                 continue;
             }
 
-            // See if we have a sx-osl implementation used
+            // See if we have a genosl implementation used
             // instead of the reference one
             if (libraryImpl->getLanguage() == OSL_STRING)
             {
@@ -1092,7 +1096,7 @@ void printRunLog(const ShaderValidProfileTimes &profileTimes, const ShaderValidT
                     std::string ending = implName.substr(endSize);
                     if (ending == OSL_STRING)
                     {
-                        std::string sxImplName = implName.substr(0, endSize) + SX_OSL_STRING;
+                        std::string sxImplName = implName.substr(0, endSize) + GEN_OSL_STRING;
                         if (oslShaderGenerator->getCachedImplementation(sxImplName))
                         {
                             implementationUseCount++;
@@ -1144,8 +1148,9 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
     std::ofstream oslLogfile("shadervalid_OSL_log.txt");
     std::ostream& oslLog(oslLogfile);
 #endif
-    std::ofstream docValidLogfile("shadervalid_validate_doc_log.txt");
-    std::ostream& docValidLog(docValidLogfile);
+    std::string docValidLogFilename = "shadervalid_validate_doc_log.txt";
+    std::ofstream docValidLogFile(docValidLogFilename);
+    std::ostream& docValidLog(docValidLogFile);
     std::ofstream profilingLogfile("shadervalid_profiling_log.txt");
     std::ostream& profilingLog(profilingLogfile);
 #else
@@ -1245,19 +1250,20 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
     std::set<std::string> excludeFiles;
     if (!options.runGLSLTests && !options.runOGSFXTests)
     {
-        excludeFiles.insert("stdlib_sx-glsl_impl.mtlx");
+        excludeFiles.insert("stdlib_" + mx::GlslShaderGenerator::LANGUAGE + "_impl.mtlx");
+        excludeFiles.insert("stdlib_" + mx::GlslShaderGenerator::LANGUAGE + "_ogsfx_impl.mtlx");
     }
     if (!options.runOSLTests)
     {
         excludeFiles.insert("stdlib_osl_impl.mtlx");
-        excludeFiles.insert("stdlib_sx-osl_impl.mtlx");
+        excludeFiles.insert("stdlib_" + mx::OslShaderGenerator::LANGUAGE + "_impl.mtlx");
     }
     if (options.cmsFiles.size() == 0)
     {
         excludeFiles.insert("cm_impl.mtlx");
     }
-    
-    const mx::StringVec libraries = { "stdlib", "sxpbrlib" };
+
+    const mx::StringVec libraries = { "stdlib", "pbrlib" };
     loadLibraries(libraries, searchPath, dependLib, &excludeFiles);
     mx::FilePath lightDir = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Utilities/Lights");
     if (options.lightFiles.size() == 0)
@@ -1278,25 +1284,41 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
     mx::CopyOptions importOptions;
     importOptions.skipDuplicateElements = true;
 
-#if defined(MATERIALX_BUILD_GEN_GLSL) || defined(MATERIALX_BUILD_GEN_OGSFX)
-    mx::HwLightHandlerPtr lightHandler = nullptr;
-    if (options.runGLSLTests || options.runOGSFXTests)
+#if defined(MATERIALX_BUILD_GEN_GLSL)
+    mx::HwLightHandlerPtr glslLightHandler = nullptr;
+    if (options.runGLSLTests)
     {
         AdditiveScopedTimer glslSetupLightingTimer(profileTimes.glslTimes.setupTime, "GLSL setup lighting time");
 
-        // Add lights as a dependency
-        mx::GenOptions genOptions;
-        lightHandler = mx::HwLightHandler::create();
-        createLightRig(dependLib, *lightHandler, *glslShaderGenerator, genOptions);
-
-        // Clamp the number of light sources to the number bound
-        size_t lightSourceCount = lightHandler->getLightSources().size();
         if (glslShaderGenerator)
         {
+            // Add lights as a dependency
+            mx::GenOptions genOptions;
+            glslLightHandler = mx::HwLightHandler::create();
+            createLightRig(dependLib, *glslLightHandler, *glslShaderGenerator, genOptions);
+
+            // Clamp the number of light sources to the number bound
+            size_t lightSourceCount = glslLightHandler->getLightSources().size();
             glslShaderGenerator->setMaxActiveLightSources(lightSourceCount);
         }
+    }
+#endif
+
+#if defined(MATERIALX_BUILD_GEN_OGSFX)
+    mx::HwLightHandlerPtr ogsfxLightHandler = nullptr;
+    if (options.runOGSFXTests)
+    {
+        AdditiveScopedTimer glslSetupLightingTimer(profileTimes.glslTimes.setupTime, "OGSFX setup lighting time");
+
         if (ogsfxShaderGenerator)
         {
+            // Add lights as a dependency
+            mx::GenOptions genOptions;
+            ogsfxLightHandler = mx::HwLightHandler::create();
+            createLightRig(dependLib, *ogsfxLightHandler, *ogsfxShaderGenerator, genOptions);
+
+            // Clamp the number of light sources to the number bound
+            size_t lightSourceCount = ogsfxLightHandler->getLightSources().size();
             ogsfxShaderGenerator->setMaxActiveLightSources(lightSourceCount);
         }
     }
@@ -1397,7 +1419,15 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
 
             renderableSearchTimer.startTimer();
             std::vector<mx::TypedElementPtr> elements;
-            mx::findRenderableElements(doc, elements);
+            try
+            {
+                mx::findRenderableElements(doc, elements);
+            }
+            catch (mx::ExceptionShaderGenError& e)
+            {
+                docValidLog << e.what() << std::endl;
+                WARN("Find renderable elements failed, see: " + docValidLogFilename + " for details.");
+            }
             renderableSearchTimer.endTimer();
 
             std::string outputPath = mx::FilePath(dir) / mx::FilePath(mx::removeExtension(file));
@@ -1431,7 +1461,7 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
                                 mx::InterfaceElementPtr nodeGraphImpl = nodeGraph ? nodeGraph->getImplementation() : nullptr;
                                 usedImpls.insert(nodeGraphImpl ? nodeGraphImpl->getName() : impl->getName());
                             }
-                            runGLSLValidation(elementName, element, *glslValidator, *glslShaderGenerator, lightHandler, doc, glslLog, options, profileTimes, outputPath);
+                            runGLSLValidation(elementName, element, *glslValidator, *glslShaderGenerator, glslLightHandler, doc, glslLog, options, profileTimes, outputPath);
                         }
                     }
 #endif
@@ -1449,7 +1479,7 @@ TEST_CASE("MaterialX documents", "[shadervalid]")
                                 mx::InterfaceElementPtr nodeGraphImpl = nodeGraph ? nodeGraph->getImplementation() : nullptr;
                                 usedImpls.insert(nodeGraphImpl ? nodeGraphImpl->getName() : impl->getName());
                             }
-                            runOGSFXValidation(elementName, element, *ogsfxShaderGenerator, lightHandler, doc, ogsfxLog, options, profileTimes, outputPath);
+                            runOGSFXValidation(elementName, element, *ogsfxShaderGenerator, ogsfxLightHandler, doc, ogsfxLog, options, profileTimes, outputPath);
                         }
                     }
 #endif

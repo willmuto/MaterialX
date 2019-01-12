@@ -213,8 +213,8 @@ void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
         _ngShader->setUniform("u_envSamples", envSamples);
     }
     mx::StringMap lightTextures = {
-        { "u_envRadiance", "documents/TestSuite/Images/san_giuseppe_bridge.exr" },
-        { "u_envIrradiance", "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.exr" }
+        { "u_envRadiance", "documents/TestSuite/Images/san_giuseppe_bridge.hdr" },
+        { "u_envIrradiance", "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.hdr" }
     };
     for (auto pair : lightTextures)
     {

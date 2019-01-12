@@ -1,7 +1,6 @@
 #include <MaterialXView/Viewer.h>
 
 #include <MaterialXRender/Handlers/stbImageLoader.h>
-#include <MaterialXRender/Handlers/TinyExrImageLoader.h>
 #include <MaterialXGenShader/Util.h>
 
 #include <nanogui/button.h>
@@ -163,12 +162,10 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
     });
 
-    _materialFilename = std::string("documents/TestSuite/sxpbrlib/materials/standard_surface_default.mtlx");
+    _materialFilename = std::string("documents/TestSuite/pbrlib/materials/standard_surface_default.mtlx");
 
-    mx::ImageLoaderPtr exrImageLoader = mx::TinyEXRImageLoader::create();
     mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
-    _imageHandler = mx::GLTextureHandler::create(exrImageLoader);
-    _imageHandler->addLoader(stbImageLoader);
+    _imageHandler = mx::GLTextureHandler::create(stbImageLoader);
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
 
     std::string meshFilename("documents/TestSuite/Geometry/teapot.obj");
@@ -208,7 +205,10 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 void Viewer::updateElementSelections()
 {
     _elementSelections.clear();
-    mx::findRenderableElements(_contentDocument, _elementSelections);
+    if (_contentDocument)
+    {
+        mx::findRenderableElements(_contentDocument, _elementSelections);
+    }
 
     std::vector<std::string> items;
     for (size_t i = 0; i < _elementSelections.size(); i++)
