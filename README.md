@@ -24,5 +24,5 @@ This repository contains the **Prototype MaterialX Viewer** (MaterialXView), whi
 
 - The main [MaterialX repository](https://github.com/materialx/MaterialX)
 - The latest [ShaderX specification](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Specification/ShaderX.Draft.pdf)
-- The MaterialX graph for the [Standard Surface shader](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Libraries/sxpbrlib/sxpbrlib_ng.mtlx#L38)
-- An example MaterialX graph for [procedural marble](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/TestSuite/sxpbrlib/materials/standard_surface_marble_solid.mtlx)
+- The MaterialX graph for the [Standard Surface shader](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/Libraries/pbrlib/sxpbrlib_ng.mtlx#L38)
+- An example MaterialX graph for [procedural marble](https://github.com/jstone-dev/MaterialX/blob/adsk_contrib/dev/documents/TestSuite/pbrlib/materials/standard_surface_marble_solid.mtlx)
