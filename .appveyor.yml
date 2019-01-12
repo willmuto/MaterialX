@@ -26,12 +26,13 @@ environment:
       configuration: Release
 
 install:
+  - git submodule update --init --recursive
   - set PATH=%PYTHON%;%PATH%
 
 build_script:
   - mkdir build
   - cd build
-  - cmake -DMATERIALX_BUILD_PYTHON=ON -DMATERIALX_WARNINGS_AS_ERRORS=ON -G "%CMAKE_PLATFORM%" -DCMAKE_BUILD_TYPE="%CONFIGURATION%" ..
+  - cmake -DMATERIALX_BUILD_PYTHON=ON -DMATERIALX_BUILD_VIEWER=ON -DMATERIALX_WARNINGS_AS_ERRORS=ON -G "%CMAKE_PLATFORM%" -DCMAKE_BUILD_TYPE="%CONFIGURATION%" ..
   - cmake --build . --target install --config %CONFIGURATION%
   - ctest --output-on-failure --build-config %CONFIGURATION%
   - cmake -E chdir ../python/MaterialXTest python main.py
