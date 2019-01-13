@@ -64,9 +64,6 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                const mx::FileSearchPath& searchPath,
                const mx::StringMap& nodeRemap) :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
-    _libraryFolders(libraryFolders),
-    _searchPath(searchPath),
-    _nodeRemap(nodeRemap),
     _eye(0.0f, 0.0f, 5.0f),
     _up(0.0f, 1.0f, 0.0f),
     _zoom(1.0f),
@@ -76,6 +73,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _modelZoom(1.0f),
     _translationActive(false),
     _translationStart(0, 0),
+    _libraryFolders(libraryFolders),
+    _searchPath(searchPath),
+    _nodeRemap(nodeRemap),
     _envSamples(DEFAULT_ENV_SAMPLES)
 {
     _window = new ng::Window(this, "Viewer Options");
@@ -224,7 +224,7 @@ void Viewer::updateElementSelections()
 bool Viewer::setElementSelection(size_t index)
 {
     mx::ElementPtr elem;
-    if (index >= 0 && index < _elementSelections.size())
+    if (index < _elementSelections.size())
     {
         elem = _elementSelections[index];
     }
