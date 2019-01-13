@@ -235,7 +235,7 @@ bool Viewer::setElementSelection(size_t index)
         {
             _material->bindImages(_imageHandler, _searchPath);
             _material->bindMesh(_mesh);
-            _elementSelectionIndex = index;
+            _elementIndex = index;
             return true;
         }
     }
@@ -304,17 +304,17 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
             size_t newIndex = 0;
             if (key == GLFW_KEY_RIGHT)
             {
-                newIndex = _elementSelectionIndex < elementCount - 1 ? _elementSelectionIndex + 1 : 0;
+                newIndex = (_elementIndex < elementCount - 1) ? _elementIndex + 1 : 0;
             }
             else
             {
-                newIndex = _elementSelectionIndex > 0 ? _elementSelectionIndex - 1 : elementCount - 1;
+                newIndex = (_elementIndex > 0) ? _elementIndex - 1 : elementCount - 1;
             }
             try
             {
                 if (setElementSelection(newIndex))
                 {
-                    _elementSelectionBox->setSelectedIndex(newIndex);
+                    _elementSelectionBox->setSelectedIndex((int) newIndex);
                     updateElementSelections();
                     updatePropertyEditor();
                 }
