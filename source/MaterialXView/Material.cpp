@@ -74,7 +74,7 @@ StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr&
     mx::ShaderGeneratorPtr shaderGenerator = mx::GlslShaderGenerator::create();
     mx::DefaultColorManagementSystemPtr cms = mx::DefaultColorManagementSystem::create(shaderGenerator->getLanguage());
     cms->loadLibrary(elem->getDocument());
-    for (int i = 0; i < searchPath.size(); i++)
+    for (size_t i = 0; i < searchPath.size(); i++)
     {
         // TODO: The registerSourceCodeSearchPath method should probably take a
         //       full FileSearchPath rather than a single FilePath.

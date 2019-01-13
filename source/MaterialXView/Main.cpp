@@ -15,7 +15,7 @@ int main(int argc, char* const argv[])
     mx::StringVec libraryFolders = { "stdlib", "pbrlib", "stdlib/genglsl", "pbrlib/genglsl" };
     mx::FileSearchPath searchPath;
     mx::StringMap nodeRemap;
-    for (int i = 0; i < tokens.size(); i++)
+    for (size_t i = 0; i < tokens.size(); i++)
     {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
