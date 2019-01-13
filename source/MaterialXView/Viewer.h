@@ -26,7 +26,7 @@ class Viewer : public ng::Screen
     mx::ElementPtr getSelectedElement() const
     {
         mx::ElementPtr element = nullptr;
-        if (_elementSelectionIndex >= 0 && _elementSelectionIndex < _elementSelections.size())
+        if (_elementSelectionIndex < _elementSelections.size())
         {
             element = _elementSelections[_elementSelectionIndex];
         }
@@ -64,7 +64,7 @@ class Viewer : public ng::Screen
                                mx::Matrix44& view,
                                mx::Matrix44& proj);
 
-    bool setElementSelection(int index);
+    bool setElementSelection(size_t index);
     void updateElementSelections();
     void updatePropertyEditor();
 
@@ -101,7 +101,7 @@ class Viewer : public ng::Screen
     mx::DocumentPtr _stdLib;
 
     std::vector<mx::TypedElementPtr> _elementSelections;
-    int _elementSelectionIndex;
+    size_t _elementSelectionIndex;
     ng::ComboBox* _elementSelectionBox;
 
     PropertyEditor _propertyEditor;

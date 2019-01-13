@@ -107,7 +107,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         int v = value->asA<int>();
 
         // Create a combo box. The items are the enumerations in order.
-        if (v < enumeration.size())
+        if (v < (int) enumeration.size())
         {
             std::string enumValue = enumeration[v];
 
@@ -123,7 +123,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                 if (uniform)
                 {
                     material->ngShader()->bind();
-                    if (v < enumValues.size())
+                    if (v < (int) enumValues.size())
                     {
                         material->ngShader()->setUniform(uniform->name, enumValues[v]->asA<int>());
                     }
@@ -245,7 +245,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                 if (uniform)
                 {
                     material->ngShader()->bind();
-                    if (index < enumValues.size())
+                    if (index < (int) enumValues.size())
                     {
                         mx::Color3 c = enumValues[index]->asA<mx::Color3>();
                         ng::Vector3f v;

@@ -221,7 +221,7 @@ void Viewer::updateElementSelections()
     performLayout();
 }
 
-bool Viewer::setElementSelection(int index)
+bool Viewer::setElementSelection(size_t index)
 {
     mx::ElementPtr elem;
     if (index >= 0 && index < _elementSelections.size())
@@ -298,17 +298,17 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     // Allow left and right keys to cycle through the renderable elements
     if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
     {
-        int elementSize = static_cast<int>(_elementSelections.size());
-        if (elementSize > 1)
+        size_t elementCount = _elementSelections.size();
+        if (elementCount > 1)
         {
-            int newIndex = 0;
+            size_t newIndex = 0;
             if (key == GLFW_KEY_RIGHT)
             {
-                newIndex = (_elementSelectionIndex + 1) % elementSize;
+                newIndex = _elementSelectionIndex < elementCount - 1 ? _elementSelectionIndex + 1 : 0;
             }
             else
             {
-                newIndex = (_elementSelectionIndex + elementSize - 1) % elementSize;
+                newIndex = _elementSelectionIndex > 0 ? _elementSelectionIndex - 1 : elementCount - 1;
             }
             try
             {
