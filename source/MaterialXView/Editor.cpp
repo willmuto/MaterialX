@@ -29,9 +29,9 @@ using EditorGroups = std::multimap<std::string, EditorItem>;
 //
 
 PropertyEditor::PropertyEditor() :
+    _visible(false),
     _form(nullptr),
     _formWindow(nullptr),
-    _visible(false),
     _fileDialogsForImages(true)
 {
 }
@@ -116,7 +116,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             comboBox->setSelectedIndex(v);
             comboBox->setFontSize(form.widgetFontSize());
             form.addWidget(label, comboBox);
-            comboBox->setCallback([this, path, viewer, enumValues](int v)
+            comboBox->setCallback([path, viewer, enumValues](int v)
             {
                 MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -139,7 +139,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             nanogui::detail::FormWidget<int, std::true_type>* intVar =
                 form.addVariable(label, v, true);
             intVar->setSpinnable(true);
-            intVar->setCallback([this, path, viewer](int v)
+            intVar->setCallback([path, viewer](int v)
             {
                 MaterialPtr material = viewer->getMaterial();
                 if (material)
@@ -166,7 +166,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             floatVar->setMinValue(min->asA<float>());
         if (max)
             floatVar->setMaxValue(max->asA<float>());
-        floatVar->setCallback([this, path, viewer](float v)
+        floatVar->setCallback([path, viewer](float v)
         {
             MaterialPtr material = viewer->getMaterial();
             if (material)
@@ -192,7 +192,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         c.w() = 1.0f;
         nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
             form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path, viewer, colorVar](const ng::Color &c)
+        colorVar->setFinalCallback([path, viewer, colorVar](const ng::Color &c)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -238,7 +238,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             comboBox->setSelectedIndex(index);
             comboBox->setFontSize(form.widgetFontSize());
             form.addWidget(label, comboBox);
-            comboBox->setCallback([this, path, enumValues, viewer](int index)
+            comboBox->setCallback([path, enumValues, viewer](int index)
             {
                 MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -267,7 +267,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             c.w() = 1.0;
             nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
                 form.addVariable(label, c, true);
-            colorVar->setFinalCallback([this, path, viewer](const ng::Color &c)
+            colorVar->setFinalCallback([path, viewer](const ng::Color &c)
             {
                 MaterialPtr material = viewer->getMaterial();
                 mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -295,7 +295,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         c.w() = v[3];
         nanogui::detail::FormWidget<nanogui::Color, std::true_type>* colorVar =
             form.addVariable(label, c, true);
-        colorVar->setFinalCallback([this, path, viewer](const ng::Color &c)
+        colorVar->setFinalCallback([path, viewer](const ng::Color &c)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -320,7 +320,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".x", v[0], true);
         nanogui::detail::FormWidget<float, std::true_type>* v2 =
             form.addVariable(label + ".y", v[1], true);
-        v1->setCallback([this, v1, v2, path, viewer](float f)
+        v1->setCallback([v2, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -334,7 +334,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v1->setSpinnable(true);
-        v2->setCallback([this, v1, v2, path, viewer](float f)
+        v2->setCallback([v1, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -360,7 +360,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".y", v[1], true);
         nanogui::detail::FormWidget<float, std::true_type>* v3 =
             form.addVariable(label + ".z", v[2], true);
-        v1->setCallback([this, v1, v2, v3, path, viewer](float f)
+        v1->setCallback([v2, v3, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -375,7 +375,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v1->setSpinnable(true);
-        v2->setCallback([this, v1, v2, v3, path, viewer](float f)
+        v2->setCallback([v1, v3, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -390,7 +390,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v2->setSpinnable(true);
-        v3->setCallback([this, v1, v2, v3, path, viewer](float f)
+        v3->setCallback([v1, v2, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -419,7 +419,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             form.addVariable(label + ".z", v[2], true);
         nanogui::detail::FormWidget<float, std::true_type>* v4 =
             form.addVariable(label + ".w", v[3], true);
-        v1->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
+        v1->setCallback([v2, v3, v4, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -435,7 +435,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v1->setSpinnable(true);
-        v2->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
+        v2->setCallback([v1, v3, v4, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -451,7 +451,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v2->setSpinnable(true);
-        v3->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
+        v3->setCallback([v1, v2, v4, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -467,7 +467,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             }
         });
         v3->setSpinnable(true);
-        v4->setCallback([this, v1, v2, v3, v4, path, viewer](float f)
+        v4->setCallback([v1, v2, v3, path, viewer](float f)
         {
             MaterialPtr material = viewer->getMaterial();
             mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
@@ -533,7 +533,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
             {
                 nanogui::detail::FormWidget<std::string, std::true_type>* stringVar =
                     form.addVariable(label, v, true);
-                stringVar->setCallback([this, path, viewer](const std::string &v)
+                stringVar->setCallback([path, viewer](const std::string &v)
                 {
                     MaterialPtr material = viewer->getMaterial();
                     mx::Shader::Variable* uniform = material ? material->findUniform(path) : nullptr;
