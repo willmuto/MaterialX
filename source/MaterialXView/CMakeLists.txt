@@ -13,6 +13,8 @@ source_group("Header Files\\TinyObjLoader" FILES ${tinyobjloader_headers})
 set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_SHARED OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_PYTHON OFF CACHE BOOL " " FORCE)
+set(NANOGUI_INSTALL OFF CACHE BOOL " " FORCE)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/NanoGUI external/NanoGUI)
 set_property(TARGET nanogui nanogui-obj glfw glfw_objects PROPERTY FOLDER "External")
 
@@ -43,3 +45,8 @@ add_custom_command(TARGET MaterialXView POST_BUILD
 add_custom_command(TARGET MaterialXView POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                    ${CMAKE_SOURCE_DIR}/documents/TestSuite ${CMAKE_CURRENT_BINARY_DIR}/documents/TestSuite)
+
+install(TARGETS MaterialXView
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documents/
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/documents")
