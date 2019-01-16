@@ -91,12 +91,8 @@
     <input name="color90" type="color3" value="1.0, 1.0, 1.0"/>
     <input name="exponent" type="float" value="5.0"/>
     <input name="roughness" type="roughnessinfo"/>
-    <input name="normal" type="vector3">
-      <geomprop name="normal" type="vector3" space="world"/>
-    </input>
-    <input name="tangent" type="vector3">
-      <geomprop name="tangent" type="vector3" space="world"/>
-    </input>
+    <input name="normal" type="vector3" defaultgeomprop="Nworld"/>
+    <input name="tangent" type="vector3" defaultgeomprop="Tworld"/>
     <input name="distribution" type="string" value="ggx" enum="ggx"/>
     <input name="base" type="BSDF"/>
 </nodedef>
