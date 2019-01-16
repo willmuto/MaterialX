@@ -1,6 +1,6 @@
 #include "pbrlib/genglsl/lib/mx_bsdfs.glsl"
 
-void mx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void mx_generalizedschlickbrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
@@ -34,7 +34,7 @@ void mx_glossybrdf_reflection(vec3 L, vec3 V, float weight, vec3 color0, vec3 co
            + base * (1.0 - avgF);       // Base layer reflection attenuated by top fresnel
 }
 
-void mx_glossybrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void mx_generalizedschlickbrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
@@ -55,7 +55,7 @@ void mx_glossybrdf_transmission(vec3 V, float weight, vec3 color0, vec3 color90,
     result = base * (1.0 - avgF); // Base layer transmission attenuated by top fresnel
 }
 
-void mx_glossybrdf_indirect(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
+void mx_generalizedschlickbrdf_indirect(vec3 V, float weight, vec3 color0, vec3 color90, float exponent, roughnessinfo roughness, vec3 normal, vec3 tangent, int distribution, BSDF base, out BSDF result)
 {
     if (weight < M_FLOAT_EPS)
     {
@@ -63,7 +63,7 @@ void mx_glossybrdf_indirect(vec3 V, float weight, vec3 color0, vec3 color90, flo
         return;
     }
 
-    vec3 Li = mx_environment_specular(normal, V, tangent, roughness);
+    vec3 Li = mx_environment_specular(normal, V, roughness.alpha);
 
     float NdotV = dot(normal,V);
     vec3 F = mx_fresnel_schlick(NdotV, color0, color90, exponent);
