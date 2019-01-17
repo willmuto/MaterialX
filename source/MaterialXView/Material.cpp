@@ -108,7 +108,51 @@ MaterialPtr Material::generateMaterial(const mx::FileSearchPath& searchPath, mx:
     return nullptr;
 }
 
-void Material::bindMesh(MeshPtr& mesh)
+void Material::assignPartitionsToMaterial(const mx::GeometryHandler handler)
+{
+    _geometryList.clear();
+    for (auto mesh : handler.getMeshes())
+    {
+        for (size_t p = 0; p < mesh->getPartitionCount(); p++)
+        {
+            _geometryList.push_back(mesh->getPartition(p)->getIdentifier());
+        }
+    }
+}
+
+void Material::bindMesh(const mx::GeometryHandler& handler)
+{
+    assignPartitionsToMaterial(handler);
+
+    mx::MeshList meshes = handler.getMeshes();
+    bool haveMaterialGeometry = !_geometryList.empty();
+    for (auto mesh : handler.getMeshes())
+    {
+        if (!haveMaterialGeometry)
+        {
+            bindMeshStreams(mesh);
+            continue;
+        }
+        bool matchMeshName = std::find(_geometryList.begin(), _geometryList.end(), mesh->getIdentifier()) != _geometryList.end();
+        if (matchMeshName)
+        {
+            bindMeshStreams(mesh);
+            continue;
+        }
+        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
+        {
+            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
+            bool matchPartName = std::find(_geometryList.begin(), _geometryList.end(), part->getIdentifier()) != _geometryList.end();
+            if (matchPartName)
+            {
+                bindMeshStreams(mesh);
+                break;
+            }
+        }
+    }
+}
+
+void Material::bindMeshStreams(const mx::MeshPtr mesh) const
 {
     if (!mesh || !_ngShader)
     {
@@ -118,27 +162,54 @@ void Material::bindMesh(MeshPtr& mesh)
     _ngShader->bind();
     if (_ngShader->attrib("i_position") != -1)
     {
-        MatrixXfProxy positions(&mesh->getPositions()[0][0], 3, mesh->getPositions().size());
+        mx::MeshStreamPtr stream = mesh->getStream(mx::MeshStream::POSITION_ATTRIBUTE, 0);
+        mx::MeshFloatBuffer &buffer = stream->getData();
+        MatrixXfProxy positions(&buffer[0], stream->getStride(), buffer.size() / stream->getStride());
         _ngShader->uploadAttrib("i_position", positions);
     }
     if (_ngShader->attrib("i_normal", false) != -1)
     {
-        MatrixXfProxy normals(&mesh->getNormals()[0][0], 3, mesh->getNormals().size());
+        mx::MeshStreamPtr stream = mesh->getStream(mx::MeshStream::NORMAL_ATTRIBUTE, 0);
+        mx::MeshFloatBuffer &buffer = stream->getData();
+        MatrixXfProxy normals(&buffer[0], stream->getStride(), buffer.size() / stream->getStride());
         _ngShader->uploadAttrib("i_normal", normals);
     }
     if (_ngShader->attrib("i_tangent", false) != -1)
     {
-        MatrixXfProxy tangents(&mesh->getTangents()[0][0], 3, mesh->getTangents().size());
+        mx::MeshStreamPtr stream = mesh->getStream(mx::MeshStream::TANGENT_ATTRIBUTE, 0);
+        mx::MeshFloatBuffer &buffer = stream->getData();
+        MatrixXfProxy tangents(&buffer[0], stream->getStride(), buffer.size() / stream->getStride());
         _ngShader->uploadAttrib("i_tangent", tangents);
     }
     if (_ngShader->attrib("i_texcoord_0", false) != -1)
     {
-        MatrixXfProxy texcoords(&mesh->getTexcoords()[0][0], 2, mesh->getTexcoords().size());
+        mx::MeshStreamPtr stream = mesh->getStream(mx::MeshStream::TEXCOORD_ATTRIBUTE, 0);
+        mx::MeshFloatBuffer &buffer = stream->getData();
+        MatrixXfProxy texcoords(&buffer[0], stream->getStride(), buffer.size() / stream->getStride());
         _ngShader->uploadAttrib("i_texcoord_0", texcoords);
     }
 }
 
-void Material::bindPartition(const Partition& part)
+void Material::draw(const mx::GeometryHandler& handler) const
+{
+    bool nothingToMatch = _geometryList.empty();
+    for (auto mesh : handler.getMeshes())
+    {
+        bool meshMatches = nothingToMatch || (std::find(_geometryList.begin(), _geometryList.end(), mesh->getIdentifier()) != _geometryList.end());
+        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
+        {
+            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
+            bool partMatches = meshMatches || (std::find(_geometryList.begin(), _geometryList.end(), part->getIdentifier()) != _geometryList.end());
+            if (partMatches)
+            {
+                bindPartition(part);
+                _ngShader->drawIndexed(GL_TRIANGLES, 0, (uint32_t)part->getFaceCount());
+            }
+        }
+    }
+}
+
+void Material::bindPartition(mx::MeshPartitionPtr part) const
 {
     if (!_ngShader)
     {
@@ -146,7 +217,7 @@ void Material::bindPartition(const Partition& part)
     }
 
     _ngShader->bind();
-    MatrixXuProxy indices(&part.getIndices()[0], 3, part.getIndices().size() / 3);
+    MatrixXuProxy indices(&part->getIndices()[0], 3, part->getIndices().size() / 3);
     _ngShader->uploadIndices(indices);
 }
 
