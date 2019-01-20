@@ -61,7 +61,7 @@ class Material
     }
 
     // Return the block of public uniforms for this material.
-    const mx::Shader::VariableBlock* Material::getPublicUniforms() const;
+    const mx::Shader::VariableBlock* getPublicUniforms() const;
 
     /// Find a public uniform from its MaterialX path.
     mx::Shader::Variable* findUniform(const std::string& path) const;
