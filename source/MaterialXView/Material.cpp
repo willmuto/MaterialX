@@ -206,14 +206,23 @@ void Material::bindPartition(mx::MeshPartitionPtr part) const
     _ngShader->uploadIndices(indices);
 }
 
-void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
+bool Material::bindShader()
 {
     if (!_ngShader)
     {
-        return;
+        return false;
     }
 
     _ngShader->bind();
+    return true;
+}
+
+void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
+{
+    if (!bindShader())
+    {
+        return;
+    }
 
     mx::Matrix44 viewProj = proj * view;
     mx::Matrix44 invView = view.getInverse();
@@ -236,12 +245,10 @@ void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44
 bool Material::bindImage(const std::string& filename, const std::string& uniformName, 
                          mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc)
 {
-    if (!_ngShader)
+    if (!bindShader())
     {
         return false;
     }
-
-    _ngShader->bind();
 
     // Acquire the given image.
     std::array<float, 4> defaultColor{0, 0, 0, 1};
@@ -261,12 +268,12 @@ bool Material::bindImage(const std::string& filename, const std::string& uniform
 
 void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath)
 {
-    if (!_ngShader || !_mxShader)
+    if (!bindShader())
     {
         return;
     }
 
-    const MaterialX::Shader::VariableBlock publicUniforms = _mxShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+    const MaterialX::Shader::VariableBlock publicUniforms = _hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
     for (auto uniform : publicUniforms.variableOrder)
     {
         if (uniform->type != MaterialX::Type::FILENAME)
@@ -287,12 +294,10 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
 
 void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples)
 {
-    if (!_ngShader)
+    if (!bindShader())
     {
         return;
     }
-
-    _ngShader->bind();
 
     // Bind light properties.
     if (_ngShader->uniform("u_envSamples", false) != -1)
@@ -345,12 +350,12 @@ void Material::draw(const mx::GeometryHandler& handler) const
 
 const MaterialX::Shader::VariableBlock* Material::getPublicUniforms() const
 {
-    if (!_mxShader)
+    if (!_hwShader)
     {
         return nullptr;
     }
 
-    return &_mxShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+    return &_hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
 }
 
 mx::Shader::Variable* Material::findUniform(const std::string& path) const

@@ -77,7 +77,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _libraryFolders(libraryFolders),
     _searchPath(searchPath),
     _nodeRemap(nodeRemap),
-    _envSamples(DEFAULT_ENV_SAMPLES)
+    _envSamples(DEFAULT_ENV_SAMPLES),
+    _partIndex(0),
+    _elementIndex(0)
 {
     _window = new ng::Window(this, "Viewer Options");
     _window->setPosition(ng::Vector2i(15, 15));
@@ -91,13 +93,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         if (!filename.empty())
         {
             _geometryHandler.clearGeometry();
-            bool loaded = _geometryHandler.loadGeometry(filename);
-            if (loaded)
+            if (_geometryHandler.loadGeometry(filename))
             {
                 if (_material)
                 {
                     _material->bindMesh(_geometryHandler);
                 }
+                updatePartSelections();
                 initCamera();
             }
             else
@@ -130,6 +132,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             }
         }
         mProcessEvents = true;
+    });
+
+    _partSelectionBox = new ng::ComboBox(_window, {"None"});
+    _partSelectionBox->setChevronIcon(-1);
+    _partSelectionBox->setCallback([this](int choice)
+    {
+        setPartSelection(choice);
     });
 
     _elementSelectionBox = new ng::ComboBox(_window, {"None"});
@@ -173,6 +182,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
     _geometryHandler.addLoader(loader);
     _geometryHandler.loadGeometry(meshFilename);
+    updatePartSelections();
     initCamera();
 
     setResizeCallback([this](ng::Vector2i size)
@@ -202,6 +212,39 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     updatePropertyEditor();
     _propertyEditor.setVisible(false);
     performLayout();
+}
+
+void Viewer::updatePartSelections()
+{
+    _partSelections.clear();
+    for (mx::MeshPtr mesh : _geometryHandler.getMeshes())
+    {
+        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
+        {
+            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
+            _partSelections.push_back(part);
+        }
+    }
+
+    std::vector<std::string> items;
+    for (size_t i = 0; i < _partSelections.size(); i++)
+    {
+        items.push_back(_partSelections[i]->getIdentifier());
+    }
+    _partSelectionBox->setItems(items);
+    _partSelectionBox->setVisible(items.size() > 1);
+
+    performLayout();
+}
+
+bool Viewer::setPartSelection(size_t index)
+{
+    if (index < _partSelections.size())
+    {
+        _partIndex = index;
+        return true;
+    }
+    return false;
 }
 
 void Viewer::updateElementSelections()
@@ -334,7 +377,11 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
 
 void Viewer::drawContents()
 {
-    if (_geometryHandler.getMeshes().empty() || !_material || !_material->getShader())
+    if (_geometryHandler.getMeshes().empty() || !_material)
+    {
+        return;
+    }
+    if (!_material->bindShader())
     {
         return;
     }
@@ -342,7 +389,6 @@ void Viewer::drawContents()
     mx::Matrix44 world, view, proj;
     computeCameraMatrices(world, view, proj);
 
-    _material->getShader()->bind();
     _material->bindViewInformation(world, view, proj);
     _material->bindImages(_imageHandler, _searchPath);
     _material->bindLights(_imageHandler, _searchPath, _envSamples);

@@ -64,8 +64,12 @@ class Viewer : public ng::Screen
                                mx::Matrix44& view,
                                mx::Matrix44& proj);
 
+    bool setPartSelection(size_t index);
+    void updatePartSelections();
+
     bool setElementSelection(size_t index);
     void updateElementSelections();
+
     void updatePropertyEditor();
 
   private:
@@ -99,6 +103,10 @@ class Viewer : public ng::Screen
 
     mx::DocumentPtr _contentDocument;
     mx::DocumentPtr _stdLib;
+
+    ng::ComboBox* _partSelectionBox;
+    std::vector<mx::MeshPartitionPtr> _partSelections;
+    size_t _partIndex;
 
     ng::ComboBox* _elementSelectionBox;
     std::vector<mx::TypedElementPtr> _elementSelections;
