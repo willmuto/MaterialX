@@ -64,8 +64,8 @@ class Viewer : public ng::Screen
                                mx::Matrix44& view,
                                mx::Matrix44& proj);
 
-    bool setPartSelection(size_t index);
-    void updatePartSelections();
+    bool setGeometrySelection(size_t index);
+    void updateGeometrySelections();
 
     bool setElementSelection(size_t index);
     void updateElementSelections();

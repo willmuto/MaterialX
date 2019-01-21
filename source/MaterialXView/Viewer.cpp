@@ -99,7 +99,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                 {
                     _material->bindMesh(_geometryHandler);
                 }
-                updatePartSelections();
+                updateGeometrySelections();
                 initCamera();
             }
             else
@@ -163,7 +163,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _geomSelectionBox->setChevronIcon(-1);
     _geomSelectionBox->setCallback([this](int choice)
     {
-        setPartSelection(choice);
+        setGeometrySelection(choice);
     });
 
     _elemLabel = new ng::Label(_window, "Element");
@@ -184,7 +184,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
     _geometryHandler.addLoader(loader);
     _geometryHandler.loadGeometry(meshFilename);
-    updatePartSelections();
+    updateGeometrySelections();
     initCamera();
 
     setResizeCallback([this](ng::Vector2i size)
@@ -218,7 +218,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     performLayout();
 }
 
-void Viewer::updatePartSelections()
+void Viewer::updateGeometrySelections()
 {
     _geomSelections.clear();
     for (mx::MeshPtr mesh : _geometryHandler.getMeshes())
@@ -243,7 +243,7 @@ void Viewer::updatePartSelections()
     performLayout();
 }
 
-bool Viewer::setPartSelection(size_t index)
+bool Viewer::setGeometrySelection(size_t index)
 {
     if (index < _geomSelections.size())
     {
