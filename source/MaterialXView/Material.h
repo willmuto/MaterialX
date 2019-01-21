@@ -30,7 +30,7 @@ class Material
     void bindMesh(const mx::GeometryHandler& handler);
 
     /// Return the underlying OpenGL shader.
-    GLShaderPtr getShader() const { return _ngShader; }
+    GLShaderPtr getShader() const { return _glShader; }
     
     /// Bind the underlying OpenGL shader, returning true upon success.
     bool bindShader();
@@ -67,8 +67,8 @@ class Material
     mx::Shader::Variable* findUniform(const std::string& path) const;
 
   protected:
-    Material(GLShaderPtr ngShader, mx::HwShaderPtr hwShader) :
-        _ngShader(ngShader),
+    Material(GLShaderPtr glShader, mx::HwShaderPtr hwShader) :
+        _glShader(glShader),
         _hwShader(hwShader),
         _hasTransparency(hwShader ? hwShader->hasTransparency() : false)
     {
@@ -84,7 +84,7 @@ class Material
     /// Bind mesh partition.
     void bindPartition(mx::MeshPartitionPtr part) const;
 
-    GLShaderPtr _ngShader;
+    GLShaderPtr _glShader;
     mx::HwShaderPtr _hwShader;
     bool _hasTransparency;
     mx::StringVec _geometryList;
@@ -94,6 +94,6 @@ mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLi
 mx::DocumentPtr loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath);
 void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap);
 
-StringPair generateSource(const mx::FileSearchPath& searchPath, mx::HwShaderPtr& hwShader, mx::ElementPtr elem);
+mx::HwShaderPtr generateSource(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
 #endif // MATERIALXVIEW_MATERIAL_H

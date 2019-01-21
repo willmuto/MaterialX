@@ -325,11 +325,15 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                 mx::ElementPtr elem = _elementSelections.size() ? _elementSelections[0] : nullptr;
                 if (elem)
                 {
-                    mx::HwShaderPtr hwShader = nullptr;
-                    StringPair source = generateSource(_searchPath, hwShader, elem);
-                    std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
-                    writeTextFile(source.first, _searchPath[0] / (baseName + "_vs.glsl"));
-                    writeTextFile(source.second, _searchPath[0]  / (baseName + "_ps.glsl"));
+                    mx::HwShaderPtr hwShader = generateSource(_searchPath, elem);
+                    if (hwShader)
+                    {
+                        std::string vertexShader = hwShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
+                        std::string pixelShader = hwShader->getSourceCode(mx::HwShader::PIXEL_STAGE);
+                        std::string baseName = mx::splitString(_materialFilename.getBaseName(), ".")[0];
+                        writeTextFile(vertexShader, _searchPath[0] / (baseName + "_vs.glsl"));
+                        writeTextFile(pixelShader, _searchPath[0]  / (baseName + "_ps.glsl"));
+                    }
                 }
             }
             catch (std::exception& e)
