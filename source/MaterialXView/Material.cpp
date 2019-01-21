@@ -126,7 +126,6 @@ void Material::bindMesh(const mx::GeometryHandler& handler)
 {
     assignPartitionsToMaterial(handler);
 
-    mx::MeshList meshes = handler.getMeshes();
     bool haveMaterialGeometry = !_geometryList.empty();
     for (auto mesh : handler.getMeshes())
     {

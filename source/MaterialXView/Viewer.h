@@ -26,9 +26,9 @@ class Viewer : public ng::Screen
     mx::ElementPtr getSelectedElement() const
     {
         mx::ElementPtr element = nullptr;
-        if (_elementIndex < _elementSelections.size())
+        if (_elemIndex < _elemSelections.size())
         {
-            element = _elementSelections[_elementIndex];
+            element = _elemSelections[_elemIndex];
         }
         return element;
     }
@@ -104,13 +104,15 @@ class Viewer : public ng::Screen
     mx::DocumentPtr _contentDocument;
     mx::DocumentPtr _stdLib;
 
-    ng::ComboBox* _partSelectionBox;
-    std::vector<mx::MeshPartitionPtr> _partSelections;
-    size_t _partIndex;
+    ng::Label* _geomLabel;
+    ng::ComboBox* _geomSelectionBox;
+    std::vector<mx::MeshPartitionPtr> _geomSelections;
+    size_t _geomIndex;
 
-    ng::ComboBox* _elementSelectionBox;
-    std::vector<mx::TypedElementPtr> _elementSelections;
-    size_t _elementIndex;
+    ng::Label* _elemLabel;
+    ng::ComboBox* _elemSelectionBox;
+    std::vector<mx::TypedElementPtr> _elemSelections;
+    size_t _elemIndex;
 
     PropertyEditor _propertyEditor;
 
