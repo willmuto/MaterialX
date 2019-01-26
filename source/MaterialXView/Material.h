@@ -26,8 +26,8 @@ class Material
   public:
     static MaterialPtr generateMaterial(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
-    /// Bind mesh given a handler.
-    void bindMesh(const mx::GeometryHandler& handler);
+    /// Bind the given mesh to this material.
+    void bindMesh(mx::MeshPtr mesh) const;
 
     /// Return the underlying OpenGL shader.
     GLShaderPtr getShader() const { return _glShader; }
@@ -51,14 +51,8 @@ class Material
     /// Return if the shader is has transparency.
     bool hasTransparency() const { return _hasTransparency; }
 
-    /// Draw the mesh given a handler.
-    void draw(const mx::GeometryHandler& handler) const;
-
-    /// List of associated geometry for this material.
-    mx::StringVec& getGeometryList()
-    {
-        return _geometryList;
-    }
+    /// Draw the given mesh partition.
+    void drawPartition(mx::MeshPartitionPtr part) const;
 
     // Return the block of public uniforms for this material.
     const mx::Shader::VariableBlock* getPublicUniforms() const;
@@ -74,20 +68,12 @@ class Material
     {
     }
 
-    // Utility to set associated geometry for the material.  For now it
-    // assigns all partitions to the the material.
-    void assignPartitionsToMaterial(const mx::GeometryHandler handler);
-
-    /// Bind mesh streams given a mesh.
-    void bindMeshStreams(mx::MeshPtr mesh) const;
-
-    /// Bind mesh partition.
+    /// Bind a mesh partition to this material.
     void bindPartition(mx::MeshPartitionPtr part) const;
 
     GLShaderPtr _glShader;
     mx::HwShaderPtr _hwShader;
     bool _hasTransparency;
-    mx::StringVec _geometryList;
 };
 
 mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);

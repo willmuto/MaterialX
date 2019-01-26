@@ -33,9 +33,9 @@ class Viewer : public ng::Screen
         return element;
     }
 
-    MaterialPtr getMaterial() const
+    MaterialPtr getCurrentMaterial() const
     {
-        return _material;
+        return _materials[_geomIndex];
     }
 
     mx::DocumentPtr getContentDocument() const
@@ -77,7 +77,7 @@ class Viewer : public ng::Screen
     ng::Arcball _arcball;
 
     mx::GeometryHandler _geometryHandler;
-    MaterialPtr _material;
+    std::vector<MaterialPtr> _materials;
 
     mx::Vector3 _eye;
     mx::Vector3 _center;

@@ -110,50 +110,7 @@ MaterialPtr Material::generateMaterial(const mx::FileSearchPath& searchPath, mx:
     return MaterialPtr(new Material(glShader, hwShader));
 }
 
-void Material::assignPartitionsToMaterial(const mx::GeometryHandler handler)
-{
-    _geometryList.clear();
-    for (auto mesh : handler.getMeshes())
-    {
-        for (size_t p = 0; p < mesh->getPartitionCount(); p++)
-        {
-            _geometryList.push_back(mesh->getPartition(p)->getIdentifier());
-        }
-    }
-}
-
-void Material::bindMesh(const mx::GeometryHandler& handler)
-{
-    assignPartitionsToMaterial(handler);
-
-    bool haveMaterialGeometry = !_geometryList.empty();
-    for (auto mesh : handler.getMeshes())
-    {
-        if (!haveMaterialGeometry)
-        {
-            bindMeshStreams(mesh);
-            continue;
-        }
-        bool matchMeshName = std::find(_geometryList.begin(), _geometryList.end(), mesh->getIdentifier()) != _geometryList.end();
-        if (matchMeshName)
-        {
-            bindMeshStreams(mesh);
-            continue;
-        }
-        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
-        {
-            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
-            bool matchPartName = std::find(_geometryList.begin(), _geometryList.end(), part->getIdentifier()) != _geometryList.end();
-            if (matchPartName)
-            {
-                bindMeshStreams(mesh);
-                break;
-            }
-        }
-    }
-}
-
-void Material::bindMeshStreams(const mx::MeshPtr mesh) const
+void Material::bindMesh(const mx::MeshPtr mesh) const
 {
     if (!mesh || !_glShader)
     {
@@ -326,23 +283,10 @@ void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
     }
 }
 
-void Material::draw(const mx::GeometryHandler& handler) const
+void Material::drawPartition(mx::MeshPartitionPtr part) const
 {
-    bool nothingToMatch = _geometryList.empty();
-    for (auto mesh : handler.getMeshes())
-    {
-        bool meshMatches = nothingToMatch || (std::find(_geometryList.begin(), _geometryList.end(), mesh->getIdentifier()) != _geometryList.end());
-        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
-        {
-            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
-            bool partMatches = meshMatches || (std::find(_geometryList.begin(), _geometryList.end(), part->getIdentifier()) != _geometryList.end());
-            if (partMatches)
-            {
-                bindPartition(part);
-                _glShader->drawIndexed(GL_TRIANGLES, 0, (uint32_t)part->getFaceCount());
-            }
-        }
-    }
+    bindPartition(part);
+    _glShader->drawIndexed(GL_TRIANGLES, 0, (uint32_t) part->getFaceCount());
 }
 
 const MaterialX::Shader::VariableBlock* Material::getPublicUniforms() const

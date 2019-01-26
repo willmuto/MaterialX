@@ -95,9 +95,15 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             _geometryHandler.clearGeometry();
             if (_geometryHandler.loadGeometry(filename))
             {
-                if (_material)
+                mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+                _materials.resize(mesh->getPartitionCount());
+                for (size_t i = 1; i < mesh->getPartitionCount(); i++)
                 {
-                    _material->bindMesh(_geometryHandler);
+                    _materials[i] = _materials[0];
+                }
+                if (getCurrentMaterial())
+                {
+                    getCurrentMaterial()->bindMesh(mesh);
                 }
                 updateGeometrySelections();
                 initCamera();
@@ -221,13 +227,11 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 void Viewer::updateGeometrySelections()
 {
     _geomSelections.clear();
-    for (mx::MeshPtr mesh : _geometryHandler.getMeshes())
+    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+    for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
     {
-        for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
-        {
-            mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
-            _geomSelections.push_back(part);
-        }
+        mx::MeshPartitionPtr part = mesh->getPartition(partIndex);
+        _geomSelections.push_back(part);
     }
 
     std::vector<std::string> items;
@@ -283,12 +287,19 @@ bool Viewer::setElementSelection(size_t index)
     }
     if (elem)
     {
-        _material = Material::generateMaterial(_searchPath, elem);
-        if (_material)
+        MaterialPtr material = Material::generateMaterial(_searchPath, elem);
+        if (material)
         {
-            _material->bindImages(_imageHandler, _searchPath);
-            _material->bindMesh(_geometryHandler);
+            material->bindImages(_imageHandler, _searchPath);
+            material->bindMesh(_geometryHandler.getMeshes()[0]);
             _elemIndex = index;
+
+            if (_materials.empty())
+            {
+                _materials.resize(1);
+            }
+            _materials[_geomIndex] = material;
+
             return true;
         }
     }
@@ -389,11 +400,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
 
 void Viewer::drawContents()
 {
-    if (_geometryHandler.getMeshes().empty() || !_material)
-    {
-        return;
-    }
-    if (!_material->bindShader())
+    if (_geometryHandler.getMeshes().empty() || !getCurrentMaterial())
     {
         return;
     }
@@ -401,24 +408,32 @@ void Viewer::drawContents()
     mx::Matrix44 world, view, proj;
     computeCameraMatrices(world, view, proj);
 
-    _material->bindViewInformation(world, view, proj);
-    _material->bindImages(_imageHandler, _searchPath);
-    _material->bindLights(_imageHandler, _searchPath, _envSamples);
-
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
-    if (_material->hasTransparency())
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
 
-    _material->draw(_geometryHandler);
+    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+    for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
+    {
+        MaterialPtr material = _materials[partIndex];
+        if (!material->bindShader())
+        {
+            continue;
+        }
+        if (material->hasTransparency())
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        else
+        {
+            glDisable(GL_BLEND);
+        }
+        material->bindViewInformation(world, view, proj);
+        material->bindImages(_imageHandler, _searchPath);
+        material->bindLights(_imageHandler, _searchPath, _envSamples);
+        material->drawPartition(mesh->getPartition(partIndex));
+    }
 
     glDisable(GL_BLEND);
     glDisable(GL_FRAMEBUFFER_SRGB);
