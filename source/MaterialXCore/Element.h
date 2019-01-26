@@ -1026,7 +1026,8 @@ class ValueElement : public TypedElement
     }
 
     /// Return the typed value of an element as a generic value object, which
-    /// may be queried to access its data.
+    /// may be queried to access its data.  Returned string values are resolved,
+    /// applying any string substitutions at the scope of this element.
     ///
     /// @return A shared pointer to the typed value of this element, or an
     ///    empty shared pointer if no value is present.
@@ -1034,7 +1035,7 @@ class ValueElement : public TypedElement
     {
         if (!hasValue())
             return ValuePtr();
-        return Value::createValueFromStrings(getValueString(), getType());
+        return Value::createValueFromStrings(getResolvedValueString(), getType());
     }
 
     /// @}
@@ -1234,6 +1235,12 @@ class StringResolver
     /// Given an input string and type, apply all appropriate modifiers and
     /// return the resulting string.
     virtual string resolve(const string& str, const string& type) const;
+
+    /// Return true if the given type may be resolved by this class.
+    static bool isResolvedType(const string& type)
+    {
+        return type == FILENAME_TYPE_STRING || type == GEOMNAME_TYPE_STRING;
+    }
 
     /// @}
 
