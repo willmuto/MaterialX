@@ -46,6 +46,7 @@ mx::DocumentPtr loadLibraries(const mx::StringVec& libraryFolders, const mx::Fil
 
 void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap)
 {
+    // Remap node names if requested.
     for (mx::ElementPtr elem : doc->traverseTree())
     {
         mx::NodePtr node = elem->asA<mx::Node>();
@@ -62,6 +63,17 @@ void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap)
                 shaderRef->setNodeString(nodeRemap.at(nodeDef->getNodeString()));
                 shaderRef->removeAttribute(mx::ShaderRef::NODE_DEF_ATTRIBUTE);
             }
+        }
+    }
+
+    // Remove unimplemented shader nodedefs.
+    std::vector<mx::NodeDefPtr> nodeDefs = doc->getNodeDefs();
+    for (mx::NodeDefPtr nodeDef : nodeDefs)
+    {
+        if (nodeDef->getType() == mx::SURFACE_SHADER_TYPE_STRING &&
+            !nodeDef->getImplementation())
+        {
+            doc->removeNodeDef(nodeDef->getName());
         }
     }
 }
@@ -207,8 +219,7 @@ bool Material::bindImage(const std::string& filename, const std::string& uniform
     }
 
     // Acquire the given image.
-    std::array<float, 4> defaultColor{0, 0, 0, 1};
-    if (!imageHandler->acquireImage(filename, desc, true, &defaultColor))
+    if (!imageHandler->acquireImage(filename, desc, true, nullptr))
     {
         std::cerr << "Failed to load image: " << filename << std::endl;
         return false;
