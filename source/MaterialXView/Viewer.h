@@ -13,7 +13,8 @@ class Viewer : public ng::Screen
   public:
     Viewer(const mx::StringVec& libraryFolders,
            const mx::FileSearchPath& searchPath,
-           const mx::StringMap& nodeRemap);
+           const mx::StringMap& nodeRemap,
+           int multiSampleCount);
     ~Viewer() { }
 
     void drawContents() override;

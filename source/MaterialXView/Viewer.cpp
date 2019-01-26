@@ -63,8 +63,12 @@ void writeTextFile(const std::string& text, const std::string& filePath)
 
 Viewer::Viewer(const mx::StringVec& libraryFolders,
                const mx::FileSearchPath& searchPath,
-               const mx::StringMap& nodeRemap) :
-    ng::Screen(ng::Vector2i(1280, 960), "MaterialXView"),
+               const mx::StringMap& nodeRemap,
+               int multiSampleCount) :
+    ng::Screen(ng::Vector2i(1280, 960), "MaterialXView",
+        true, false,
+        8, 8, 24, 8,
+        multiSampleCount),
     _eye(0.0f, 0.0f, 5.0f),
     _up(0.0f, 1.0f, 0.0f),
     _zoom(1.0f),
