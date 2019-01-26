@@ -240,7 +240,14 @@ void Viewer::updateGeometrySelections()
     std::vector<std::string> items;
     for (size_t i = 0; i < _geomSelections.size(); i++)
     {
-        items.push_back(_geomSelections[i]->getIdentifier());
+        std::string geomName = _geomSelections[i]->getIdentifier();
+        mx::StringVec geomSplit = mx::splitString(geomName, ":");
+        if (!geomSplit.empty() && !geomSplit[geomSplit.size() - 1].empty())
+        {
+            geomName = geomSplit[geomSplit.size() - 1];
+        }
+
+        items.push_back(geomName);
     }
     _geomSelectionBox->setItems(items);
 
@@ -256,6 +263,7 @@ bool Viewer::setGeometrySelection(size_t index)
     if (index < _geomSelections.size())
     {
         _geomIndex = index;
+        performLayout();
         return true;
     }
     return false;
