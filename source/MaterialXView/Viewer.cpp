@@ -99,17 +99,16 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             _geometryHandler.clearGeometry();
             if (_geometryHandler.loadGeometry(filename))
             {
-                mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
-                _materials.resize(mesh->getPartitionCount());
-                for (size_t i = 1; i < mesh->getPartitionCount(); i++)
+                updateGeometrySelections();
+                _materials.resize(_geomSelections.size());
+                for (size_t i = 1; i < _geomSelections.size(); i++)
                 {
                     _materials[i] = _materials[0];
                 }
                 if (getCurrentMaterial())
                 {
-                    getCurrentMaterial()->bindMesh(mesh);
+                    getCurrentMaterial()->bindMesh(_geometryHandler.getMeshes()[0]);
                 }
-                updateGeometrySelections();
                 initCamera();
             }
             else
@@ -247,6 +246,7 @@ void Viewer::updateGeometrySelections()
 
     _geomLabel->setVisible(items.size() > 1);
     _geomSelectionBox->setVisible(items.size() > 1);
+    _geomIndex = 0;
 
     performLayout();
 }
@@ -404,7 +404,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
 
 void Viewer::drawContents()
 {
-    if (_geometryHandler.getMeshes().empty() || !getCurrentMaterial())
+    if (_geomSelections.empty() || !getCurrentMaterial())
     {
         return;
     }
@@ -416,10 +416,9 @@ void Viewer::drawContents()
     glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
 
-    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
-    for (size_t partIndex = 0; partIndex < mesh->getPartitionCount(); partIndex++)
+    for (size_t i = 0; i < _geomSelections.size(); i++)
     {
-        MaterialPtr material = _materials[partIndex];
+        MaterialPtr material = _materials[i];
         if (!material->bindShader())
         {
             continue;
@@ -436,7 +435,7 @@ void Viewer::drawContents()
         material->bindViewInformation(world, view, proj);
         material->bindImages(_imageHandler, _searchPath);
         material->bindLights(_imageHandler, _searchPath, _envSamples);
-        material->drawPartition(mesh->getPartition(partIndex));
+        material->drawPartition(_geomSelections[i]);
     }
 
     glDisable(GL_BLEND);
@@ -473,8 +472,9 @@ bool Viewer::mouseMotionEvent(const ng::Vector2i& p,
         computeCameraMatrices(world, view, proj);
         mx::Matrix44 worldView = view * world;
 
-        mx::Vector3 boxMin = _geometryHandler.getMinimumBounds();
-        mx::Vector3 boxMax = _geometryHandler.getMaximumBounds();
+        mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+        mx::Vector3 boxMin = mesh->getMinimumBounds();
+        mx::Vector3 boxMax = mesh->getMaximumBounds();
         mx::Vector3 sphereCenter = (boxMax + boxMin) / 2.0;
 
         float zval = ng::project(ng::Vector3f(sphereCenter.data()),
@@ -535,8 +535,9 @@ void Viewer::initCamera()
     _arcball = ng::Arcball();
     _arcball.setSize(mSize);
 
-    mx::Vector3 boxMin = _geometryHandler.getMinimumBounds();
-    mx::Vector3 boxMax = _geometryHandler.getMaximumBounds();
+    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+    mx::Vector3 boxMin = mesh->getMinimumBounds();
+    mx::Vector3 boxMax = mesh->getMaximumBounds();
     mx::Vector3 sphereCenter = (boxMax + boxMin) / 2.0;
     float sphereRadius = (sphereCenter - boxMin).getMagnitude();
     _modelZoom = 2.0f / sphereRadius;
