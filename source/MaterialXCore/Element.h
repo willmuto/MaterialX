@@ -1026,9 +1026,10 @@ class ValueElement : public TypedElement
     }
 
     /// Return the typed value of an element as a generic value object, which
-    /// may be queried to access its data.  Returned values of string types
-    /// will be resolved, applying any string substitutions that are defined
-    /// at the scope of this element.
+    /// may be queried to access its data.
+    ///
+    /// Default string resolution will be applied to returned string values,
+    /// applying any substitutions that are defined at the scope of this element.
     ///
     /// @return A shared pointer to the typed value of this element, or an
     ///    empty shared pointer if no value is present.
