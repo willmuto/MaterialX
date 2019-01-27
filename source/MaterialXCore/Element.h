@@ -1028,16 +1028,28 @@ class ValueElement : public TypedElement
     /// Return the typed value of an element as a generic value object, which
     /// may be queried to access its data.
     ///
-    /// Default string resolution will be applied to returned string values,
-    /// applying any substitutions that are defined at the scope of this element.
-    ///
     /// @return A shared pointer to the typed value of this element, or an
     ///    empty shared pointer if no value is present.
     ValuePtr getValue() const
     {
         if (!hasValue())
             return ValuePtr();
-        return Value::createValueFromStrings(getResolvedValueString(), getType());
+        return Value::createValueFromStrings(getValueString(), getType());
+    }
+
+    /// Return the resolved value of an element as a generic value object, which
+    /// may be queried to access its data.
+    ///
+    /// @param resolver An optional string resolver, which will be used to
+    ///    apply string substitutions.  By default, a new string resolver
+    ///    will be created at this scope and applied to the return value.
+    /// @return A shared pointer to the typed value of this element, or an
+    ///    empty shared pointer if no value is present.
+    ValuePtr getResolvedValue(StringResolverPtr resolver = nullptr) const
+    {
+        if (!hasValue())
+            return ValuePtr();
+        return Value::createValueFromStrings(getResolvedValueString(resolver), getType());
     }
 
     /// @}
