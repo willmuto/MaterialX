@@ -21,16 +21,24 @@ using GLShaderPtr = std::shared_ptr<ng::GLShader>;
 
 using StringPair = std::pair<std::string, std::string>;
 
+class MaterialSubset
+{
+  public:
+    mx::TypedElementPtr elem;
+    std::string udim;
+};
+
 class Material
 {
   public:
-    static MaterialPtr generateMaterial(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
+    Material() { }
+    ~Material() { }
 
-    /// Bind the given mesh to this material.
-    void bindMesh(mx::MeshPtr mesh) const;
+    /// Generate a shader from the given inputs.
+    bool generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
     /// Return the underlying OpenGL shader.
-    GLShaderPtr getShader() const { return _glShader; }
+    GLShaderPtr getShader() const { return glShader; }
     
     /// Bind the underlying OpenGL shader, returning true upon success.
     bool bindShader();
@@ -48,8 +56,11 @@ class Material
     /// Bind lights to shader.
     void bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples);
 
-    /// Return if the shader is has transparency.
-    bool hasTransparency() const { return _hasTransparency; }
+    /// Bind the given mesh to this material.
+    void bindMesh(mx::MeshPtr mesh) const;
+
+    /// Bind a mesh partition to this material.
+    void bindPartition(mx::MeshPartitionPtr part) const;
 
     /// Draw the given mesh partition.
     void drawPartition(mx::MeshPartitionPtr part) const;
@@ -60,27 +71,12 @@ class Material
     /// Find a public uniform from its MaterialX path.
     mx::Shader::Variable* findUniform(const std::string& path) const;
 
-  protected:
-    Material(GLShaderPtr glShader, mx::HwShaderPtr hwShader) :
-        _glShader(glShader),
-        _hwShader(hwShader),
-        _hasTransparency(hwShader ? hwShader->hasTransparency() : false)
-    {
-    }
-
-    /// Bind a mesh partition to this material.
-    void bindPartition(mx::MeshPartitionPtr part) const;
-
-    GLShaderPtr _glShader;
-    mx::HwShaderPtr _hwShader;
-    bool _hasTransparency;
-};
-
-class MaterialSubset
-{
   public:
-    mx::TypedElementPtr elem;
-    std::string udim;
+    mx::DocumentPtr doc;
+    GLShaderPtr glShader;
+    mx::HwShaderPtr hwShader;
+    std::vector<MaterialSubset> subsets;
+    bool hasTransparency;
 };
 
 mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);

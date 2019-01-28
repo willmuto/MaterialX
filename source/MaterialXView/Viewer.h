@@ -29,23 +29,19 @@ class Viewer : public ng::Screen
         return _window;
     }
 
-    mx::DocumentPtr getContentDocument() const
-    {
-        return _contentDocument;
-    }
-
     MaterialPtr getCurrentMaterial() const
     {
         return _materials[_geomIndex];
     }
 
-    MaterialSubset getMaterialSubset() const
+    MaterialSubset getCurrentMaterialSubset() const
     {
-        if (_subsetIndex < _materialSubsets.size())
-        {
-            return _materialSubsets[_subsetIndex];
-        }
-        return MaterialSubset();
+        return getCurrentMaterial()->subsets[_subsetIndex];
+    }
+
+    mx::DocumentPtr getCurrentDocument() const
+    {
+        return getCurrentMaterial()->doc;
     }
 
     const mx::FileSearchPath& getSearchPath() const
@@ -101,7 +97,6 @@ class Viewer : public ng::Screen
     mx::FilePath _materialFilename;
     int _envSamples;
 
-    mx::DocumentPtr _contentDocument;
     mx::DocumentPtr _stdLib;
 
     ng::Label* _geomLabel;
@@ -111,7 +106,6 @@ class Viewer : public ng::Screen
 
     ng::Label* _materialLabel;
     ng::ComboBox* _materialSubsetBox;
-    std::vector<MaterialSubset> _materialSubsets;
     size_t _subsetIndex;
 
     PropertyEditor _propertyEditor;

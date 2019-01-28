@@ -519,7 +519,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                                     mx::ImageDesc desc;
                                     uniform->value = mx::Value::createValue<std::string>(filename);
                                     material->getShader()->bind();
-                                    material->bindImage(filename, uniform->name, handler, desc, viewer->getMaterialSubset().udim); 
+                                    material->bindImage(filename, uniform->name, handler, desc, viewer->getCurrentMaterialSubset().udim); 
 
                                     buttonVar->setCaption(filename);
                                     viewer->performLayout();
@@ -546,7 +546,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                             mx::ImageDesc desc;
                             uniform->value = mx::Value::createValue<std::string>(filename);
                             material->getShader()->bind();
-                            material->bindImage(filename, uniformName, viewer->getImageHandler(), desc, viewer->getMaterialSubset().udim);
+                            material->bindImage(filename, uniformName, viewer->getImageHandler(), desc, viewer->getCurrentMaterialSubset().udim);
                         }
                         else
                         {
@@ -563,14 +563,14 @@ void PropertyEditor::updateContents(Viewer* viewer)
 {
     create(*viewer);
 
-    MaterialSubset selection = viewer->getMaterialSubset();
-    if (!selection.elem)
+    MaterialSubset subset = viewer->getCurrentMaterialSubset();
+    if (!subset.elem)
     {
         return;
     }
 
     MaterialPtr material = viewer->getCurrentMaterial();
-    mx::DocumentPtr contentDocument = viewer->getContentDocument();
+    mx::DocumentPtr contentDocument = viewer->getCurrentDocument();
     if (!material || !contentDocument)
     {
         return;
@@ -594,11 +594,11 @@ void PropertyEditor::updateContents(Viewer* viewer)
 
                     std::string parentLabel;
                     mx::ElementPtr parent = uniformElement->getParent();
-                    if (parent && parent != contentDocument && parent != selection.elem)
+                    if (parent && parent != contentDocument && parent != subset.elem)
                     {
                         parentLabel = parent->getNamePath();
                     }
-                    if (parentLabel == selection.elem->getAttribute(mx::PortElement::NODE_NAME_ATTRIBUTE))
+                    if (parentLabel == subset.elem->getAttribute(mx::PortElement::NODE_NAME_ATTRIBUTE))
                     {
                         parentLabel.clear();
                     }
