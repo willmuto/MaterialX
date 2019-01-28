@@ -83,7 +83,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _nodeRemap(nodeRemap),
     _envSamples(DEFAULT_ENV_SAMPLES),
     _geomIndex(0),
-    _elemIndex(0)
+    _subsetIndex(0)
 {
     _window = new ng::Window(this, "Viewer Options");
     _window->setPosition(ng::Vector2i(15, 15));
@@ -131,8 +131,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             {
                 _contentDocument = loadDocument(_materialFilename, _stdLib);
                 remapNodes(_contentDocument, _nodeRemap);
-                updateElementSelections();
-                setElementSelection(0);
+                updateMaterialSubsets();
+                setMaterialSubset(0);
                 updatePropertyEditor();
             }
             catch (std::exception& e)
@@ -175,13 +175,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         setGeometrySelection(choice);
     });
 
-    _elemLabel = new ng::Label(_window, "Element");
+    _materialLabel = new ng::Label(_window, "Material");
 
-    _elemSelectionBox = new ng::ComboBox(_window, {"None"});
-    _elemSelectionBox->setChevronIcon(-1);
-    _elemSelectionBox->setCallback([this](int choice)
+    _materialSubsetBox = new ng::ComboBox(_window, {"None"});
+    _materialSubsetBox->setChevronIcon(-1);
+    _materialSubsetBox->setCallback([this](int choice)
     {
-        setElementSelection(choice);
+        setMaterialSubset(choice);
         updatePropertyEditor();
     });
 
@@ -214,8 +214,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     }
     try
     {
-        updateElementSelections();
-        setElementSelection(0);
+        updateMaterialSubsets();
+        setMaterialSubset(0);
     }
     catch (std::exception& e)
     {
@@ -269,42 +269,71 @@ bool Viewer::setGeometrySelection(size_t index)
     return false;
 }
 
-void Viewer::updateElementSelections()
+void Viewer::updateMaterialSubsets()
 {
-    _elemSelections.clear();
+    _materialSubsets.clear();
     if (_contentDocument)
     {
-        mx::findRenderableElements(_contentDocument, _elemSelections);
+        std::vector<mx::TypedElementPtr> elems;
+        mx::findRenderableElements(_contentDocument, elems);
+        mx::ValuePtr udimSetValue = _contentDocument->getGeomAttrValue("udimset");
+        for (mx::TypedElementPtr elem : elems)
+        {
+            if (udimSetValue && udimSetValue->isA<mx::StringVec>())
+            {
+                for (const std::string& udim : udimSetValue->asA<mx::StringVec>())
+                {
+                    MaterialSubset select;
+                    select.elem = elem;
+                    select.udim = udim;
+                    _materialSubsets.push_back(select);
+                }
+            }
+            else
+            {
+                MaterialSubset select;
+                select.elem = elem;
+                _materialSubsets.push_back(select);
+            }
+        }
     }
 
     std::vector<std::string> items;
-    for (size_t i = 0; i < _elemSelections.size(); i++)
+    for (const MaterialSubset& select : _materialSubsets)
     {
-        items.push_back(_elemSelections[i]->getNamePath());
+        std::string displayName = select.elem->getNamePath();
+        if (!select.udim.empty())
+        {
+            displayName += " (" + select.udim + ")";
+        }
+        items.push_back(displayName);
     }
-    _elemSelectionBox->setItems(items);
+    _materialSubsetBox->setItems(items);
 
-    _elemLabel->setVisible(items.size() > 1);
-    _elemSelectionBox->setVisible(items.size() > 1);
+    _materialLabel->setVisible(items.size() > 1);
+    _materialSubsetBox->setVisible(items.size() > 1);
 
     performLayout();
 }
 
-bool Viewer::setElementSelection(size_t index)
+bool Viewer::setMaterialSubset(size_t index)
 {
-    mx::ElementPtr elem;
-    if (index < _elemSelections.size())
+    if (index >= _materialSubsets.size())
     {
-        elem = _elemSelections[index];
+        return false;
     }
-    if (elem)
+
+    _subsetIndex = index;
+    const MaterialSubset& selection = getMaterialSubset();
+
+    if (selection.elem)
     {
-        MaterialPtr material = Material::generateMaterial(_searchPath, elem);
+        MaterialPtr material = Material::generateMaterial(_searchPath, selection.elem);
         if (material)
         {
-            material->bindImages(_imageHandler, _searchPath);
+            material->bindImages(_imageHandler, _searchPath, selection.udim);
             material->bindMesh(_geometryHandler.getMeshes()[0]);
-            _elemIndex = index;
+            _subsetIndex = index;
 
             if (_materials.empty())
             {
@@ -337,8 +366,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         }
         try
         {
-            updateElementSelections();
-            setElementSelection(0);
+            updateMaterialSubsets();
+            setMaterialSubset(0);
             updatePropertyEditor();
         }
         catch (std::exception& e)
@@ -353,10 +382,10 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         {
             try
             {
-                mx::ElementPtr elem = _elemSelections.size() ? _elemSelections[0] : nullptr;
-                if (elem)
+                MaterialSubset selection = getMaterialSubset();
+                if (selection.elem)
                 {
-                    mx::HwShaderPtr hwShader = generateSource(_searchPath, elem);
+                    mx::HwShaderPtr hwShader = generateSource(_searchPath, selection.elem);
                     if (hwShader)
                     {
                         std::string vertexShader = hwShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
@@ -378,24 +407,24 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     // Allow left and right keys to cycle through the renderable elements
     if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
     {
-        size_t elementCount = _elemSelections.size();
-        if (elementCount > 1)
+        size_t selectionCount = _materialSubsets.size();
+        if (selectionCount > 1)
         {
             size_t newIndex = 0;
             if (key == GLFW_KEY_RIGHT)
             {
-                newIndex = (_elemIndex < elementCount - 1) ? _elemIndex + 1 : 0;
+                newIndex = (_subsetIndex < selectionCount - 1) ? _subsetIndex + 1 : 0;
             }
             else
             {
-                newIndex = (_elemIndex > 0) ? _elemIndex - 1 : elementCount - 1;
+                newIndex = (_subsetIndex > 0) ? _subsetIndex - 1 : selectionCount - 1;
             }
             try
             {
-                if (setElementSelection(newIndex))
+                if (setMaterialSubset(newIndex))
                 {
-                    _elemSelectionBox->setSelectedIndex((int) newIndex);
-                    updateElementSelections();
+                    _materialSubsetBox->setSelectedIndex((int) newIndex);
+                    updateMaterialSubsets();
                     updatePropertyEditor();
                 }
             }
@@ -441,7 +470,7 @@ void Viewer::drawContents()
             glDisable(GL_BLEND);
         }
         material->bindViewInformation(world, view, proj);
-        material->bindImages(_imageHandler, _searchPath);
+        material->bindImages(_imageHandler, _searchPath, getMaterialSubset().udim);
         material->bindLights(_imageHandler, _searchPath, _envSamples);
         material->drawPartition(_geomSelections[i]);
     }

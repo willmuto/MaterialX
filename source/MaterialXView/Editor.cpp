@@ -519,7 +519,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                                     mx::ImageDesc desc;
                                     uniform->value = mx::Value::createValue<std::string>(filename);
                                     material->getShader()->bind();
-                                    material->bindImage(filename, uniform->name, handler, desc); 
+                                    material->bindImage(filename, uniform->name, handler, desc, viewer->getMaterialSubset().udim); 
 
                                     buttonVar->setCaption(filename);
                                     viewer->performLayout();
@@ -546,7 +546,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                             mx::ImageDesc desc;
                             uniform->value = mx::Value::createValue<std::string>(filename);
                             material->getShader()->bind();
-                            material->bindImage(filename, uniformName, viewer->getImageHandler(), desc);
+                            material->bindImage(filename, uniformName, viewer->getImageHandler(), desc, viewer->getMaterialSubset().udim);
                         }
                         else
                         {
@@ -563,8 +563,8 @@ void PropertyEditor::updateContents(Viewer* viewer)
 {
     create(*viewer);
 
-    mx::ElementPtr element = viewer->getSelectedElement();
-    if (!element)
+    MaterialSubset selection = viewer->getMaterialSubset();
+    if (!selection.elem)
     {
         return;
     }
@@ -594,11 +594,11 @@ void PropertyEditor::updateContents(Viewer* viewer)
 
                     std::string parentLabel;
                     mx::ElementPtr parent = uniformElement->getParent();
-                    if (parent && parent != contentDocument && parent != element)
+                    if (parent && parent != contentDocument && parent != selection.elem)
                     {
                         parentLabel = parent->getNamePath();
                     }
-                    if (parentLabel == element->getAttribute(mx::PortElement::NODE_NAME_ATTRIBUTE))
+                    if (parentLabel == selection.elem->getAttribute(mx::PortElement::NODE_NAME_ATTRIBUTE))
                     {
                         parentLabel.clear();
                     }

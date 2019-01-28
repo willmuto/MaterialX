@@ -24,19 +24,9 @@ class Viewer : public ng::Screen
     bool mouseMotionEvent(const ng::Vector2i& p, const ng::Vector2i& rel, int button, int modifiers) override;
     bool mouseButtonEvent(const ng::Vector2i& p, int button, bool down, int modifiers) override;
 
-    mx::ElementPtr getSelectedElement() const
+    ng::Window* getWindow() const
     {
-        mx::ElementPtr element = nullptr;
-        if (_elemIndex < _elemSelections.size())
-        {
-            element = _elemSelections[_elemIndex];
-        }
-        return element;
-    }
-
-    MaterialPtr getCurrentMaterial() const
-    {
-        return _materials[_geomIndex];
+        return _window;
     }
 
     mx::DocumentPtr getContentDocument() const
@@ -44,9 +34,18 @@ class Viewer : public ng::Screen
         return _contentDocument;
     }
 
-    ng::Window* getWindow() const
+    MaterialPtr getCurrentMaterial() const
     {
-        return _window;
+        return _materials[_geomIndex];
+    }
+
+    MaterialSubset getMaterialSubset() const
+    {
+        if (_subsetIndex < _materialSubsets.size())
+        {
+            return _materialSubsets[_subsetIndex];
+        }
+        return MaterialSubset();
     }
 
     const mx::FileSearchPath& getSearchPath() const
@@ -68,8 +67,8 @@ class Viewer : public ng::Screen
     bool setGeometrySelection(size_t index);
     void updateGeometrySelections();
 
-    bool setElementSelection(size_t index);
-    void updateElementSelections();
+    bool setMaterialSubset(size_t index);
+    void updateMaterialSubsets();
 
     void updatePropertyEditor();
 
@@ -110,10 +109,10 @@ class Viewer : public ng::Screen
     std::vector<mx::MeshPartitionPtr> _geomSelections;
     size_t _geomIndex;
 
-    ng::Label* _elemLabel;
-    ng::ComboBox* _elemSelectionBox;
-    std::vector<mx::TypedElementPtr> _elemSelections;
-    size_t _elemIndex;
+    ng::Label* _materialLabel;
+    ng::ComboBox* _materialSubsetBox;
+    std::vector<MaterialSubset> _materialSubsets;
+    size_t _subsetIndex;
 
     PropertyEditor _propertyEditor;
 

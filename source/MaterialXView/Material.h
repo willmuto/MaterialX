@@ -38,12 +38,12 @@ class Material
     /// Bind viewing information for this material.
     void bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
 
-    /// Bind image to shader.
-    bool bindImage(const std::string& filename, const std::string& uniformName,
-                   mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc);
-
     /// Bind all images for this material.
-    void bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath);
+    void bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, const std::string& udim);
+
+    /// Bind a single image.
+    bool bindImage(std::string filename, const std::string& uniformName, mx::GLTextureHandlerPtr imageHandler,
+        mx::ImageDesc& desc, const std::string& udim = mx::EMPTY_STRING);
 
     /// Bind lights to shader.
     void bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples);
@@ -74,6 +74,13 @@ class Material
     GLShaderPtr _glShader;
     mx::HwShaderPtr _hwShader;
     bool _hasTransparency;
+};
+
+class MaterialSubset
+{
+  public:
+    mx::TypedElementPtr elem;
+    std::string udim;
 };
 
 mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);

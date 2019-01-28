@@ -210,12 +210,47 @@ void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44
     }
 }
 
-bool Material::bindImage(const std::string& filename, const std::string& uniformName, 
-                         mx::GLTextureHandlerPtr imageHandler, mx::ImageDesc& desc)
+void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, const std::string& udim)
+{
+    if (!bindShader())
+    {
+        return;
+    }
+
+    const MaterialX::Shader::VariableBlock publicUniforms = _hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE,
+        MaterialX::Shader::PUBLIC_UNIFORMS);
+    for (auto uniform : publicUniforms.variableOrder)
+    {
+        if (uniform->type != MaterialX::Type::FILENAME)
+        {
+            continue;
+        }
+        const std::string& uniformName = uniform->name;
+        std::string filename;
+        if (uniform->value)
+        {
+            filename = searchPath.find(uniform->value->getValueString());
+        }
+
+        mx::ImageDesc desc;
+        bindImage(filename, uniformName, imageHandler, desc, udim);
+    }
+}
+
+bool Material::bindImage(std::string filename, const std::string& uniformName, mx::GLTextureHandlerPtr imageHandler,
+    mx::ImageDesc& desc, const std::string& udim)
 {
     if (!bindShader())
     {
         return false;
+    }
+
+    // Apply udim string if specified.
+    if (!udim.empty())
+    {
+        mx::StringMap map;
+        map[mx::UDIM_TOKEN] = udim;
+        filename = mx::replaceSubstrings(filename, map);
     }
 
     // Acquire the given image.
@@ -231,32 +266,6 @@ bool Material::bindImage(const std::string& filename, const std::string& uniform
     imageHandler->bindImage(filename, samplingProperties);
 
     return true;
-}
-
-void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath)
-{
-    if (!bindShader())
-    {
-        return;
-    }
-
-    const MaterialX::Shader::VariableBlock publicUniforms = _hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
-    for (auto uniform : publicUniforms.variableOrder)
-    {
-        if (uniform->type != MaterialX::Type::FILENAME)
-        {
-            continue;
-        }
-        const std::string& uniformName = uniform->name;
-        std::string filename;
-        if (uniform->value)
-        {
-            filename = searchPath.find(uniform->value->getValueString());
-        }
-
-        mx::ImageDesc desc;
-        bindImage(filename, uniformName, imageHandler, desc);
-    }
 }
 
 void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples)
