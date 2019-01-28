@@ -129,7 +129,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             _materialFilename = filename;
             try
             {
-                getCurrentMaterial()->doc = loadDocument(_materialFilename, _stdLib);
+                _materials[_geomIndex] = std::make_shared<Material>();
+                getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
                 remapNodes(getCurrentMaterial()->doc, _nodeRemap);
                 updateMaterialSubsets();
                 setMaterialSubset(0);
@@ -206,7 +207,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     try
     {
-        getCurrentMaterial()->doc = loadDocument(_materialFilename, _stdLib);
+        getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
         remapNodes(getCurrentMaterial()->doc, _nodeRemap);
     }
     catch (std::exception& e)
@@ -285,28 +286,28 @@ void Viewer::updateMaterialSubsets()
             {
                 for (const std::string& udim : udimSetValue->asA<mx::StringVec>())
                 {
-                    MaterialSubset select;
-                    select.elem = elem;
-                    select.udim = udim;
-                    getCurrentMaterial()->subsets.push_back(select);
+                    MaterialSubset subset;
+                    subset.elem = elem;
+                    subset.udim = udim;
+                    getCurrentMaterial()->subsets.push_back(subset);
                 }
             }
             else
             {
-                MaterialSubset select;
-                select.elem = elem;
-                getCurrentMaterial()->subsets.push_back(select);
+                MaterialSubset subset;
+                subset.elem = elem;
+                getCurrentMaterial()->subsets.push_back(subset);
             }
         }
     }
 
     std::vector<std::string> items;
-    for (const MaterialSubset& select : getCurrentMaterial()->subsets)
+    for (const MaterialSubset& subset : getCurrentMaterial()->subsets)
     {
-        std::string displayName = select.elem->getNamePath();
-        if (!select.udim.empty())
+        std::string displayName = subset.elem->getNamePath();
+        if (!subset.udim.empty())
         {
-            displayName += " (" + select.udim + ")";
+            displayName += " (" + subset.udim + ")";
         }
         items.push_back(displayName);
     }
@@ -353,7 +354,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     {
         try
         {
-            getCurrentMaterial()->doc = loadDocument(_materialFilename, _stdLib);
+            getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
             remapNodes(getCurrentMaterial()->doc, _nodeRemap);
         }
         catch (std::exception& e)

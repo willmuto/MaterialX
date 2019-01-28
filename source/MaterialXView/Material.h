@@ -34,6 +34,9 @@ class Material
     Material() { }
     ~Material() { }
 
+    /// Load a new content document.
+    void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);
+
     /// Generate a shader from the given inputs.
     bool generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 

@@ -10,17 +10,6 @@
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
 using MatrixXuProxy = Eigen::Map<const ng::MatrixXu>;
 
-mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib)
-{
-    mx::DocumentPtr doc = mx::createDocument();
-    mx::readFromXmlFile(doc, filePath);
-    mx::CopyOptions copyOptions;
-    copyOptions.skipDuplicateElements = true;
-    doc->importLibrary(stdLib, &copyOptions);
-
-    return doc;
-}
-
 mx::DocumentPtr loadLibraries(const mx::StringVec& libraryFolders, const mx::FileSearchPath& searchPath)
 {
     mx::DocumentPtr doc = mx::createDocument();
@@ -105,8 +94,17 @@ mx::HwShaderPtr generateSource(const mx::FileSearchPath& searchPath, mx::Element
 }
 
 //
-// Viewer methods
+// Material methods
 //
+
+void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib)
+{
+    doc = mx::createDocument();
+    mx::readFromXmlFile(doc, filePath);
+    mx::CopyOptions copyOptions;
+    copyOptions.skipDuplicateElements = true;
+    doc->importLibrary(stdLib, &copyOptions);
+}
 
 bool Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
 {
