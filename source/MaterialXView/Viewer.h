@@ -36,7 +36,7 @@ class Viewer : public ng::Screen
 
     MaterialSubset getCurrentMaterialSubset() const
     {
-        return getCurrentMaterial()->getSubsets()[_subsetIndex];
+        return getCurrentMaterial()->getCurrentSubset();
     }
 
     mx::DocumentPtr getCurrentDocument() const
@@ -63,8 +63,8 @@ class Viewer : public ng::Screen
     bool setGeometrySelection(size_t index);
     void updateGeometrySelections();
 
-    bool setMaterialSubset(size_t index);
-    void updateMaterialSubsets();
+    bool setSubsetSelection(size_t index);
+    void updateSubsetSelections();
 
     void updatePropertyEditor();
 
@@ -106,7 +106,6 @@ class Viewer : public ng::Screen
 
     ng::Label* _materialLabel;
     ng::ComboBox* _materialSubsetBox;
-    size_t _subsetIndex;
 
     PropertyEditor _propertyEditor;
 

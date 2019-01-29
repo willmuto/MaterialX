@@ -31,7 +31,10 @@ class MaterialSubset
 class Material
 {
   public:
-    Material() { }
+    Material() :
+        _subsetIndex(0)
+    {
+    }
     ~Material() { }
 
     /// Load a new content document.
@@ -47,6 +50,24 @@ class Material
     const std::vector<MaterialSubset>& getSubsets()
     {
         return _subsets;
+    }
+
+    /// Return the current material subset.
+    const MaterialSubset& getCurrentSubset()
+    {
+        return _subsets[_subsetIndex];
+    }
+
+    /// Set the current material subset index.
+    void setSubsetIndex(size_t index)
+    {
+        _subsetIndex = index;
+    }
+
+    /// Return the current material subset index.
+    size_t getSubsetIndex()
+    {
+        return _subsetIndex;
     }
 
     /// Generate a shader from the given inputs.
@@ -100,6 +121,7 @@ class Material
     GLShaderPtr _glShader;
     mx::HwShaderPtr _hwShader;
     std::vector<MaterialSubset> _subsets;
+    size_t _subsetIndex;
     bool _hasTransparency;
 };
 

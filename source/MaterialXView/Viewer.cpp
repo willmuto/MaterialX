@@ -82,8 +82,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _searchPath(searchPath),
     _nodeRemap(nodeRemap),
     _envSamples(DEFAULT_ENV_SAMPLES),
-    _geomIndex(0),
-    _subsetIndex(0)
+    _geomIndex(0)
 {
     _window = new ng::Window(this, "Viewer Options");
     _window->setPosition(ng::Vector2i(15, 15));
@@ -131,8 +130,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             {
                 _materials[_geomIndex] = std::make_shared<Material>();
                 getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
-                updateMaterialSubsets();
-                setMaterialSubset(0);
+                updateSubsetSelections();
+                setSubsetSelection(0);
                 updatePropertyEditor();
             }
             catch (std::exception& e)
@@ -181,7 +180,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _materialSubsetBox->setChevronIcon(-1);
     _materialSubsetBox->setCallback([this](int choice)
     {
-        setMaterialSubset(choice);
+        setSubsetSelection(choice);
         updatePropertyEditor();
     });
 
@@ -214,8 +213,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     }
     try
     {
-        updateMaterialSubsets();
-        setMaterialSubset(0);
+        updateSubsetSelections();
+        setSubsetSelection(0);
     }
     catch (std::exception& e)
     {
@@ -263,13 +262,15 @@ bool Viewer::setGeometrySelection(size_t index)
     if (index < _geomSelections.size())
     {
         _geomIndex = index;
-        performLayout();
+        updateSubsetSelections();
+        setSubsetSelection(getCurrentMaterial()->getSubsetIndex());
+        updatePropertyEditor();
         return true;
     }
     return false;
 }
 
-void Viewer::updateMaterialSubsets()
+void Viewer::updateSubsetSelections()
 {
     std::vector<std::string> items;
     for (const MaterialSubset& subset : getCurrentMaterial()->getSubsets())
@@ -289,7 +290,7 @@ void Viewer::updateMaterialSubsets()
     performLayout();
 }
 
-bool Viewer::setMaterialSubset(size_t index)
+bool Viewer::setSubsetSelection(size_t index)
 {
     MaterialPtr material = getCurrentMaterial();
     if (index >= material->getSubsets().size())
@@ -297,7 +298,7 @@ bool Viewer::setMaterialSubset(size_t index)
         return false;
     }
 
-    _subsetIndex = index;
+    getCurrentMaterial()->setSubsetIndex(index);
     const MaterialSubset& subset = getCurrentMaterialSubset();
 
     if (subset.elem)
@@ -306,8 +307,6 @@ bool Viewer::setMaterialSubset(size_t index)
         {
             material->bindImages(_imageHandler, _searchPath, subset.udim);
             material->bindMesh(_geometryHandler.getMeshes()[0]);
-            _subsetIndex = index;
-
             return true;
         }
     }
@@ -332,8 +331,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         }
         try
         {
-            updateMaterialSubsets();
-            setMaterialSubset(0);
+            updateSubsetSelections();
+            setSubsetSelection(getCurrentMaterial()->getSubsetIndex());
             updatePropertyEditor();
         }
         catch (std::exception& e)
@@ -374,23 +373,24 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
     {
         size_t subsetCount = getCurrentMaterial()->getSubsets().size();
+        size_t subsetIndex = getCurrentMaterial()->getSubsetIndex();
         if (subsetCount > 1)
         {
             size_t newIndex = 0;
             if (key == GLFW_KEY_RIGHT)
             {
-                newIndex = (_subsetIndex < subsetCount - 1) ? _subsetIndex + 1 : 0;
+                newIndex = (subsetIndex < subsetCount - 1) ? subsetIndex + 1 : 0;
             }
             else
             {
-                newIndex = (_subsetIndex > 0) ? _subsetIndex - 1 : subsetCount - 1;
+                newIndex = (subsetIndex > 0) ? subsetIndex - 1 : subsetCount - 1;
             }
             try
             {
-                if (setMaterialSubset(newIndex))
+                if (setSubsetSelection(newIndex))
                 {
                     _materialSubsetBox->setSelectedIndex((int) newIndex);
-                    updateMaterialSubsets();
+                    updateSubsetSelections();
                     updatePropertyEditor();
                 }
             }
