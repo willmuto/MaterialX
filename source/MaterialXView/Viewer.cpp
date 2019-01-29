@@ -130,8 +130,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             try
             {
                 _materials[_geomIndex] = std::make_shared<Material>();
-                getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
-                remapNodes(getCurrentMaterial()->doc, _nodeRemap);
+                getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
                 updateMaterialSubsets();
                 setMaterialSubset(0);
                 updatePropertyEditor();
@@ -207,8 +206,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     try
     {
-        getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
-        remapNodes(getCurrentMaterial()->doc, _nodeRemap);
+        getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
     }
     catch (std::exception& e)
     {
@@ -273,36 +271,8 @@ bool Viewer::setGeometrySelection(size_t index)
 
 void Viewer::updateMaterialSubsets()
 {
-    getCurrentMaterial()->subsets.clear();
-    mx::DocumentPtr doc = getCurrentDocument();
-    if (doc)
-    {
-        std::vector<mx::TypedElementPtr> elems;
-        mx::findRenderableElements(doc, elems);
-        mx::ValuePtr udimSetValue = doc->getGeomAttrValue("udimset");
-        for (mx::TypedElementPtr elem : elems)
-        {
-            if (udimSetValue && udimSetValue->isA<mx::StringVec>())
-            {
-                for (const std::string& udim : udimSetValue->asA<mx::StringVec>())
-                {
-                    MaterialSubset subset;
-                    subset.elem = elem;
-                    subset.udim = udim;
-                    getCurrentMaterial()->subsets.push_back(subset);
-                }
-            }
-            else
-            {
-                MaterialSubset subset;
-                subset.elem = elem;
-                getCurrentMaterial()->subsets.push_back(subset);
-            }
-        }
-    }
-
     std::vector<std::string> items;
-    for (const MaterialSubset& subset : getCurrentMaterial()->subsets)
+    for (const MaterialSubset& subset : getCurrentMaterial()->getSubsets())
     {
         std::string displayName = subset.elem->getNamePath();
         if (!subset.udim.empty())
@@ -322,7 +292,7 @@ void Viewer::updateMaterialSubsets()
 bool Viewer::setMaterialSubset(size_t index)
 {
     MaterialPtr material = getCurrentMaterial();
-    if (index >= material->subsets.size())
+    if (index >= material->getSubsets().size())
     {
         return false;
     }
@@ -354,8 +324,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     {
         try
         {
-            getCurrentMaterial()->loadDocument(_materialFilename, _stdLib);
-            remapNodes(getCurrentMaterial()->doc, _nodeRemap);
+            getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
         }
         catch (std::exception& e)
         {
@@ -404,7 +373,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     // Allow left and right keys to cycle through the renderable elements
     if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_PRESS)
     {
-        size_t subsetCount = getCurrentMaterial()->subsets.size();
+        size_t subsetCount = getCurrentMaterial()->getSubsets().size();
         if (subsetCount > 1)
         {
             size_t newIndex = 0;
@@ -450,25 +419,30 @@ void Viewer::drawContents()
     glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
 
+    MaterialPtr lastBoundMaterial;
     for (size_t i = 0; i < _geomSelections.size(); i++)
     {
         MaterialPtr material = _materials[i];
-        if (!material->bindShader())
+        if (material != lastBoundMaterial)
         {
-            continue;
+            if (!material->bindShader())
+            {
+                continue;
+            }
+            lastBoundMaterial = material;
+            if (material->hasTransparency())
+            {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }
+            else
+            {
+                glDisable(GL_BLEND);
+            }
+            material->bindViewInformation(world, view, proj);
+            material->bindImages(_imageHandler, _searchPath, getCurrentMaterialSubset().udim);
+            material->bindLights(_imageHandler, _searchPath, _envSamples);
         }
-        if (material->hasTransparency)
-        {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-        else
-        {
-            glDisable(GL_BLEND);
-        }
-        material->bindViewInformation(world, view, proj);
-        material->bindImages(_imageHandler, _searchPath, getCurrentMaterialSubset().udim);
-        material->bindLights(_imageHandler, _searchPath, _envSamples);
         material->drawPartition(_geomSelections[i]);
     }
 

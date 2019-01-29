@@ -35,13 +35,34 @@ class Material
     ~Material() { }
 
     /// Load a new content document.
-    void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);
+    void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib, const mx::StringMap& nodeRemap);
+
+    /// Return the content document.
+    mx::DocumentPtr getDocument()
+    {
+        return _doc;
+    }
+
+    /// Return the vector of material subsets.
+    const std::vector<MaterialSubset>& getSubsets()
+    {
+        return _subsets;
+    }
 
     /// Generate a shader from the given inputs.
     bool generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
     /// Return the underlying OpenGL shader.
-    GLShaderPtr getShader() const { return glShader; }
+    GLShaderPtr getShader() const
+    {
+        return _glShader;
+    }
+
+    /// Return true if this material has transparency.
+    bool hasTransparency() const
+    {
+        return _hasTransparency;
+    }
     
     /// Bind the underlying OpenGL shader, returning true upon success.
     bool bindShader();
@@ -74,18 +95,15 @@ class Material
     /// Find a public uniform from its MaterialX path.
     mx::Shader::Variable* findUniform(const std::string& path) const;
 
-  public:
-    mx::DocumentPtr doc;
-    GLShaderPtr glShader;
-    mx::HwShaderPtr hwShader;
-    std::vector<MaterialSubset> subsets;
-    bool hasTransparency;
+  protected:
+    mx::DocumentPtr _doc;
+    GLShaderPtr _glShader;
+    mx::HwShaderPtr _hwShader;
+    std::vector<MaterialSubset> _subsets;
+    bool _hasTransparency;
 };
 
-mx::DocumentPtr loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib);
 mx::DocumentPtr loadLibraries(const mx::StringVec& libraryNames, const mx::FileSearchPath& searchPath);
-void remapNodes(mx::DocumentPtr& doc, const mx::StringMap& nodeRemap);
-
 mx::HwShaderPtr generateSource(const mx::FileSearchPath& searchPath, mx::ElementPtr elem);
 
 #endif // MATERIALXVIEW_MATERIAL_H

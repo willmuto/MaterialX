@@ -36,12 +36,12 @@ class Viewer : public ng::Screen
 
     MaterialSubset getCurrentMaterialSubset() const
     {
-        return getCurrentMaterial()->subsets[_subsetIndex];
+        return getCurrentMaterial()->getSubsets()[_subsetIndex];
     }
 
     mx::DocumentPtr getCurrentDocument() const
     {
-        return getCurrentMaterial()->doc;
+        return getCurrentMaterial()->getDocument();
     }
 
     const mx::FileSearchPath& getSearchPath() const
