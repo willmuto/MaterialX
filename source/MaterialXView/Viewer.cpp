@@ -306,7 +306,6 @@ bool Viewer::setSubsetSelection(size_t index)
         _subsetSelectionBox->setSelectedIndex((int) index);
         if (material->generateShader(_searchPath, subset.elem))
         {
-            material->bindImages(_imageHandler, _searchPath, subset.udim);
             material->bindMesh(_geometryHandler.getMeshes()[0]);
             updatePropertyEditor();
             return true;
