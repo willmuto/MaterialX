@@ -516,7 +516,6 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                                     { "bmp", "BMP" } }, false);
                                 if (!filename.empty())
                                 {
-                                    mx::ImageDesc desc;
                                     uniform->value = mx::Value::createValue<std::string>(filename);
                                     buttonVar->setCaption(filename);
                                     viewer->performLayout();
@@ -539,7 +538,6 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                         if (uniform->type == MaterialX::Type::FILENAME)
                         {
                             const std::string& filename = viewer->getSearchPath().find(v);
-                            mx::ImageDesc desc;
                             uniform->value = mx::Value::createValue<std::string>(filename);
                         }
                         else
