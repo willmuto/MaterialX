@@ -66,6 +66,7 @@ class Viewer : public ng::Screen
   private:
     ng::Window* _window;
     ng::Arcball _arcball;
+    PropertyEditor _propertyEditor;
 
     mx::GeometryHandler _geometryHandler;
     std::vector<MaterialPtr> _materials;
@@ -100,9 +101,7 @@ class Viewer : public ng::Screen
     size_t _geomIndex;
 
     ng::Label* _materialLabel;
-    ng::ComboBox* _materialSubsetBox;
-
-    PropertyEditor _propertyEditor;
+    ng::ComboBox* _subsetSelectionBox;
 
     mx::GLTextureHandlerPtr _imageHandler;
 };

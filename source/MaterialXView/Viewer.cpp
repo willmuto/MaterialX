@@ -135,7 +135,6 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                 getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
                 updateSubsetSelections();
                 setSubsetSelection(0);
-                updatePropertyEditor();
             }
             catch (std::exception& e)
             {
@@ -179,12 +178,11 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     _materialLabel = new ng::Label(_window, "Material");
 
-    _materialSubsetBox = new ng::ComboBox(_window, {"None"});
-    _materialSubsetBox->setChevronIcon(-1);
-    _materialSubsetBox->setCallback([this](int choice)
+    _subsetSelectionBox = new ng::ComboBox(_window, {"None"});
+    _subsetSelectionBox->setChevronIcon(-1);
+    _subsetSelectionBox->setCallback([this](int choice)
     {
         setSubsetSelection(choice);
-        updatePropertyEditor();
     });
 
     mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
@@ -267,7 +265,6 @@ bool Viewer::setGeometrySelection(size_t index)
         _geomIndex = index;
         updateSubsetSelections();
         setSubsetSelection(getCurrentMaterial()->getSubsetIndex());
-        updatePropertyEditor();
         return true;
     }
     return false;
@@ -285,10 +282,10 @@ void Viewer::updateSubsetSelections()
         }
         items.push_back(displayName);
     }
-    _materialSubsetBox->setItems(items);
+    _subsetSelectionBox->setItems(items);
 
     _materialLabel->setVisible(items.size() > 1);
-    _materialSubsetBox->setVisible(items.size() > 1);
+    _subsetSelectionBox->setVisible(items.size() > 1);
 
     performLayout();
 }
@@ -302,14 +299,16 @@ bool Viewer::setSubsetSelection(size_t index)
     }
 
     getCurrentMaterial()->setSubsetIndex(index);
-    const MaterialSubset& subset = material->getCurrentSubset();
 
+    const MaterialSubset& subset = material->getCurrentSubset();
     if (subset.elem)
     {
+        _subsetSelectionBox->setSelectedIndex((int) index);
         if (material->generateShader(_searchPath, subset.elem))
         {
             material->bindImages(_imageHandler, _searchPath, subset.udim);
             material->bindMesh(_geometryHandler.getMeshes()[0]);
+            updatePropertyEditor();
             return true;
         }
     }
@@ -393,7 +392,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
             {
                 if (setSubsetSelection(newIndex))
                 {
-                    _materialSubsetBox->setSelectedIndex((int) newIndex);
+                    _subsetSelectionBox->setSelectedIndex((int) newIndex);
                     updateSubsetSelections();
                     updatePropertyEditor();
                 }
