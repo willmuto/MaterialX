@@ -493,7 +493,7 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
         {
             if (_fileDialogsForImages && item.variable->type == MaterialX::Type::FILENAME)
             {
-                ng::Button* buttonVar = new ng::Button(form.window(), v);
+                ng::Button* buttonVar = new ng::Button(form.window(), mx::FilePath(v).getBaseName());
                 form.addWidget(label, buttonVar);
                 buttonVar->setFontSize(form.widgetFontSize()-1);
                 buttonVar->setCallback([buttonVar, path, viewer]()
