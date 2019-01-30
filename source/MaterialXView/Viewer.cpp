@@ -89,6 +89,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _window->setLayout(new ng::GroupLayout());
 
     ng::Button* meshButton = new ng::Button(_window, "Load Mesh");
+    meshButton->setIcon(ENTYPO_ICON_FOLDER);
     meshButton->setCallback([this]()
     {
         mProcessEvents = false;
@@ -102,7 +103,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
                 _materials.resize(_geomSelections.size());
                 for (size_t i = 1; i < _geomSelections.size(); i++)
                 {
-                    _materials[i] = _materials[0];
+                    _materials[i] = std::make_shared<Material>();
+                    *_materials[i] = *_materials[0];
                 }
                 if (getCurrentMaterial())
                 {
@@ -119,6 +121,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     });
 
     ng::Button* materialButton = new ng::Button(_window, "Load Material");
+    materialButton->setIcon(ENTYPO_ICON_FOLDER);
     materialButton->setCallback([this]()
     {
         mProcessEvents = false;
@@ -299,7 +302,7 @@ bool Viewer::setSubsetSelection(size_t index)
     }
 
     getCurrentMaterial()->setSubsetIndex(index);
-    const MaterialSubset& subset = getCurrentMaterialSubset();
+    const MaterialSubset& subset = material->getCurrentSubset();
 
     if (subset.elem)
     {
@@ -347,7 +350,8 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
         {
             try
             {
-                MaterialSubset subset = getCurrentMaterialSubset();
+                MaterialPtr material = getCurrentMaterial();
+                MaterialSubset subset = material->getCurrentSubset();
                 if (subset.elem)
                 {
                     mx::HwShaderPtr hwShader = generateSource(_searchPath, subset.elem);
@@ -419,17 +423,15 @@ void Viewer::drawContents()
     glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
 
-    MaterialPtr lastBoundMaterial;
+    GLShaderPtr lastBoundShader;
     for (size_t i = 0; i < _geomSelections.size(); i++)
     {
         MaterialPtr material = _materials[i];
-        if (material != lastBoundMaterial)
+        GLShaderPtr shader = material->getShader();
+        if (shader && shader != lastBoundShader)
         {
-            if (!material->bindShader())
-            {
-                continue;
-            }
-            lastBoundMaterial = material;
+            shader->bind();
+            lastBoundShader = shader;
             if (material->hasTransparency())
             {
                 glEnable(GL_BLEND);
@@ -440,9 +442,9 @@ void Viewer::drawContents()
                 glDisable(GL_BLEND);
             }
             material->bindViewInformation(world, view, proj);
-            material->bindImages(_imageHandler, _searchPath, getCurrentMaterialSubset().udim);
             material->bindLights(_imageHandler, _searchPath, _envSamples);
         }
+        material->bindImages(_imageHandler, _searchPath, material->getCurrentSubset().udim);
         material->drawPartition(_geomSelections[i]);
     }
 

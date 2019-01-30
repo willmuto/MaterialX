@@ -85,9 +85,6 @@ class Material
         return _hasTransparency;
     }
     
-    /// Bind the underlying OpenGL shader, returning true upon success.
-    bool bindShader();
-
     /// Bind viewing information for this material.
     void bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
 

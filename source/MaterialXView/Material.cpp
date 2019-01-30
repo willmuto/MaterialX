@@ -200,20 +200,9 @@ void Material::bindPartition(mx::MeshPartitionPtr part) const
     _glShader->uploadIndices(indices);
 }
 
-bool Material::bindShader()
-{
-    if (!_glShader)
-    {
-        return false;
-    }
-
-    _glShader->bind();
-    return true;
-}
-
 void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
 {
-    if (!bindShader())
+    if (!_glShader)
     {
         return;
     }
@@ -238,7 +227,7 @@ void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44
 
 void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& searchPath, const std::string& udim)
 {
-    if (!bindShader())
+    if (!_glShader)
     {
         return;
     }
@@ -266,7 +255,7 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
 bool Material::bindImage(std::string filename, const std::string& uniformName, mx::GLTextureHandlerPtr imageHandler,
     mx::ImageDesc& desc, const std::string& udim)
 {
-    if (!bindShader())
+    if (!_glShader)
     {
         return false;
     }
@@ -296,7 +285,7 @@ bool Material::bindImage(std::string filename, const std::string& uniformName, m
 
 void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSearchPath& imagePath, int envSamples)
 {
-    if (!bindShader())
+    if (!_glShader)
     {
         return;
     }

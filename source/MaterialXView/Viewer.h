@@ -34,11 +34,6 @@ class Viewer : public ng::Screen
         return _materials[_geomIndex];
     }
 
-    MaterialSubset getCurrentMaterialSubset() const
-    {
-        return getCurrentMaterial()->getCurrentSubset();
-    }
-
     mx::DocumentPtr getCurrentDocument() const
     {
         return getCurrentMaterial()->getDocument();

@@ -49,7 +49,7 @@ int main(int argc, char* const argv[])
         {
             ng::ref<Viewer> viewer = new Viewer(libraryFolders, searchPath, nodeRemap, multiSampleCount);
             viewer->setVisible(true);
-            ng::mainloop(-1);
+            ng::mainloop();
         }
     
         ng::shutdown();

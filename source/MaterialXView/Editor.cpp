@@ -518,9 +518,6 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                                 {
                                     mx::ImageDesc desc;
                                     uniform->value = mx::Value::createValue<std::string>(filename);
-                                    material->getShader()->bind();
-                                    material->bindImage(filename, uniform->name, handler, desc, viewer->getCurrentMaterialSubset().udim); 
-
                                     buttonVar->setCaption(filename);
                                     viewer->performLayout();
                                 }
@@ -541,12 +538,9 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                     {
                         if (uniform->type == MaterialX::Type::FILENAME)
                         {
-                            const std::string& uniformName = uniform->name;
                             const std::string& filename = viewer->getSearchPath().find(v);
                             mx::ImageDesc desc;
                             uniform->value = mx::Value::createValue<std::string>(filename);
-                            material->getShader()->bind();
-                            material->bindImage(filename, uniformName, viewer->getImageHandler(), desc, viewer->getCurrentMaterialSubset().udim);
                         }
                         else
                         {
@@ -563,13 +557,13 @@ void PropertyEditor::updateContents(Viewer* viewer)
 {
     create(*viewer);
 
-    MaterialSubset subset = viewer->getCurrentMaterialSubset();
+    MaterialPtr material = viewer->getCurrentMaterial();
+    MaterialSubset subset = material->getCurrentSubset();
     if (!subset.elem)
     {
         return;
     }
 
-    MaterialPtr material = viewer->getCurrentMaterial();
     mx::DocumentPtr contentDocument = viewer->getCurrentDocument();
     if (!material || !contentDocument)
     {
