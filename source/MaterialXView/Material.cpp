@@ -95,14 +95,23 @@ void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib
         }
     }
 
-    // Remove unimplemented shader nodedefs.
-    std::vector<mx::NodeDefPtr> nodeDefs = _doc->getNodeDefs();
-    for (mx::NodeDefPtr nodeDef : nodeDefs)
+    // Remap references to unimplemented shader nodedefs.
+    for (mx::MaterialPtr material : _doc->getMaterials())
     {
-        if (nodeDef->getType() == mx::SURFACE_SHADER_TYPE_STRING &&
-            !nodeDef->getImplementation())
+        for (mx::ShaderRefPtr shaderRef : material->getShaderRefs())
         {
-            _doc->removeNodeDef(nodeDef->getName());
+            mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
+            if (nodeDef && !nodeDef->getImplementation())
+            {
+                std::vector<mx::NodeDefPtr> altNodeDefs = _doc->getMatchingNodeDefs(nodeDef->getNodeString());
+                for (mx::NodeDefPtr altNodeDef : altNodeDefs)
+                {
+                    if (altNodeDef->getImplementation())
+                    {
+                        shaderRef->setNodeDefString(altNodeDef->getName());
+                    }
+                }
+            }
         }
     }
 
