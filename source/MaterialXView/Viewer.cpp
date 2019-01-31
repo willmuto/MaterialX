@@ -138,6 +138,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             }
             catch (std::exception& e)
             {
+                _materials[_geomIndex] = nullptr;
                 new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
             }
         }
