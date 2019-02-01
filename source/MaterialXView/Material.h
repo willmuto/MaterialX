@@ -28,6 +28,14 @@ class MaterialSubset
     std::string udim;
 };
 
+class DocumentModifiers
+{
+  public:
+    mx::StringMap remapElements;
+    mx::StringSet skipElements;
+    std::string filePrefixTerminator;
+};
+
 class Material
 {
   public:
@@ -40,8 +48,7 @@ class Material
     /// Load a new content document.
     void loadDocument(const mx::FilePath& filePath,
                       mx::DocumentPtr stdLib,
-                      const mx::StringMap& remapElements,
-                      const mx::StringSet& skipElements);
+                      const DocumentModifiers& modifiers);
 
     /// Return the content document.
     mx::DocumentPtr getDocument()
