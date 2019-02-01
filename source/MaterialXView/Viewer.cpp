@@ -64,6 +64,7 @@ void writeTextFile(const std::string& text, const std::string& filePath)
 Viewer::Viewer(const mx::StringVec& libraryFolders,
                const mx::FileSearchPath& searchPath,
                const mx::StringMap& nodeRemap,
+               const mx::StringSet& elementSkip,
                int multiSampleCount) :
     ng::Screen(ng::Vector2i(1280, 960), "MaterialXView",
         true, false,
@@ -80,7 +81,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _translationStart(0, 0),
     _libraryFolders(libraryFolders),
     _searchPath(searchPath),
-    _nodeRemap(nodeRemap),
+    _remapElements(nodeRemap),
+    _skipElements(elementSkip),
     _envSamples(DEFAULT_ENV_SAMPLES),
     _geomIndex(0)
 {
@@ -132,7 +134,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
             try
             {
                 _materials[_geomIndex] = std::make_shared<Material>();
-                getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
+                getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _remapElements, _skipElements);
                 updateSubsetSelections();
                 setSubsetSelection(0);
             }
@@ -207,7 +209,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     try
     {
-        getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
+        getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _remapElements, _skipElements);
     }
     catch (std::exception& e)
     {
@@ -325,7 +327,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
     {
         try
         {
-            getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _nodeRemap);
+            getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _remapElements, _skipElements);
         }
         catch (std::exception& e)
         {

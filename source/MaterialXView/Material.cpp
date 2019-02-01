@@ -64,7 +64,10 @@ mx::HwShaderPtr generateSource(const mx::FileSearchPath& searchPath, mx::Element
 // Material methods
 //
 
-void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib, const mx::StringMap& nodeRemap)
+void Material::loadDocument(const mx::FilePath& filePath,
+                            mx::DocumentPtr stdLib,
+                            const mx::StringMap& remapElements,
+                            const mx::StringSet& skipElements)
 {
     // Load the given document.
     _doc = mx::createDocument();
@@ -75,22 +78,32 @@ void Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib
     copyOptions.skipDuplicateElements = true;
     _doc->importLibrary(stdLib, &copyOptions);
 
-    // Remap node names if requested.
+    // Remap and skip elements if requested.
     for (mx::ElementPtr elem : _doc->traverseTree())
     {
-        mx::NodePtr node = elem->asA<mx::Node>();
-        mx::ShaderRefPtr shaderRef = elem->asA<mx::ShaderRef>();
-        if (node && nodeRemap.count(node->getCategory()))
+        if (remapElements.count(elem->getCategory()))
         {
-            node->setCategory(nodeRemap.at(node->getCategory()));
+            elem->setCategory(remapElements.at(elem->getCategory()));
         }
-        if (shaderRef)
+        if (remapElements.count(elem->getName()))
         {
-            mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
-            if (nodeDef && nodeRemap.count(nodeDef->getNodeString()))
+            elem->setName(remapElements.at(elem->getName()));
+        }
+        for (const std::string& attr : elem->getAttributeNames())
+        {
+            if (remapElements.count(attr))
             {
-                shaderRef->setNodeString(nodeRemap.at(nodeDef->getNodeString()));
-                shaderRef->removeAttribute(mx::ShaderRef::NODE_DEF_ATTRIBUTE);
+                elem->setAttribute(remapElements.at(attr), elem->getAttribute(attr));
+                elem->removeAttribute(attr);
+            }
+        }
+        std::vector<mx::ElementPtr> children = elem->getChildren();
+        for (mx::ElementPtr child : children)
+        {
+            if (skipElements.count(child->getCategory()) ||
+                skipElements.count(child->getName()))
+            {
+                elem->removeChild(child->getName());
             }
         }
     }

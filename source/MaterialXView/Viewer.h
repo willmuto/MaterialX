@@ -14,6 +14,7 @@ class Viewer : public ng::Screen
     Viewer(const mx::StringVec& libraryFolders,
            const mx::FileSearchPath& searchPath,
            const mx::StringMap& nodeRemap,
+           const mx::StringSet& elementSkip,
            int multiSampleCount);
     ~Viewer() { }
 
@@ -88,7 +89,8 @@ class Viewer : public ng::Screen
 
     mx::StringVec _libraryFolders;
     mx::FileSearchPath _searchPath;
-    mx::StringMap _nodeRemap;
+    mx::StringMap _remapElements;
+    mx::StringSet _skipElements;
 
     mx::FilePath _materialFilename;
     int _envSamples;

@@ -38,7 +38,10 @@ class Material
     ~Material() { }
 
     /// Load a new content document.
-    void loadDocument(const mx::FilePath& filePath, mx::DocumentPtr stdLib, const mx::StringMap& nodeRemap);
+    void loadDocument(const mx::FilePath& filePath,
+                      mx::DocumentPtr stdLib,
+                      const mx::StringMap& remapElements,
+                      const mx::StringSet& skipElements);
 
     /// Return the content document.
     mx::DocumentPtr getDocument()
