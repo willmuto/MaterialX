@@ -89,12 +89,12 @@ void Material::loadDocument(const mx::FilePath& filePath,
         {
             elem->setName(remapElements.at(elem->getName()));
         }
-        for (const std::string& attr : elem->getAttributeNames())
+        mx::StringVec attrNames = elem->getAttributeNames();
+        for (const std::string& attrName : attrNames)
         {
-            if (remapElements.count(attr))
+            if (remapElements.count(elem->getAttribute(attrName)))
             {
-                elem->setAttribute(remapElements.at(attr), elem->getAttribute(attr));
-                elem->removeAttribute(attr);
+                elem->setAttribute(attrName, remapElements.at(elem->getAttribute(attrName)));
             }
         }
         std::vector<mx::ElementPtr> children = elem->getChildren();
