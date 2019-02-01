@@ -13,6 +13,8 @@ class Viewer : public ng::Screen
   public:
     Viewer(const mx::StringVec& libraryFolders,
            const mx::FileSearchPath& searchPath,
+           const std::string meshFilename,
+           const std::string materialFilename,
            const mx::StringMap& nodeRemap,
            const mx::StringSet& elementSkip,
            int multiSampleCount);

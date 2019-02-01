@@ -63,6 +63,8 @@ void writeTextFile(const std::string& text, const std::string& filePath)
 
 Viewer::Viewer(const mx::StringVec& libraryFolders,
                const mx::FileSearchPath& searchPath,
+               const std::string meshFilename,
+               const std::string materialFilename,
                const mx::StringMap& nodeRemap,
                const mx::StringSet& elementSkip,
                int multiSampleCount) :
@@ -83,6 +85,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _searchPath(searchPath),
     _remapElements(nodeRemap),
     _skipElements(elementSkip),
+    _materialFilename(materialFilename),
     _envSamples(DEFAULT_ENV_SAMPLES),
     _geomIndex(0)
 {
@@ -192,7 +195,6 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _imageHandler = mx::GLTextureHandler::create(stbImageLoader);
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
 
-    std::string meshFilename("documents/TestSuite/Geometry/teapot.obj");
     mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
     _geometryHandler.addLoader(loader);
     _geometryHandler.loadGeometry(meshFilename);
@@ -204,9 +206,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         _arcball.setSize(size);
     });
 
-    _materialFilename = std::string("documents/TestSuite/pbrlib/materials/standard_surface_default.mtlx");
     _materials.push_back(std::make_shared<Material>());
-
     try
     {
         getCurrentMaterial()->loadDocument(_materialFilename, _stdLib, _remapElements, _skipElements);
