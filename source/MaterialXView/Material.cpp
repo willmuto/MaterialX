@@ -75,13 +75,11 @@ bool stringEndsWith(const std::string& str, std::string const& end)
 //
 // Material methods
 //
-
-void Material::loadDocument(const mx::FilePath& filePath,
-                            mx::DocumentPtr stdLib,
+mx::DocumentPtr Material::loadDocument(const mx::FilePath& filePath, mx::DocumentPtr libraries, std::vector<MaterialPtr>& materials,
                             const DocumentModifiers& modifiers)
 {
     // Load the content document.
-    _doc = mx::createDocument();
+    mx::DocumentPtr doc = mx::createDocument();
     mx::XmlReadOptions readOptions;
     readOptions.readXIncludeFunction = [](mx::DocumentPtr doc, const std::string& filename, const std::string& searchPath, const mx::XmlReadOptions* options)
     {
@@ -95,10 +93,10 @@ void Material::loadDocument(const mx::FilePath& filePath,
             std::cerr << "Include file not found: " << filename << std::endl;
         }
     };
-    mx::readFromXmlFile(_doc, filePath, mx::EMPTY_STRING, &readOptions);
+    mx::readFromXmlFile(doc, filePath, mx::EMPTY_STRING, &readOptions);
 
     // Apply modifiers to the content document if requested.
-    for (mx::ElementPtr elem : _doc->traverseTree())
+    for (mx::ElementPtr elem : doc->traverseTree())
     {
         if (modifiers.remapElements.count(elem->getCategory()))
         {
@@ -135,20 +133,21 @@ void Material::loadDocument(const mx::FilePath& filePath,
         }
     }
 
-    // Import the given standard library.
+   // Import the given libraries.
+    doc->setSourceUri(filePath);
     mx::CopyOptions copyOptions;
     copyOptions.skipDuplicateElements = true;
-    _doc->importLibrary(stdLib, &copyOptions);
+    doc->importLibrary(libraries, &copyOptions);
 
     // Remap references to unimplemented shader nodedefs.
-    for (mx::MaterialPtr material : _doc->getMaterials())
+    for (mx::MaterialPtr material : doc->getMaterials())
     {
         for (mx::ShaderRefPtr shaderRef : material->getShaderRefs())
         {
             mx::NodeDefPtr nodeDef = shaderRef->getNodeDef();
             if (nodeDef && !nodeDef->getImplementation())
             {
-                std::vector<mx::NodeDefPtr> altNodeDefs = _doc->getMatchingNodeDefs(nodeDef->getNodeString());
+                std::vector<mx::NodeDefPtr> altNodeDefs = doc->getMatchingNodeDefs(nodeDef->getNodeString());
                 for (mx::NodeDefPtr altNodeDef : altNodeDefs)
                 {
                     if (altNodeDef->getImplementation())
@@ -160,35 +159,40 @@ void Material::loadDocument(const mx::FilePath& filePath,
         }
     }
 
-    // Generate material subsets.
-    _subsets.clear();
+    // Generate materials
     std::vector<mx::TypedElementPtr> elems;
-    mx::findRenderableElements(_doc, elems);
-    mx::ValuePtr udimSetValue = _doc->getGeomAttrValue("udimset");
+    mx::findRenderableElements(doc, elems);
+    mx::ValuePtr udimSetValue = doc->getGeomAttrValue("udimset");
     for (mx::TypedElementPtr elem : elems)
     {
         if (udimSetValue && udimSetValue->isA<mx::StringVec>())
         {
             for (const std::string& udim : udimSetValue->asA<mx::StringVec>())
             {
-                MaterialSubset subset;
-                subset.elem = elem;
-                subset.udim = udim;
-                _subsets.push_back(subset);
+                MaterialPtr mat = Material::create();
+                mat->setElement(elem);
+                mat->setUdim(udim);
+                materials.push_back(mat);
             }
         }
         else
         {
-            MaterialSubset subset;
-            subset.elem = elem;
-            _subsets.push_back(subset);
+            MaterialPtr mat = Material::create();
+            mat->setElement(elem);
+            materials.push_back(mat);
         }
     }
+
+    return doc;
 }
 
-bool Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementPtr elem)
+bool Material::generateShader(const mx::FileSearchPath& searchPath)
 {
-    _hwShader = generateSource(searchPath, elem);
+    if (!_elem)
+    {
+        return false;
+    }
+    _hwShader = generateSource(searchPath, _elem);
     if (!_hwShader)
     {
         return false;
@@ -198,7 +202,7 @@ bool Material::generateShader(const mx::FileSearchPath& searchPath, mx::ElementP
     std::string pixelShader = _hwShader->getSourceCode(mx::HwShader::PIXEL_STAGE);
 
     _glShader = std::make_shared<ng::GLShader>();
-    _glShader->init(elem->getNamePath(), vertexShader, pixelShader);
+    _glShader->init(_elem->getNamePath(), vertexShader, pixelShader);
 
     _hasTransparency = _hwShader->hasTransparency();
 
@@ -243,16 +247,18 @@ void Material::bindMesh(const mx::MeshPtr mesh) const
     }
 }
 
-void Material::bindPartition(mx::MeshPartitionPtr part) const
+bool Material::bindPartition(mx::MeshPartitionPtr part) const
 {
     if (!_glShader)
     {
-        return;
+        return false;
     }
 
     _glShader->bind();
     MatrixXuProxy indices(&part->getIndices()[0], 3, part->getIndices().size() / 3);
     _glShader->uploadIndices(indices);
+    
+    return true;
 }
 
 void Material::bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj)
@@ -377,7 +383,10 @@ void Material::bindLights(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
 
 void Material::drawPartition(mx::MeshPartitionPtr part) const
 {
-    bindPartition(part);
+    if (!bindPartition(part))
+    {
+        return;
+    }
     _glShader->drawIndexed(GL_TRIANGLES, 0, (uint32_t) part->getFaceCount());
 }
 
