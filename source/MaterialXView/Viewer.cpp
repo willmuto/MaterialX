@@ -61,6 +61,120 @@ void writeTextFile(const std::string& text, const std::string& filePath)
 // Viewer methods
 //
 
+Viewer::Viewer(const mx::StringVec& libraryFolders,
+               const mx::FileSearchPath& searchPath,
+               const std::string meshFilename,
+               const std::string materialFilename,
+               const DocumentModifiers& modifiers,
+               int multiSampleCount) :
+    ng::Screen(ng::Vector2i(1280, 960), "MaterialXView",
+        true, false,
+        8, 8, 24, 8,
+        multiSampleCount),
+    _eye(0.0f, 0.0f, 5.0f),
+    _up(0.0f, 1.0f, 0.0f),
+    _zoom(1.0f),
+    _viewAngle(45.0f),
+    _nearDist(0.05f),
+    _farDist(100.0f),
+    _modelZoom(1.0f),
+    _translationActive(false),
+    _translationStart(0, 0),
+    _libraryFolders(libraryFolders),
+    _searchPath(searchPath),
+    _materialFilename(materialFilename),
+    _modifiers(modifiers),
+    _selectedGeom(0),
+    _envSamples(DEFAULT_ENV_SAMPLES)
+{
+    _window = new ng::Window(this, "Viewer Options");
+    _window->setPosition(ng::Vector2i(15, 15));
+    _window->setLayout(new ng::GroupLayout());
+
+    createLoadMeshInterface(_window, "Load Mesh");
+    createLoadMaterialsInterface(_window, "Load Material");
+    createLookAssignmentInterface();
+
+    ng::Button* editorButton = new ng::Button(_window, "Property Editor");
+    editorButton->setFlags(ng::Button::ToggleButton);
+    editorButton->setChangeCallback([this](bool state)
+    { 
+        _propertyEditor.setVisible(state);
+        performLayout();
+    });
+
+    mx::StringVec sampleOptions;
+    for (int i = MIN_ENV_SAMPLES; i <= MAX_ENV_SAMPLES; i *= 4)
+    {
+        mProcessEvents = false;
+        sampleOptions.push_back("Samples " + std::to_string(i));
+        mProcessEvents = true;
+    }
+    ng::ComboBox* sampleBox = new ng::ComboBox(_window, sampleOptions);
+    sampleBox->setChevronIcon(-1);
+    sampleBox->setSelectedIndex((int) std::log2(DEFAULT_ENV_SAMPLES / MIN_ENV_SAMPLES) / 2);
+    sampleBox->setCallback([this](int index)
+    {
+        _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
+    });
+
+    _geomLabel = new ng::Label(_window, "Select Geometry");
+    _geometryListBox = new ng::ComboBox(_window, {"None"});
+    _geometryListBox->setChevronIcon(-1);
+    _geometryListBox->setCallback([this](int choice)
+    {
+        setGeometrySelection(choice);
+    });
+
+    _materialLabel = new ng::Label(_window, "Assign Material To Selected Geometry");
+    _materialSelectionBox = new ng::ComboBox(_window, {"None"});
+    _materialSelectionBox->setChevronIcon(-1);
+    _materialSelectionBox->setCallback([this](int choice)
+    {
+        setMaterialSelection(choice);
+        assignMaterial(_materials[_selectedMaterial], _geometryList[_selectedGeom]);
+    });
+
+    // Load in standard library and create top level document
+    _stdLib = loadLibraries(_libraryFolders, _searchPath);
+    initializeDocument(_stdLib);
+
+    mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
+    _imageHandler = mx::GLTextureHandler::create(stbImageLoader);
+
+    mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
+    _geometryHandler.addLoader(loader);
+    _geometryHandler.loadGeometry(meshFilename);
+    updateGeometrySelections();
+    
+    // Initialize camera
+    initCamera();
+    setResizeCallback([this](ng::Vector2i size)
+    {
+        _arcball.setSize(size);
+    });
+
+    try
+    {
+        mx::DocumentPtr materialDoc = Material::loadDocument(_materialFilename, _stdLib, _materials, modifiers);
+        importMaterials(materialDoc);            
+        updateMaterialSelections();
+        setMaterialSelection(0);
+        if (_materials.size())
+        {
+            assignMaterial(_materials[0]);
+        }
+    }
+    catch (std::exception& e)
+    {
+        new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to load materials", e.what());
+    }
+
+    updatePropertyEditor();
+    _propertyEditor.setVisible(false);
+    performLayout();
+}
+
 void Viewer::initializeDocument(mx::DocumentPtr libraries)
 {
     _doc = mx::createDocument();
@@ -109,9 +223,9 @@ void Viewer::assignMaterial(MaterialPtr material, mx::MeshPartitionPtr geometry)
     }
 }
 
-void Viewer::createLoadMeshInterface()
+void Viewer::createLoadMeshInterface(Widget *parent, const std::string label)
 {
-    ng::Button* meshButton = new ng::Button(_window, "Load Mesh");
+    ng::Button* meshButton = new ng::Button(parent, label);
     meshButton->setIcon(ENTYPO_ICON_FOLDER);
     meshButton->setCallback([this]()
     {
@@ -129,13 +243,54 @@ void Viewer::createLoadMeshInterface()
                 MaterialPtr material = getSelectedMaterial();
                 if (material)
                 {
-                    assignMaterial(material, nullptr);
+                    assignMaterial(material);
                 }
                 initCamera();
             }
             else
             {
                 new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Mesh Loading Error", filename);
+            }
+        }
+        mProcessEvents = true;
+    });
+}
+
+void Viewer::createLoadMaterialsInterface(Widget *parent, const std::string label)
+{
+    ng::Button* materialButton = new ng::Button(parent, label);
+    materialButton->setIcon(ENTYPO_ICON_FOLDER);
+    materialButton->setCallback([this]()
+    {
+        mProcessEvents = false;
+        std::string filename = ng::file_dialog({ { "mtlx", "MaterialX" } }, false);
+        if (!filename.empty())
+        {
+            _materialFilename = filename;
+            try
+            {
+                if (_clearExistingMaterials)
+                {
+                    initializeDocument(_stdLib);
+                    std::vector<MaterialPtr> newMaterials;
+                    mx::DocumentPtr materialDoc = Material::loadDocument(_materialFilename, _stdLib, newMaterials, _modifiers);
+                    if (newMaterials.size())
+                    {
+                        importMaterials(materialDoc);
+                        _materials.insert(_materials.end(), newMaterials.begin(), newMaterials.end());
+                        updateMaterialSelections();
+                        setMaterialSelection(0);
+                        assignMaterial(newMaterials[0]);
+                    }
+                }
+                else
+                {
+                    // TODO: Add material append.
+                }
+            }
+            catch (std::exception& e)
+            {
+                new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
             }
         }
         mProcessEvents = true;
@@ -238,172 +393,6 @@ void Viewer::createLookAssignmentInterface()
     });
 }
 
-void Viewer::createLoadMaterialsInterface(Widget *parent, const std::string label)
-{
-    ng::Button* materialButton = new ng::Button(parent, label);
-    materialButton->setIcon(ENTYPO_ICON_FOLDER);
-    materialButton->setCallback([this]()
-    {
-        mProcessEvents = false;
-        std::string filename = ng::file_dialog({ { "mtlx", "MaterialX" } }, false);
-        if (!filename.empty())
-        {
-            _materialFilename = filename;
-            try
-            {
-                if (_clearExistingMaterials)
-                {
-                    initializeDocument(_stdLib);
-                    std::vector<MaterialPtr> newMaterials;
-                    mx::DocumentPtr materialDoc = Material::loadDocument(_materialFilename, _stdLib, newMaterials, _modifiers);
-                    if (newMaterials.size())
-                    {
-                        importMaterials(materialDoc);
-                        _materials.insert(_materials.end(), newMaterials.begin(), newMaterials.end());
-                        updateMaterialSelections();
-                        setMaterialSelection(0);
-                        assignMaterial(newMaterials[0], nullptr);
-                    }
-                }
-                else
-                {
-                    // TODO: Add material append.
-                }
-            }
-            catch (std::exception& e)
-            {
-                new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Shader Generation Error", e.what());
-            }
-        }
-        mProcessEvents = true;
-    });
-
-}
-
-Viewer::Viewer(const mx::StringVec& libraryFolders,
-               const mx::FileSearchPath& searchPath,
-               const std::string meshFilename,
-               const std::string materialFilename,
-               const DocumentModifiers& modifiers,
-               int multiSampleCount) :
-    ng::Screen(ng::Vector2i(1280, 960), "MaterialXView",
-        true, false,
-        8, 8, 24, 8,
-        multiSampleCount),
-    _eye(0.0f, 0.0f, 5.0f),
-    _up(0.0f, 1.0f, 0.0f),
-    _zoom(1.0f),
-    _viewAngle(45.0f),
-    _nearDist(0.05f),
-    _farDist(100.0f),
-    _modelZoom(1.0f),
-    _translationActive(false),
-    _translationStart(0, 0),
-    _libraryFolders(libraryFolders),
-    _searchPath(searchPath),
-    _materialFilename(materialFilename),
-    _modifiers(modifiers),
-    _selectedGeom(0),
-    _envSamples(DEFAULT_ENV_SAMPLES)
-{
-    _window = new ng::Window(this, "Viewer Options");
-    _window->setPosition(ng::Vector2i(15, 15));
-    _window->setLayout(new ng::GroupLayout());
-
-    createLoadMeshInterface();
-
-    ng::PopupButton *materialsBtn = new ng::PopupButton(_window, "Materials");
-    materialsBtn->setIcon(ENTYPO_ICON_FOLDER);
-    ng::Popup *materialsPopup = materialsBtn->popup();
-    materialsPopup->setAnchorHeight(61);
-    materialsPopup->setLayout(new ng::GroupLayout());
-    Widget *statePanel = new Widget(materialsPopup);
-    statePanel->setLayout(new ng::BoxLayout(ng::Orientation::Horizontal, ng::Alignment::Middle, 0, 5));
-    // Add material load options
-    createLoadMaterialsInterface(statePanel, "Load Material(s)");
-
-    createLookAssignmentInterface();
-
-    ng::Button* editorButton = new ng::Button(_window, "Property Editor");
-    editorButton->setFlags(ng::Button::ToggleButton);
-    editorButton->setChangeCallback([this](bool state)
-    { 
-        _propertyEditor.setVisible(state);
-        performLayout();
-    });
-
-    mx::StringVec sampleOptions;
-    for (int i = MIN_ENV_SAMPLES; i <= MAX_ENV_SAMPLES; i *= 4)
-    {
-        mProcessEvents = false;
-        sampleOptions.push_back("Samples " + std::to_string(i));
-        mProcessEvents = true;
-    }
-    ng::ComboBox* sampleBox = new ng::ComboBox(_window, sampleOptions);
-    sampleBox->setChevronIcon(-1);
-    sampleBox->setSelectedIndex((int) std::log2(DEFAULT_ENV_SAMPLES / MIN_ENV_SAMPLES) / 2);
-    sampleBox->setCallback([this](int index)
-    {
-        _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
-    });
-
-    _geomLabel = new ng::Label(_window, "Select Geometry");
-    _geometryListBox = new ng::ComboBox(_window, {"None"});
-    _geometryListBox->setChevronIcon(-1);
-    _geometryListBox->setCallback([this](int choice)
-    {
-        setGeometrySelection(choice);
-    });
-
-    _materialLabel = new ng::Label(_window, "Assign Material To Selected Geometry");
-    _materialSelectionBox = new ng::ComboBox(_window, {"None"});
-    _materialSelectionBox->setChevronIcon(-1);
-    _materialSelectionBox->setCallback([this](int choice)
-    {
-        setMaterialSelection(choice);
-        assignMaterial(_materials[_selectedMaterial], _geometryList[_selectedGeom]);
-    });
-
-    // Load in standard library and create top level document
-    _stdLib = loadLibraries(_libraryFolders, _searchPath);
-    initializeDocument(_stdLib);
-
-    mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
-    _imageHandler = mx::GLTextureHandler::create(stbImageLoader);
-
-    mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
-    _geometryHandler.addLoader(loader);
-    _geometryHandler.loadGeometry(meshFilename);
-    updateGeometrySelections();
-    
-    // Initialize camera
-    initCamera();
-    setResizeCallback([this](ng::Vector2i size)
-    {
-        _arcball.setSize(size);
-    });
-
-    try
-    {
-        mx::DocumentPtr materialDoc = Material::loadDocument(_materialFilename, _stdLib, _materials, modifiers);
-        importMaterials(materialDoc);            
-        updateMaterialSelections();
-        setMaterialSelection(0);
-        if (_materials.size())
-        {
-            assignMaterial(_materials[0], nullptr);
-        }
-    }
-    catch (std::exception& e)
-    {
-        new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to load materials", e.what());
-    }
-
-    updatePropertyEditor();
-    _propertyEditor.setVisible(false);
-    performLayout();
-}
-
 void Viewer::updateGeometrySelections()
 {
     _geometryList.clear();
@@ -451,7 +440,12 @@ void Viewer::updateMaterialSelections()
     std::vector<std::string> items;
     for (auto material : _materials)
     {
-        std::string displayName = material->getElement()->getNamePath();
+        mx::ElementPtr displayElem = material->getElement();
+        if (displayElem->isA<mx::ShaderRef>())
+        {
+            displayElem = displayElem->getParent();
+        }
+        std::string displayName = displayElem->getNamePath();
         if (!material->getUdim().empty())
         {
             displayName += " (" + material->getUdim() + ")";
@@ -540,7 +534,7 @@ bool Viewer::keyboardEvent(int key, int scancode, int action, int modifiers)
                 setMaterialSelection(0);
                 if (_materials.size())
                 {
-                    assignMaterial(_materials[0], nullptr);
+                    assignMaterial(_materials[0]);
                 }
             }
         }

@@ -60,9 +60,9 @@ class Viewer : public ng::Screen
     void importMaterials(mx::DocumentPtr materials);
     void saveActiveMaterialSource();
 
-    /// Assign material ro a given geometry if given. If an empty supplied,
-    /// then assign to all geometries.
-    void assignMaterial(MaterialPtr material, mx::MeshPartitionPtr geometry);
+    /// Assign the given material to a geometry, or to all geometries if no
+    /// target is specified.
+    void assignMaterial(MaterialPtr material, mx::MeshPartitionPtr geometry = nullptr);
     void initCamera();
     void computeCameraMatrices(mx::Matrix44& world,
                                mx::Matrix44& view,
@@ -76,7 +76,7 @@ class Viewer : public ng::Screen
 
     void updatePropertyEditor();
 
-    void createLoadMeshInterface();
+    void createLoadMeshInterface(Widget *parent, const std::string label);
     void createLoadMaterialsInterface(Widget *parent, const std::string label);
     void createLookAssignmentInterface();
 
