@@ -82,7 +82,20 @@ void Material::loadDocument(const mx::FilePath& filePath,
 {
     // Load the content document.
     _doc = mx::createDocument();
-    mx::readFromXmlFile(_doc, filePath);
+    mx::XmlReadOptions readOptions;
+    readOptions.readXIncludeFunction = [](mx::DocumentPtr doc, const std::string& filename, const std::string& searchPath, const mx::XmlReadOptions* options)
+    {
+        mx::FilePath resolvedFilename = mx::FileSearchPath(searchPath).find(filename);
+        if (resolvedFilename.exists())
+        {
+            readFromXmlFile(doc, resolvedFilename, mx::EMPTY_STRING, options);
+        }
+        else
+        {
+            std::cerr << "Include file not found: " << filename << std::endl;
+        }
+    };
+    mx::readFromXmlFile(_doc, filePath, mx::EMPTY_STRING, &readOptions);
 
     // Apply modifiers to the content document if requested.
     for (mx::ElementPtr elem : _doc->traverseTree())
