@@ -363,6 +363,9 @@ class Mesh
     /// Merge all mesh partitions into one.
     void mergePartitions();
 
+    /// Split the mesh into a single partition per UDIM.
+    void splitByUdims();
+
   private:
     string _identifier;
     string _sourceUri;
