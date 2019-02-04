@@ -167,10 +167,10 @@ void Mesh::splitByUdims()
             uint32_t i1 = part->getIndices()[f * 3 + 1];
             uint32_t i2 = part->getIndices()[f * 3 + 2];
 
-            const Vector2& uv0 = *reinterpret_cast<Vector2*>(&(texcoords->getData()[i0]));
+            const Vector2& uv0 = reinterpret_cast<Vector2*>(&texcoords->getData()[0])[i0];
             uint32_t udimU = (uint32_t) uv0[0];
             uint32_t udimV = (uint32_t) uv0[1];
-            uint32_t udim = 1000 + udimV * 10 + udimU;
+            uint32_t udim = 1001 + udimU + (10 * udimV);
             if (!udimMap.count(udim))
             {
                 udimMap[udim] = MeshPartition::create();

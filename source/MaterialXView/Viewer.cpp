@@ -85,6 +85,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _materialFilename(materialFilename),
     _modifiers(modifiers),
     _selectedGeom(0),
+    _splitByUdims(false),
     _assignLooks(false),
     _envSamples(DEFAULT_ENV_SAMPLES)
 {
@@ -223,6 +224,11 @@ void Viewer::createLoadMeshInterface(Widget* parent, const std::string label)
             _geometryHandler.clearGeometry();
             if (_geometryHandler.loadGeometry(filename))
             {
+                if (_splitByUdims && !_geometryHandler.getMeshes().empty())
+                {
+                    _geometryHandler.getMeshes()[0]->splitByUdims();
+                }
+
                 updateGeometrySelections();
                 // Clear out any previous assignments
                 _materialAssignments.clear();
@@ -379,10 +385,19 @@ void Viewer::createAdvancedSettings(Widget* parent)
     ng::Popup* advancedPopup = advancedButton->popup();
     advancedPopup->setLayout(new ng::GroupLayout());
 
+    new ng::Label(advancedPopup, "Mesh Options");
+
+    ng::CheckBox* splitUdimsBox = new ng::CheckBox(advancedPopup, "Split By UDIMs");
+    splitUdimsBox->setChecked(_splitByUdims);
+    splitUdimsBox->setCallback([this](bool enable)
+    {
+        _splitByUdims = enable;
+    });
+
     new ng::Label(advancedPopup, "Material Options");
 
     ng::CheckBox* assignLooksBox = new ng::CheckBox(advancedPopup, "Assign Looks");
-    assignLooksBox->setChecked(false);
+    assignLooksBox->setChecked(_assignLooks);
     assignLooksBox->setCallback([this](bool enable)
     {
         _assignLooks = enable;

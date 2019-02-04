@@ -131,6 +131,9 @@ class Viewer : public ng::Screen
     mx::GeometryHandler _geometryHandler;
     mx::GLTextureHandlerPtr _imageHandler;
 
+    // Mesh options
+    bool _splitByUdims;
+
     // Material options
     bool _assignLooks;
 
