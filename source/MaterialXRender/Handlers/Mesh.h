@@ -360,6 +360,9 @@ class Mesh
     bool generateTangents(MeshStreamPtr positionStream, MeshStreamPtr texcoordStream, MeshStreamPtr normalStream,
                           MeshStreamPtr tangentStream, MeshStreamPtr bitangentStream);   
 
+    /// Merge all mesh partitions into one.
+    void mergePartitions();
+
   private:
     string _identifier;
     string _sourceUri;

@@ -126,4 +126,25 @@ bool Mesh::generateTangents(MeshStreamPtr positionStream, MeshStreamPtr texcoord
     return true;
 }
 
+void Mesh::mergePartitions()
+{
+    if (getPartitionCount() <= 1)
+    {
+        return;
+    }
+
+    MeshPartitionPtr merged = MeshPartition::create();
+    for (size_t i = 0; i < getPartitionCount(); i++)
+    {
+        MeshPartitionPtr part = getPartition(i);
+        merged->getIndices().insert(merged->getIndices().end(),
+                                    part->getIndices().begin(),
+                                    part->getIndices().end());
+        merged->setFaceCount(merged->getFaceCount() + part->getFaceCount());
+    }
+
+    _partitions.clear();
+    addPartition(merged);
+}
+
 }
