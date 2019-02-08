@@ -693,25 +693,21 @@ void Viewer::drawContents()
     for (auto assignment : _materialAssignments)
     {
         mx::MeshPartitionPtr geom = assignment.first;
-
         MaterialPtr material = assignment.second;
         mx::TypedElementPtr shader = material->getElement();
-        if (shader && shader != lastBoundShader)
+
+        material->bindShader(_searchPath);
+        if (material->hasTransparency())
         {
-            material->bindShader(_searchPath);
-            lastBoundShader = shader;
-            if (material->hasTransparency())
-            {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            }
-            else
-            {
-                glDisable(GL_BLEND);
-            }
-            material->bindViewInformation(world, view, proj);
-            material->bindLights(_imageHandler, _searchPath, _envSamples);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
+        else
+        {
+            glDisable(GL_BLEND);
+        }
+        material->bindViewInformation(world, view, proj);
+        material->bindLights(_imageHandler, _searchPath, _envSamples);
         material->bindImages(_imageHandler, _searchPath, material->getUdim());
         material->drawPartition(geom);
     }
