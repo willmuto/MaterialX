@@ -10,7 +10,7 @@
 
   <!-- N O D E S -->
 
-  <!--
+<!--
     Node: <diffusebrdf>
     A BSDF node for diffuse reflection.
   -->
@@ -78,6 +78,18 @@
     <input name="tangent" type="vector3" defaultgeomprop="Tworld"/>
     <input name="distribution" type="string" value="ggx" enum="ggx"/>
     <input name="interior" type="VDF"/>
+  </nodedef>
+
+  <!--
+    Node: <burleydiffusebrdf>
+    A BSDF node for Burley diffuse reflection.
+  -->
+  <nodedef name="ND_burleydiffusebrdf" node="burleydiffusebrdf" type="BSDF" bsdf="R" nodegroup="pbr"
+           doc="A BSDF node for Burley diffuse reflections.">
+    <input name="weight" type="float" value="1.0"/>
+    <input name="color" type="color3" value="0.18, 0.18, 0.18"/>
+    <input name="roughness" type="float" value="0.0"/>
+    <input name="normal" type="vector3" defaultgeomprop="Nworld"/>
   </nodedef>
 
   <!--
