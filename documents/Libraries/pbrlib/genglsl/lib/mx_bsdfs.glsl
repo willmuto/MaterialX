@@ -56,13 +56,13 @@ float mx_microfacet_ggx_smith_G(float NdotL, float NdotV, float alpha)
     return mx_microfacet_ggx_G1(NdotL, alpha) * mx_microfacet_ggx_G1(NdotV, alpha);
 }
 
-float mx_fresnel_schlick(float cosTheta, float F0, float F90, float exponent = 5.0)
+float mx_fresnel_schlick(float cosTheta, float F0, float F90, float exponent)
 {
     float x = clamp(1.0 - cosTheta, 0.0, 1.0);
     return mix(F0, F90, pow(x, exponent));
 }
 
-vec3 mx_fresnel_schlick(float cosTheta, vec3 F0, vec3 F90, float exponent = 5.0)
+vec3 mx_fresnel_schlick(float cosTheta, vec3 F0, vec3 F90, float exponent)
 {
     float x = clamp(1.0 - cosTheta, 0.0, 1.0);
     return mix(F0, F90, pow(x, exponent));
@@ -126,21 +126,21 @@ vec3 mx_fresnel_conductor(float cosTheta, vec3 n, vec3 k)
 
 // https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf
 // Section 5.3
-float mx_burleydiffuse(vec3 L, vec3 V, vec3 N, float NdotL, float roughness)
+float mx_burley_diffuse(vec3 L, vec3 V, vec3 N, float NdotL, float roughness)
 {
     vec3 H = normalize(L + V);
     float LdotH = max(dot(L, H), 0.0);
     float NdotV = max(dot(N, V), 0.0);
 
     float F90 = 0.5 + (2.0 * roughness * mx_square(LdotH));
-    float refL = mx_fresnel_schlick(NdotL, 1.0, F90);
-    float refV = mx_fresnel_schlick(NdotV, 1.0, F90);
+    float refL = mx_fresnel_schlick(NdotL, 1.0, F90, 5.0);
+    float refV = mx_fresnel_schlick(NdotV, 1.0, F90, 5.0);
     return refL * refV * M_PI_INV;
 }
 
 // Compute the directional albedo component of Burley diffuse for the given
 // view angle and roughness.  Curve fit provided by Stephen Hill.
-float mx_burleydiffuse_directional_albedo(vec3 V, vec3 N, float roughness)
+float mx_burley_directional_albedo(vec3 V, vec3 N, float roughness)
 {
     float x = dot(N, V);
     float fit0 = 0.97619 - 0.488095 * mx_pow5(1 - x);

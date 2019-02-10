@@ -9,7 +9,7 @@ void mx_burleydiffusebrdf_reflection(vec3 L, vec3 V, float weight, vec3 color, f
         return;
     }
 
-    result = color * weight * mx_burleydiffuse(L, V, normal, NdotL, roughness);
+    result = color * weight * mx_burley_diffuse(L, V, normal, NdotL, roughness);
     return;
 }
 
@@ -22,6 +22,6 @@ void mx_burleydiffusebrdf_indirect(vec3 V, float weight, vec3 color, float rough
     }
 
     vec3 Li = mx_environment_irradiance(normal) *
-              mx_burleydiffuse_directional_albedo(V, normal, roughness);
+              mx_burley_directional_albedo(V, normal, roughness);
     result = Li * color * weight;
 }
