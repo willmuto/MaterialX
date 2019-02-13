@@ -552,6 +552,22 @@ void Viewer::createAdvancedSettings(Widget* parent)
         _assignLooks = enable;
     });
 
+    new ng::Label(advancedPopup, "Lighting Options");
+
+    ng::CheckBox* directLightingBox = new ng::CheckBox(advancedPopup, "Direct lighting");
+    directLightingBox->setChecked(_directLighting);
+    directLightingBox->setCallback([this](bool enable)
+    {
+        _directLighting = enable;
+    });
+
+    ng::CheckBox* indirectLightingBox = new ng::CheckBox(advancedPopup, "Indirect lighting");
+    indirectLightingBox->setChecked(_indirectLighting);
+    indirectLightingBox->setCallback([this](bool enable)
+    {
+        _indirectLighting = enable;
+    });
+
     new ng::Label(advancedPopup, "Render Options");
 
     if (_wireMaterial)
@@ -580,20 +596,6 @@ void Viewer::createAdvancedSettings(Widget* parent)
     sampleBox->setCallback([this](int index)
     {
         _envSamples = MIN_ENV_SAMPLES * (int) std::pow(4, index);
-    });
-
-    ng::CheckBox* directLightingBox = new ng::CheckBox(advancedPopup, "Direct lighting");
-    directLightingBox->setChecked(_directLighting);
-    directLightingBox->setCallback([this](bool enable)
-    {
-        _directLighting = enable;
-    });
-
-    ng::CheckBox* indirectLightingBox = new ng::CheckBox(advancedPopup, "Indirect lighting");
-    indirectLightingBox->setChecked(_indirectLighting);
-    indirectLightingBox->setCallback([this](bool enable)
-    {
-        _indirectLighting = enable;
     });
 }
 

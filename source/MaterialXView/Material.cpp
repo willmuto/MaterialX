@@ -23,9 +23,10 @@ bool stringEndsWith(const std::string& str, std::string const& end)
 //
 // Material methods
 //
+
 size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath& filePath, 
-                            mx::DocumentPtr libraries, const DocumentModifiers& modifiers,
-                            std::vector<MaterialPtr>& materials)
+                              mx::DocumentPtr libraries, const DocumentModifiers& modifiers,
+                              std::vector<MaterialPtr>& materials)
 {
     // Load the content document.
     mx::DocumentPtr doc = mx::createDocument();
@@ -350,7 +351,7 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
 }
 
 bool Material::bindImage(std::string filename, const std::string& uniformName, mx::GLTextureHandlerPtr imageHandler,
-                         mx::ImageDesc& desc, const std::string& udim, std::array<float, 4> *fallbackColor)
+                         mx::ImageDesc& desc, const std::string& udim, std::array<float, 4>* fallbackColor)
 {
     if (!_glShader)
     {
@@ -380,78 +381,57 @@ bool Material::bindImage(std::string filename, const std::string& uniformName, m
     return true;
 }
 
-void Material::bindUniform(const std::string& name, const mx::Value& value)
+void Material::bindUniform(const std::string& name, mx::ConstValuePtr value)
 {
-    if (value.getValueString().empty())
+    if (!value)
+    {
         return;
+    }
 
-    if (value.getTypeString() == "float")
+    if (value->isA<float>())
     {
-        float v = value.asA<float>();
+        float v = value->asA<float>();
         _glShader->setUniform(name, v);
     }
-    else if (value.getTypeString() == "integer")
+    else if (value->isA<int>())
     {
-        int v = value.asA<int>();
+        int v = value->asA<int>();
         _glShader->setUniform(name, v);
     }
-    else if (value.getTypeString() == "boolean")
+    else if (value->isA<bool>())
     {
-        bool v = value.asA<bool>();
+        bool v = value->asA<bool>();
         _glShader->setUniform(name, v);
     }
-    else if (value.getTypeString() == "color2")
+    else if (value->isA<mx::Color2>())
     {
-        mx::Color2 v = value.asA<mx::Color2>();
-        ng::Vector2f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        _glShader->setUniform(name, ngv);
+        mx::Color2 v = value->asA<mx::Color2>();
+        _glShader->setUniform(name, ng::Vector2f(v.data()));
     }
-    else if (value.getTypeString() == "color3")
+    else if (value->isA<mx::Color3>())
     {
-        mx::Color3 v = value.asA<mx::Color3>();
-        ng::Vector3f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        ngv[2] = v[2];
-        _glShader->setUniform(name, ngv);
+        mx::Color3 v = value->asA<mx::Color3>();
+        _glShader->setUniform(name, ng::Vector3f(v.data()));
     }
-    else if (value.getTypeString() == "color4")
+    else if (value->isA<mx::Color4>())
     {
-        mx::Color4 v = value.asA<mx::Color4>();
-        ng::Vector4f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        ngv[2] = v[2];
-        _glShader->setUniform(name, ngv);
+        mx::Color4 v = value->asA<mx::Color4>();
+        _glShader->setUniform(name, ng::Vector4f(v.data()));
     }
-    else if (value.getTypeString() == "vector2")
+    else if (value->isA<mx::Vector2>())
     {
-        mx::Vector2 v = value.asA<mx::Vector2>();
-        ng::Vector2f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        _glShader->setUniform(name, ngv);
+        mx::Vector2 v = value->asA<mx::Vector2>();
+        _glShader->setUniform(name, ng::Vector2f(v.data()));
     }
-    else if (value.getTypeString() == "vector3")
+    else if (value->isA<mx::Vector3>())
     {
-        mx::Vector3 v = value.asA<mx::Vector3>();
-        ng::Vector3f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        ngv[2] = v[2];
-        _glShader->setUniform(name, ngv);
+        mx::Vector3 v = value->asA<mx::Vector3>();
+        _glShader->setUniform(name, ng::Vector3f(v.data()));
     }
-    else if (value.getTypeString() == "vector4")
+    else if (value->isA<mx::Vector4>())
     {
-        mx::Vector4 v = value.asA<mx::Vector4>();
-        ng::Vector4f ngv;
-        ngv[0] = v[0];
-        ngv[1] = v[1];
-        ngv[2] = v[2];
-        ngv[3] = v[3];
-        _glShader->setUniform(name, ngv);
+        mx::Vector4 v = value->asA<mx::Vector4>();
+        _glShader->setUniform(name, ng::Vector4f(v.data()));
     }
 }
 
@@ -471,10 +451,9 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
     {
         _glShader->setUniform("u_envSamples", envSamples);
     }
-    const std::string empty;
     mx::StringMap lightTextures = {
-        { "u_envRadiance", indirectLighting ? lightHandler->getLightEnvRadiancePath() : empty },
-        { "u_envIrradiance", indirectLighting ? lightHandler->getLightEnvIrradiancePath() : empty }
+        { "u_envRadiance", indirectLighting ? lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
+        { "u_envIrradiance", indirectLighting ? lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
     };
 
     // On failure to load, use a black texture
@@ -544,7 +523,7 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
                 std::string inputName(prefix + "." + input->getName());
                 if (_glShader->uniform(inputName, false) != -1)
                 {
-                    bindUniform(inputName, *input->getValue());
+                    bindUniform(inputName, input->getValue());
                 }
             }
         }
@@ -558,7 +537,7 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
                 std::string paramName(prefix + "." + param->getName());
                 if (_glShader->uniform(paramName, false) != -1)
                 {
-                    bindUniform(paramName, *param->getValue());
+                    bindUniform(paramName, param->getValue());
                 }
             }
         }

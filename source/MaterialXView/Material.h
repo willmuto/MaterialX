@@ -127,7 +127,7 @@ class Material
     mx::Shader::Variable* findUniform(const std::string& path) const;
 
   protected:
-    void bindUniform(const std::string& name, const mx::Value& value);
+    void bindUniform(const std::string& name, mx::ConstValuePtr value);
 
     GLShaderPtr _glShader;
     mx::HwShaderPtr _hwShader;
