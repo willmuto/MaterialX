@@ -1,10 +1,9 @@
 #include <MaterialXView/Viewer.h>
 
 #include <MaterialXGenShader/DefaultColorManagementSystem.h>
-
+#include <MaterialXGenShader/Util.h>
 #include <MaterialXRender/Handlers/stbImageLoader.h>
 #include <MaterialXRender/Handlers/TinyObjLoader.h>
-#include <MaterialXGenShader/Util.h>
 
 #include <nanogui/button.h>
 #include <nanogui/combobox.h>

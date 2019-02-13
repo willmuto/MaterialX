@@ -507,16 +507,15 @@ void PropertyEditor::addItemToForm(const EditorItem& item, const std::string& gr
                             const mx::GLTextureHandlerPtr handler = viewer->getImageHandler();
                             if (handler)
                             {
-                                std::string filename = ng::file_dialog
-                                ({ { "png", "PNG" },
-                                    { "jpeg", "JPEG" },
-                                    { "hdr", "HDR" },
-                                    { "gif", "GIF" },
-                                    { "bmp", "BMP" } }, false);
+                                std::string filename = ng::file_dialog({ { "png", "PNG" },
+                                                                         { "jpeg", "JPEG" },
+                                                                         { "hdr", "HDR" },
+                                                                         { "gif", "GIF" },
+                                                                         { "bmp", "BMP" } }, false);
                                 if (!filename.empty())
                                 {
                                     uniform->value = mx::Value::createValue<std::string>(filename);
-                                    buttonVar->setCaption(filename);
+                                    buttonVar->setCaption(mx::FilePath(filename).getBaseName());
                                     viewer->performLayout();
                                 }
                             }

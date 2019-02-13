@@ -108,8 +108,7 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
         }
     }
 
-
-    // Find new renderable elements
+    // Find new renderable elements.
     size_t previousMaterialCount = materials.size();
     mx::StringVec renderablePaths;
     std::vector<mx::TypedElementPtr> elems;
@@ -124,13 +123,13 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
         }
     }
 
-    // Check for any udim set
+    // Check for any udim set.
     mx::ValuePtr udimSetValue = doc->getGeomAttrValue("udimset");
 
-    // Merge the material document into the document passed in
+    // Merge the content document into the destination document.
     destinationDoc->importLibrary(doc, &copyOptions);
 
-    // Create new materials
+    // Create new materials.
     for (auto renderablePath : renderablePaths)
     {
         auto elem = destinationDoc->getDescendant(renderablePath)->asA<mx::TypedElement>();
@@ -244,7 +243,6 @@ void Material::bindShader(mx::ShaderGeneratorPtr shaderGenerator)
         _glShader->bind();
     }
 }
-
 
 void Material::bindMesh(const mx::MeshPtr mesh) const
 {
