@@ -444,7 +444,7 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
 
     _glShader->bind();
 
-    // Bind light properties.
+    // Bind environment light uniforms and images.
     if (_glShader->uniform("u_envSamples", false) != -1)
     {
         _glShader->setUniform("u_envSamples", envSamples);
@@ -453,8 +453,6 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
         { "u_envRadiance", indirectLighting ? lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
         { "u_envIrradiance", indirectLighting ? lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
     };
-
-    // On failure to load, use a black texture
     const std::string udim;
     std::array<float, 4> fallbackColor = { 0.0, 0.0, 0.0, 1.0 };
     for (auto pair : lightTextures)
@@ -477,27 +475,16 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
         }
     }
 
-    // Check for usage of direct lighting
-    if (_glShader->uniform("u_numActiveLightSources", false) == -1)
+    // Skip direct lights if inactive.
+    if (!directLighting || _glShader->uniform("u_numActiveLightSources", false) == -1)
     {
         return;
     }
 
-    // Set the number of active light sources
-    unsigned int lightCount = directLighting ? static_cast<unsigned int>(lightHandler->getLightSources().size()) : 0;
-    _glShader->setUniform("u_numActiveLightSources", lightCount, true);
-    
-    if (lightCount == 0)
-    {
-        return;
-    }
-
-    // Bind any direct lighting
-    //
-    const std::vector<mx::NodePtr> lightList = lightHandler->getLightSources();
+    // Bind direct light sources.
+    _glShader->setUniform("u_numActiveLightSources", (int) lightHandler->getLightSources().size(), true);
     std::unordered_map<std::string, unsigned int> ids;
     mx::mapNodeDefToIdentiers(lightHandler->getLightSources(), ids);
-
     size_t index = 0;
     for (mx::NodePtr light : lightHandler->getLightSources())
     {
