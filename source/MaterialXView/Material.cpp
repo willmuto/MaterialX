@@ -475,14 +475,15 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
         }
     }
 
-    // Skip direct lights if inactive.
-    if (!directLighting || _glShader->uniform("u_numActiveLightSources", false) == -1)
+    // Skip direct lights if unsupported by the shader.
+    if (_glShader->uniform("u_numActiveLightSources", false) == -1)
     {
         return;
     }
 
     // Bind direct light sources.
-    _glShader->setUniform("u_numActiveLightSources", (int) lightHandler->getLightSources().size(), true);
+    int lightCount = directLighting ? (int) lightHandler->getLightSources().size() : 0;
+    _glShader->setUniform("u_numActiveLightSources", lightCount);
     std::unordered_map<std::string, unsigned int> ids;
     mx::mapNodeDefToIdentiers(lightHandler->getLightSources(), ids);
     size_t index = 0;
