@@ -4,10 +4,7 @@ import unittest
 
 import MaterialX as mx
 
-"""
-Unit tests for MaterialX Python.
-"""
-
+# Unit tests for MaterialX Python.
 
 #--------------------------------------------------------------------------------
 _testValues = (1,
@@ -44,7 +41,6 @@ _exampleFilenames = ('CustomNode.mtlx',
                      'BxDF/Disney_BSDF_2015.mtlx')
 
 _epsilon = 1e-4
-
 
 #--------------------------------------------------------------------------------
 class TestMaterialX(unittest.TestCase):
@@ -315,8 +311,8 @@ class TestMaterialX(unittest.TestCase):
 
         # Create a variant set.
         variantSet = doc.addVariantSet()
-        original = variantSet.addVariant("original")
-        damaged = variantSet.addVariant("damaged")
+        variantSet.addVariant("original")
+        variantSet.addVariant("damaged")
         self.assertTrue(len(variantSet.getVariants()) == 2)
 
         # Disconnect outputs from sources.
@@ -332,7 +328,7 @@ class TestMaterialX(unittest.TestCase):
         # Create a node graph with the following structure:
         #
         # [image1] [constant]     [image2]
-        #        \ /                 |   
+        #        \ /                 |
         #    [multiply]          [contrast]         [noise3d]
         #             \____________  |  ____________/
         #                          [mix]
@@ -453,7 +449,6 @@ class TestMaterialX(unittest.TestCase):
             mx.readFromXmlFile(lib, filename, _searchPath)
             self.assertTrue(lib.validate()[0])
             libs.append(lib)
-
         # Read and validate each example document.
         for filename in _exampleFilenames:
             doc = mx.createDocument()
@@ -480,13 +475,13 @@ class TestMaterialX(unittest.TestCase):
                 for param in material.getPrimaryShaderParameters():
                     boundValue = param.getBoundValue(material)
                     self.assertTrue(boundValue is not None)
-                    for edge in param.traverseGraph(material):
+                    for _ in param.traverseGraph(material):
                         edgeCount += 1
-                for input in material.getPrimaryShaderInputs():
-                    boundValue = input.getBoundValue(material)
-                    upstreamElement = input.getUpstreamElement(material)
+                for shaderInput in material.getPrimaryShaderInputs():
+                    boundValue = shaderInput.getBoundValue(material)
+                    upstreamElement = shaderInput.getUpstreamElement(material)
                     self.assertTrue(boundValue is not None or upstreamElement is not None)
-                    for edge in input.traverseGraph(material):
+                    for _ in shaderInput.traverseGraph(material):
                         edgeCount += 1
                 self.assertTrue(edgeCount > 0)
 
@@ -514,7 +509,6 @@ class TestMaterialX(unittest.TestCase):
         mx.readFromXmlFile(doc, filename, _searchPath, readOptions)
         mx.readFromXmlFile(doc, filename, _searchPath, readOptions)
         self.assertTrue(doc.validate()[0])
-
 
 #--------------------------------------------------------------------------------
 if __name__ == '__main__':
