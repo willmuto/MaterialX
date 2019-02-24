@@ -19,7 +19,7 @@ option(MATERIALX_INSTALL_PYTHON "Install the MaterialX Python package as a third
 option(MATERIALX_WARNINGS_AS_ERRORS "Interpret all compiler warnings as errors." OFF)
 option(MATERIALX_BUILD_RENDER "Build the MaterialX Render module. " ON)
 option(MATERIALX_TEST_RENDER "Run tests for MaterialX Render module. Requires a valid GPU setup for hardware dependent validation." OFF)
-option(MATERIALX_BUILD_OPENIMAGEIO "Build the OpenImageIO loader for MaterialXRender. " OFF)
+option(MATERIALX_BUILD_OIIO "Build OpenImageIO support for MaterialXRender. " OFF)
 option(MATERIALX_BUILD_VIEWER "Build the MaterialX Viewer. " OFF)
 option(MATERIALX_BUILD_GEN_OSL "Build the OSL shader generator back-end." ON)
 option(MATERIALX_BUILD_GEN_GLSL "Build the GLSL shader generator back-end." ON)
@@ -36,7 +36,7 @@ set(MATERIALX_TESTRENDER_EXECUTABLE "" CACHE FILEPATH
     "Full path to the testrender binary.")
 set(MATERIALX_OSL_INCLUDE_PATH "" CACHE PATH
     "Full path to osl include paths. e.g. location of stdosl.h")
-set(MATERIALX_OPENIMAGEIO_DIR "" CACHE PATH
+set(MATERIALX_OIIO_DIR "" CACHE PATH
     "Path to the root folder of the OpenImageIO installation.")
 
 set(MATERIALX_PYTHON_VERSION "" CACHE STRING
@@ -64,12 +64,12 @@ mark_as_advanced(MATERIALX_BUILD_CONTRIB)
 
 mark_as_advanced(MATERIALX_BUILD_RENDER)
 mark_as_advanced(MATERIALX_TEST_RENDER)
-mark_as_advanced(MATERIALX_BUILD_OPENIMAGEIO)
+mark_as_advanced(MATERIALX_BUILD_OIIO)
 mark_as_advanced(MATERIALX_OSLC_EXECUTABLE)
 mark_as_advanced(MATERIALX_TESTSHADE_EXECUTABLE)
 mark_as_advanced(MATERIALX_TESTRENDER_EXECUTABLE)
 mark_as_advanced(MATERIALX_OSL_INCLUDE_PATH)
-mark_as_advanced(MATERIALX_OPENIMAGEIO_DIR)
+mark_as_advanced(MATERIALX_OIIO_DIR)
 
 add_definitions(-DMATERIALX_OSLC_EXECUTABLE=\"${MATERIALX_OSLC_EXECUTABLE}\")
 add_definitions(-DMATERIALX_TESTSHADE_EXECUTABLE=\"${MATERIALX_TESTSHADE_EXECUTABLE}\")
@@ -144,16 +144,15 @@ if (MATERIALX_BUILD_GEN_ARNOLD)
     add_subdirectory(source/MaterialXGenArnold)
 endif()
 
+if (MATERIALX_BUILD_OIIO)
+	add_definitions(-DMATERIALX_BUILD_OIIO)
+endif()
 if (MATERIALX_BUILD_RENDER)
     if (MATERIALX_TEST_RENDER)
         add_definitions(-DMATERIALX_TEST_RENDER)
     endif()
     add_definitions(-DMATERIALX_BUILD_RENDER)
     add_subdirectory(source/MaterialXRender)
-endif()
-
-if (MATERIALX_BUILD_OPENIMAGEIO)
-	add_definitions(-DMATERIALX_BUILD_OPENIMAGEIO)
 endif()
 
 if (MATERIALX_BUILD_VIEWER)

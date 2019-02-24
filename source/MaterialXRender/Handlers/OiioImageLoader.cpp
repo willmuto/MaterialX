@@ -1,6 +1,6 @@
-#if MATERIALX_BUILD_OPENIMAGEIO
-
 #include <MaterialXRender/Handlers/OiioImageLoader.h>
+
+#if MATERIALX_BUILD_OIIO
 
 #include <OpenImageIO/imageio.h>
 
@@ -51,4 +51,4 @@ bool OiioImageLoader::acquireImage(const std::string& fileName,
 
 } // namespace MaterialX
 
-#endif // MATERIALX_BUILD_OPENIMAGEIO
+#endif // MATERIALX_BUILD_OIIO

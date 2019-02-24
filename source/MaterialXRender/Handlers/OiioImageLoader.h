@@ -32,6 +32,7 @@ class OiioImageLoader : public ImageLoader
         _extensions.push_back(EXR_EXTENSION);
         _extensions.push_back(TIF_EXTENSION);
         _extensions.push_back(TIFF_EXTENSION);
+        _extensions.push_back(TXT_EXTENSION);
     }
 
     /// Default destructor

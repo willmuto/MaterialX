@@ -84,6 +84,7 @@ class ImageLoader
     static std::string TGA_EXTENSION;
     static std::string TIF_EXTENSION;
     static std::string TIFF_EXTENSION;
+    static std::string TXT_EXTENSION;
 
     /// Returns a list of supported extensions
     /// @return List of support extensions
