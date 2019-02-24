@@ -51,6 +51,4 @@ bool OiioImageLoader::acquireImage(const std::string& fileName,
 
 } // namespace MaterialX
 
-#else
-bool OiioImageLoader::enabled = false;
 #endif // MATERIALX_BUILD_OPENIMAGEIO

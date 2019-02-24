@@ -1,7 +1,7 @@
 #include <MaterialXCore/Types.h>
 #include <MaterialXRender/OpenGL/GLTextureHandler.h>
 #include <MaterialXRender/OpenGL/GlslProgram.h>
-#include <MaterialXRender/External/Glew/glew.h>
+#include <MaterialXRender/External/GLew/glew.h>
 
 namespace MaterialX
 {

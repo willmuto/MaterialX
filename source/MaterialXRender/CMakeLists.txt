@@ -89,7 +89,6 @@ if(MATERIALX_BUILD_OPENIMAGEIO)
 	if(OPENIMAGEIO_FOUND)
 		include_directories(${OPENIMAGEIO_INCLUDE_DIR})
 		target_link_libraries(MaterialXRender ${OPENIMAGEIO_LIBRARIES})
-		add_definitions(-DMATERIALX_BUILD_OPENIMAGEIO)
 	endif()
 endif()
 

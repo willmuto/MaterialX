@@ -189,16 +189,13 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
     initializeDocument(_stdLib);
 
-    if (mx::OiioImageLoader::enabled)
-    {
-        mx::ImageLoaderPtr OiioImageLoader = mx::OiioImageLoader::create();
-        _imageHandler = mx::GLTextureHandler::create(OiioImageLoader);
-    }
-    else
-    {
-        mx::ImageLoaderPtr StbImageLoader = mx::StbImageLoader::create();
-        _imageHandler = mx::GLTextureHandler::create(StbImageLoader);
-    }
+#if MATERIALX_BUILD_OPENIMAGEIO
+    mx::ImageLoaderPtr OiioImageLoader = mx::OiioImageLoader::create();
+    _imageHandler = mx::GLTextureHandler::create(OiioImageLoader);
+#else
+    mx::ImageLoaderPtr StbImageLoader = mx::StbImageLoader::create();
+    _imageHandler = mx::GLTextureHandler::create(StbImageLoader);
+#endif
 
     mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
     _geometryHandler.addLoader(loader);

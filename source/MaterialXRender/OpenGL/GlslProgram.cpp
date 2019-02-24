@@ -1,5 +1,5 @@
 
-#include <MaterialXRender/External/Glew/glew.h>
+#include <MaterialXRender/External/GLew/glew.h>
 #include <MaterialXRender/OpenGL/GlslProgram.h>
 #include <MaterialXGenShader/Util.h>
 
