@@ -461,7 +461,7 @@
   <implementation name="IM_transformpoint_vector2M3_genosl" nodedef="ND_transformpoint_vector2M3" function="mx_transformpoint2_matrix33" file="stdlib/genosl/mx_transformpoint2_matrix33.osl" language="genosl"/>
   <implementation name="IM_transformpoint_vector3M4_genosl" nodedef="ND_transformpoint_vector3M4" function="mx_transformpoint3_matrix44" file="stdlib/genosl/mx_transformpoint3_matrix44.osl" language="genosl"/>
   <implementation name="IM_transformpoint_vector4_genosl" nodedef="ND_transformpoint_vector4"  file="stdlib/genosl/mx_transformpoint.inline" language="genosl"/>
-  <implementation name="IM_transformpoint_vector4M_genosl" nodedef="ND_transformpoint_vector4M"  file="stdlib/genosl/mx_transformpointM.inline" language="genosl"/>
+  <implementation name="IM_transformpoint_vector4M_genosl" nodedef="ND_transformpoint_vector4M"  function="mx_transformpoint4M" file="stdlib/genosl/mx_transformpoint4M.osl" language="genosl"/>
 
   <!-- <transformvector> -->
   <implementation name="IM_transformvector_vector3_genosl" nodedef="ND_transformvector_vector3"  file="stdlib/genosl/mx_transformvector.inline" language="genosl"/>
@@ -473,9 +473,10 @@
 
   <!-- <transformnormal> -->
   <implementation name="IM_transformnormal_vector3_genosl" nodedef="ND_transformnormal_vector3"  file="stdlib/genosl/mx_transformnormal.inline" language="genosl"/>
-  <implementation name="IM_transformnormal_vector3M_genosl" nodedef="ND_transformnormal_vector3M"  file="stdlib/genosl/mx_transformnormalM.inline" language="genosl"/>
+  <implementation name="IM_transformnormal_vector3M_genosl" nodedef="ND_transformnormal_vector3M"  file="stdlib/genosl/mx_transformnormal3M.inline" language="genosl"/>
   <implementation name="IM_transformnormal_vector4_genosl" nodedef="ND_transformnormal_vector4"  file="stdlib/genosl/mx_transformnormal.inline" language="genosl"/>
-  <implementation name="IM_transformnormal_vector4M_genosl" nodedef="ND_transformnormal_vector4M"  file="stdlib/genosl/mx_transformnormalM.inline" language="genosl"/>
+  <implementation name="IM_transformnormal_vector4M_genosl" nodedef="ND_transformnormal_vector4M"  function="mx_transformnormal4M" file="stdlib/genosl/mx_transformnormal4M.osl" language="genosl"/>
+  <implementation name="IM_transformnormal_vector3M4_genosl" nodedef="ND_transformnormal_vector3M4"  file="stdlib/genosl/mx_transformnormal3M.inline" language="genosl"/>
 
   <!-- <transpose> -->
   <implementation name="IM_transpose_matrix33_genosl" nodedef="ND_transpose_matrix33" file="stdlib/genosl/mx_transpose.inline" language="genosl"/>

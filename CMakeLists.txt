@@ -25,12 +25,14 @@ option(MATERIALX_BUILD_GEN_OSL "Build the OSL shader generator back-end." ON)
 option(MATERIALX_BUILD_GEN_GLSL "Build the GLSL shader generator back-end." ON)
 cmake_dependent_option(MATERIALX_BUILD_GEN_OGSFX "Build the OGSFX shader generator back-end." ON "MATERIALX_BUILD_GEN_GLSL" OFF)
 option(MATERIALX_BUILD_CONTRIB "Build contribution folder." ON)
+cmake_dependent_option(MATERIALX_BUILD_GEN_ARNOLD "Build the Arnold OSL shader generator back-end." ON "MATERIALX_BUILD_GEN_OSL" OFF)
+option(MATERIALX_BUILD_CONTRIB "Build contribution folder." ON)
 
-set(MATERIALX_OSLC_EXECUTABLE "" CACHE FILEPATH 
+set(MATERIALX_OSLC_EXECUTABLE "" CACHE FILEPATH
     "Full path to the oslc binary.")
-set(MATERIALX_TESTSHADE_EXECUTABLE "" CACHE FILEPATH 
+set(MATERIALX_TESTSHADE_EXECUTABLE "" CACHE FILEPATH
     "Full path to the testshade binary.")
-set(MATERIALX_TESTRENDER_EXECUTABLE "" CACHE FILEPATH 
+set(MATERIALX_TESTRENDER_EXECUTABLE "" CACHE FILEPATH
     "Full path to the testrender binary.")
 set(MATERIALX_OSL_INCLUDE_PATH "" CACHE PATH
     "Full path to osl include paths. e.g. location of stdosl.h")
@@ -57,6 +59,7 @@ mark_as_advanced(MATERIALX_PYTHON_PYBIND11_DIR)
 mark_as_advanced(MATERIALX_BUILD_GEN_OSL)
 mark_as_advanced(MATERIALX_BUILD_GEN_GLSL)
 mark_as_advanced(MATERIALX_BUILD_GEN_OGSFX)
+mark_as_advanced(MATERIALX_BUILD_GEN_ARNOLD)
 mark_as_advanced(MATERIALX_BUILD_CONTRIB)
 
 mark_as_advanced(MATERIALX_BUILD_RENDER)
@@ -136,6 +139,10 @@ if (MATERIALX_BUILD_GEN_OGSFX)
     add_definitions(-DMATERIALX_BUILD_GEN_OGSFX)
     add_subdirectory(source/MaterialXGenOgsFx)
 endif()
+if (MATERIALX_BUILD_GEN_ARNOLD)
+    add_definitions(-DMATERIALX_BUILD_GEN_ARNOLD)
+    add_subdirectory(source/MaterialXGenArnold)
+endif()
 
 if (MATERIALX_BUILD_RENDER)
     if (MATERIALX_TEST_RENDER)
@@ -164,4 +171,3 @@ if(MATERIALX_BUILD_PYTHON)
     add_subdirectory(source/PyMaterialX)
     add_subdirectory(python)
 endif()
-

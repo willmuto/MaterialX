@@ -35,6 +35,8 @@ void ImageHandler::addLoader(ImageLoaderPtr loader)
 bool ImageHandler::saveImage(const std::string& fileName,
                             const ImageDesc &imageDesc)
 {
+    FilePath filePath = findFile(fileName);
+
     std::pair <ImageLoaderMap::iterator, ImageLoaderMap::iterator> range;
     string extension = MaterialX::getFileExtension(fileName);
     range = _imageLoaders.equal_range(extension);
@@ -42,7 +44,7 @@ bool ImageHandler::saveImage(const std::string& fileName,
     ImageLoaderMap::iterator last = --range.first;
     for (auto it = first; it != last; --it)
     {
-        bool saved = it->second->saveImage(fileName, imageDesc);
+        bool saved = it->second->saveImage(filePath, imageDesc);
         if (saved)
         {
             return true;
@@ -51,8 +53,10 @@ bool ImageHandler::saveImage(const std::string& fileName,
     return false;
 }
 
-bool ImageHandler::acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps, const std::array<float, 4>* /*fallbackColor*/)
+bool ImageHandler::acquireImage(const FilePath& fileName, ImageDesc &imageDesc, bool generateMipMaps, const std::array<float, 4>* /*fallbackColor*/)
 {
+    FilePath filePath = findFile(fileName);
+
     std::pair <ImageLoaderMap::iterator, ImageLoaderMap::iterator> range;
     string extension = MaterialX::getFileExtension(fileName);
     range = _imageLoaders.equal_range(extension);
@@ -60,7 +64,7 @@ bool ImageHandler::acquireImage(const std::string& fileName, ImageDesc &imageDes
     ImageLoaderMap::iterator last= --range.first;
     for (auto it = first; it != last; --it)
     {
-        bool acquired = it->second->acquireImage(fileName, imageDesc, generateMipMaps);
+        bool acquired = it->second->acquireImage(filePath, imageDesc, generateMipMaps);
         if (acquired)
         {
             return true;
@@ -111,5 +115,16 @@ const ImageDesc* ImageHandler::getCachedImage(const std::string& identifier)
     }
     return nullptr;
 }
+
+void ImageHandler::setSearchPath(const FileSearchPath& path)
+{
+    _searchPath = path;
+}
+
+FilePath ImageHandler::findFile(const FilePath& filename)
+{
+    return _searchPath.find(filename);
+}
+
 
 }
