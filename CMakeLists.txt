@@ -19,6 +19,7 @@ option(MATERIALX_INSTALL_PYTHON "Install the MaterialX Python package as a third
 option(MATERIALX_WARNINGS_AS_ERRORS "Interpret all compiler warnings as errors." OFF)
 option(MATERIALX_BUILD_RENDER "Build the MaterialX Render module. " ON)
 option(MATERIALX_TEST_RENDER "Run tests for MaterialX Render module. Requires a valid GPU setup for hardware dependent validation." OFF)
+option(MATERIALX_BUILD_OPENIMAGEIO "Build the OpenImageIO loader for MaterialXRender. " OFF)
 option(MATERIALX_BUILD_VIEWER "Build the MaterialX Viewer. " OFF)
 option(MATERIALX_BUILD_GEN_OSL "Build the OSL shader generator back-end." ON)
 option(MATERIALX_BUILD_GEN_GLSL "Build the GLSL shader generator back-end." ON)
@@ -33,6 +34,8 @@ set(MATERIALX_TESTRENDER_EXECUTABLE "" CACHE FILEPATH
     "Full path to the testrender binary.")
 set(MATERIALX_OSL_INCLUDE_PATH "" CACHE PATH
     "Full path to osl include paths. e.g. location of stdosl.h")
+set(MATERIALX_OPENIMAGEIO_DIR "" CACHE PATH
+    "Path to the root folder of the OpenImageIO installation.")
 
 set(MATERIALX_PYTHON_VERSION "" CACHE STRING
     "Python version to be used in building the MaterialX Python package (e.g. '2.7').")
@@ -51,17 +54,19 @@ mark_as_advanced(MATERIALX_PYTHON_VERSION)
 mark_as_advanced(MATERIALX_PYTHON_EXECUTABLE)
 mark_as_advanced(MATERIALX_PYTHON_OCIO_DIR)
 mark_as_advanced(MATERIALX_PYTHON_PYBIND11_DIR)
-
-mark_as_advanced(MATERIALX_BUILD_RENDER)
-mark_as_advanced(MATERIALX_TEST_RENDER)
-mark_as_advanced(MATERIALX_OSLC_EXECUTABLE)
-mark_as_advanced(MATERIALX_TESTSHADE_EXECUTABLE)
-mark_as_advanced(MATERIALX_TESTRENDER_EXECUTABLE)
-mark_as_advanced(MATERIALX_OSL_INCLUDE_PATH)
 mark_as_advanced(MATERIALX_BUILD_GEN_OSL)
 mark_as_advanced(MATERIALX_BUILD_GEN_GLSL)
 mark_as_advanced(MATERIALX_BUILD_GEN_OGSFX)
 mark_as_advanced(MATERIALX_BUILD_CONTRIB)
+
+mark_as_advanced(MATERIALX_BUILD_RENDER)
+mark_as_advanced(MATERIALX_TEST_RENDER)
+mark_as_advanced(MATERIALX_BUILD_OPENIMAGEIO)
+mark_as_advanced(MATERIALX_OSLC_EXECUTABLE)
+mark_as_advanced(MATERIALX_TESTSHADE_EXECUTABLE)
+mark_as_advanced(MATERIALX_TESTRENDER_EXECUTABLE)
+mark_as_advanced(MATERIALX_OSL_INCLUDE_PATH)
+mark_as_advanced(MATERIALX_OPENIMAGEIO_DIR)
 
 add_definitions(-DMATERIALX_OSLC_EXECUTABLE=\"${MATERIALX_OSLC_EXECUTABLE}\")
 add_definitions(-DMATERIALX_TESTSHADE_EXECUTABLE=\"${MATERIALX_TESTSHADE_EXECUTABLE}\")

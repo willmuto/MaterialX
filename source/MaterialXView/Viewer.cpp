@@ -2,7 +2,8 @@
 
 #include <MaterialXGenShader/DefaultColorManagementSystem.h>
 #include <MaterialXGenShader/Util.h>
-#include <MaterialXRender/Handlers/stbImageLoader.h>
+#include <MaterialXRender/Handlers/OiioImageLoader.h>
+#include <MaterialXRender/Handlers/StbImageLoader.h>
 #include <MaterialXRender/Handlers/TinyObjLoader.h>
 
 #include <nanogui/button.h>
@@ -188,8 +189,16 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
     initializeDocument(_stdLib);
 
-    mx::ImageLoaderPtr stbImageLoader = mx::stbImageLoader::create();
-    _imageHandler = mx::GLTextureHandler::create(stbImageLoader);
+    if (mx::OiioImageLoader::enabled)
+    {
+        mx::ImageLoaderPtr OiioImageLoader = mx::OiioImageLoader::create();
+        _imageHandler = mx::GLTextureHandler::create(OiioImageLoader);
+    }
+    else
+    {
+        mx::ImageLoaderPtr StbImageLoader = mx::StbImageLoader::create();
+        _imageHandler = mx::GLTextureHandler::create(StbImageLoader);
+    }
 
     mx::TinyObjLoaderPtr loader = mx::TinyObjLoader::create();
     _geometryHandler.addLoader(loader);

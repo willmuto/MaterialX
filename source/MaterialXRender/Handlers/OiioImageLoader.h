@@ -1,24 +1,24 @@
-#ifndef MATERIALX_STBIMAGELOADER_H
-#define MATERIALX_STBIMAGELOADER_H
+#ifndef MATERIALX_OIIOIMAGELOADER_H
+#define MATERIALX_OIIOIMAGELOADER_H
 
 #include <MaterialXRender/Handlers/ImageHandler.h>
 
 namespace MaterialX
 {
-/// Shared pointer to an StbImageLoader
-using StbImageLoaderPtr = std::shared_ptr<class StbImageLoader>;
+/// Shared pointer to an OiioImageLoader
+using OiioImageLoaderPtr = std::shared_ptr<class OiioImageLoader>;
 
-/// @class StbImageLoader
-/// Disk image loader wrapper using stb library
+/// @class OiioImageLoader
+/// Disk image loader wrapper using OpenImageIO library
 ///
-class StbImageLoader : public ImageLoader
+class OiioImageLoader : public ImageLoader
 {
-public:
+  public:
     /// Static instance create function
-    static StbImageLoaderPtr create() { return std::make_shared<StbImageLoader>(); }
+    static OiioImageLoaderPtr create() { return std::make_shared<OiioImageLoader>(); }
 
     /// Default constructor. Set all extensions supported by stb
-    StbImageLoader() 
+    OiioImageLoader() 
     {
         _extensions.push_back(BMP_EXTENSION);
         _extensions.push_back(GIF_EXTENSION);
@@ -29,10 +29,13 @@ public:
         _extensions.push_back(PNG_EXTENSION);
         _extensions.push_back(PSD_EXTENSION);
         _extensions.push_back(TGA_EXTENSION);
+        _extensions.push_back(EXR_EXTENSION);
+        _extensions.push_back(TIF_EXTENSION);
+        _extensions.push_back(TIFF_EXTENSION);
     }
 
     /// Default destructor
-    virtual ~StbImageLoader() {}    
+    virtual ~OiioImageLoader() {}    
 
     /// Save image to disk. This method must be implemented by derived classes.
     /// @param fileName Name of file to save image to
@@ -47,6 +50,9 @@ public:
     /// @param generateMipMaps Generate mip maps if supported.
     /// @return if load succeeded
     bool acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps) override;
+
+  public:
+    static bool enabled;
 };
 
 } // namespace MaterialX;

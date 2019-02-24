@@ -80,6 +80,8 @@ class ImageLoader
     static std::string PNG_EXTENSION;
     static std::string PSD_EXTENSION;
     static std::string TGA_EXTENSION;
+    static std::string TIF_EXTENSION;
+    static std::string TIFF_EXTENSION;
 
     /// Returns a list of supported extensions
     /// @return List of support extensions

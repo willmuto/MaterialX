@@ -3,39 +3,34 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
 
-# Linux checks for X and OpenGL
-if (UNIX AND NOT APPLE)
-   find_package(PkgConfig REQUIRED)
-   find_package(X11 REQUIRED)
-   if (NOT X11_FOUND)
-      message("Error in building MaterialXRender: X11 was not found")
-   endif(NOT X11_FOUND)
-   if (NOT X11_Xt_FOUND)
-      message("Error in building MaterialXRender: Xt was not found")
-   endif(NOT X11_Xt_FOUND)
-
-   find_package(OpenGL REQUIRED)
-   if (NOT OPENGL_FOUND)
-      message("Error in building MaterialXRender: OpenGL was not found")
-   endif(NOT OPENGL_FOUND)
-
-   include_directories(
-	${X11_INCLUDE_DIR}
-   )
-endif(UNIX AND NOT APPLE)
-
 file(GLOB_RECURSE materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 file(GLOB_RECURSE materialx_header "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-if (APPLE)
-  find_library(COCOA_FRAMEWORK Cocoa)
-  find_package(OpenGL REQUIRED)
-  file(GLOB_RECURSE materialx_source_oc "${CMAKE_CURRENT_SOURCE_DIR}/*.m")
-  message("Objective C files: " ${materialx_source_oc})
-  set_source_files_properties(${materialx_source_oc} PROPERTIES 
-                            COMPILE_FLAGS "-x objective-c++")
-  set(materialx_source ${materialx_source} ${materialx_source_oc})
 
-endif(APPLE)
+if(APPLE)
+	find_library(COCOA_FRAMEWORK Cocoa)
+	find_package(OpenGL REQUIRED)
+	file(GLOB_RECURSE materialx_source_oc "${CMAKE_CURRENT_SOURCE_DIR}/*.m")
+	message("Objective C files: " ${materialx_source_oc})
+	set_source_files_properties(${materialx_source_oc} PROPERTIES 
+								COMPILE_FLAGS "-x objective-c++")
+	set(materialx_source ${materialx_source} ${materialx_source_oc})
+elseif(UNIX)
+	find_package(PkgConfig REQUIRED)
+	find_package(X11 REQUIRED)
+	if (NOT X11_FOUND)
+		message("Error in building MaterialXRender: X11 was not found")
+	endif()
+	if (NOT X11_Xt_FOUND)
+		message("Error in building MaterialXRender: Xt was not found")
+	endif()
+
+	find_package(OpenGL REQUIRED)
+	if (NOT OPENGL_FOUND)
+		message("Error in building MaterialXRender: OpenGL was not found")
+	endif()
+
+	include_directories(z{X11_INCLUDE_DIR})
+endif()
 
 function(assign_source_group prefix)
     foreach(_source IN ITEMS ${ARGN})
@@ -65,7 +60,7 @@ if(MSVC)
         MaterialXCore
         Opengl32
         ${CMAKE_DL_LIBS})
-elseif (APPLE)
+elseif(APPLE)
     target_link_libraries(
         MaterialXRender
         MaterialXGenShader
@@ -75,17 +70,28 @@ elseif (APPLE)
 	"-framework Foundation"
 	"-framework Cocoa"
 )
-elseif (UNIX AND NOT APPLE)
+elseif(UNIX)
     target_link_libraries(
         MaterialXRender
         MaterialXGenShader
         MaterialXCore
         ${CMAKE_DL_LIBS}
         ${OPENGL_LIBRARIES}
-	${X11_LIBRARIES}
+		${X11_LIBRARIES}
         ${X11_Xt_LIB}
     )
-endif(MSVC)
+endif()
+
+if(MATERIALX_BUILD_OPENIMAGEIO)
+	set(OPENIMAGEIO_ROOT_DIR ${MATERIALX_OPENIMAGEIO_DIR})
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/External/OpenImageIO")
+	find_package(OpenImageIO REQUIRED)
+	if(OPENIMAGEIO_FOUND)
+		include_directories(${OPENIMAGEIO_INCLUDE_DIR})
+		target_link_libraries(MaterialXRender ${OPENIMAGEIO_LIBRARIES})
+		add_definitions(-DMATERIALX_BUILD_OPENIMAGEIO)
+	endif()
+endif()
 
 set_target_properties(
     MaterialXRender PROPERTIES

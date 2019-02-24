@@ -6,16 +6,16 @@
 
 #elif defined(OSLinux_)
 #include <dlfcn.h> // For dlopen
-#include <MaterialXRender/External/GLew/glxew.h>
+#include <MaterialXRender/External/Glew/glxew.h>
 #include <X11/Intrinsic.h> 
 
 #elif defined(OSMac_)
-#include <MaterialXRender/External/GLew/glew.h>
+#include <MaterialXRender/External/Glew/glew.h>
 #include <MaterialXRender/Window/WindowCocoaWrappers.h>
 #include <MaterialXRender/OpenGL/GLCocoaWrappers.h>
 #endif
 
-#include <MaterialXRender/External/GLew/glew.h>
+#include <MaterialXRender/External/Glew/glew.h>
 #include <MaterialXRender/OpenGL/GLUtilityContext.h>
 
 namespace MaterialX

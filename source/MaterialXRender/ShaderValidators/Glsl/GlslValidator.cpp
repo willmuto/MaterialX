@@ -1,5 +1,5 @@
 
-#include <MaterialXRender/External/GLew/glew.h>
+#include <MaterialXRender/External/Glew/glew.h>
 #include <MaterialXRender/ShaderValidators/Glsl/GlslValidator.h>
 #include <MaterialXRender/Handlers/GeometryHandler.h>
 #include <MaterialXRender/Handlers/TestObjLoader.h>

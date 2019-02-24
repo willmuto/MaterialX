@@ -10,7 +10,7 @@
 #elif defined(OSMac_)
 #include <OpenGL/gl.h>
 #elif defined(OSLinux_)
-#include <MaterialXRender/External/GLew/glxew.h>
+#include <MaterialXRender/External/Glew/glxew.h>
 #endif
 
 namespace MaterialX
