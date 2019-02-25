@@ -147,20 +147,6 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
         performLayout();
     });
 
-    // Create wire material first as advanced settings depends on if this shader exists
-    const std::string constantShaderName("__WIRE_SHADER_NAME__");
-    const mx::Color4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    _wireMaterial = Material::create();
-    try
-    {
-        _wireMaterial->generateConstantShader(constantShaderName, color);
-    }
-    catch (std::exception& e)
-    {
-        _wireMaterial = nullptr;
-        new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to generate wire shader", e.what());
-    }
-
     createAdvancedSettings(_window);
 
     _geomLabel = new ng::Label(_window, "Select Geometry");
@@ -188,6 +174,20 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     // Load in standard library and light handler and create top level document
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
     initializeDocument(_stdLib);
+
+    // Generate wireframe material.
+    const std::string constantShaderName("__WIRE_SHADER_NAME__");
+    const mx::Color3 color(1.0f);
+    _wireMaterial = Material::create();
+    try
+    {
+        _wireMaterial->generateConstantShader(_shaderGenerator, _stdLib, constantShaderName, color);
+    }
+    catch (std::exception& e)
+    {
+        _wireMaterial = nullptr;
+        new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Failed to generate wire shader", e.what());
+    }
 
     // Construct the appropriate image handler for this build.
 #if MATERIALX_BUILD_OIIO
@@ -575,15 +575,12 @@ void Viewer::createAdvancedSettings(Widget* parent)
 
     new ng::Label(advancedPopup, "Render Options");
 
-    if (_wireMaterial)
+    ng::CheckBox* outlineSelectedGeometryBox = new ng::CheckBox(advancedPopup, "Outline Selected Geometry");
+    outlineSelectedGeometryBox->setChecked(_outlineSelection);
+    outlineSelectedGeometryBox->setCallback([this](bool enable)
     {
-        ng::CheckBox* outlineSelectedGeometryBox = new ng::CheckBox(advancedPopup, "Outline Selected Geometry");
-        outlineSelectedGeometryBox->setChecked(_outlineSelection);
-        outlineSelectedGeometryBox->setCallback([this](bool enable)
-        {
-            _outlineSelection = enable;
-        });
-    }
+        _outlineSelection = enable;
+    });
 
     Widget* sampleGroup = new Widget(advancedPopup);
     sampleGroup->setLayout(new ng::BoxLayout(ng::Orientation::Horizontal));

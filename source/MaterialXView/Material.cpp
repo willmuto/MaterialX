@@ -158,36 +158,28 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
     return (materials.size() - previousMaterialCount);
 }
 
-bool Material::generateConstantShader(const std::string& shaderName, const mx::Color4 &color)
+bool Material::generateConstantShader(mx::ShaderGeneratorPtr shaderGenerator,
+                                      mx::DocumentPtr stdLib,
+                                      const std::string& shaderName,
+                                      const mx::Color3& color)
 {
-    const std::string pixelShaderShaderTemplate = {
-        "#version 400\n " \
-        "out vec4 out1;\n" \
-        "void main()\n" \
-        "{\n" \
-        "    out1 = vec4(_r_, _g_, _b_, _a_);\n" \
-        "}\n" };
-    mx::StringMap map;
-    map["_r_"] = std::to_string(color[0]);
-    map["_g_"] = std::to_string(color[1]);
-    map["_b_"] = std::to_string(color[2]);
-    map["_a_"] = std::to_string(color[3]);
-    std::string pixelShader = mx::replaceSubstrings(pixelShaderShaderTemplate, map);
-
-    const std::string vertexShader = {
-        "#version 400\n" \
-        "uniform mat4 u_worldMatrix = mat4(1.0);\n" \
-        "uniform mat4 u_viewProjectionMatrix = mat4(1.0);\n" \
-        "in vec3 i_position;\n" \
-        "void main()\n" \
-        "{\n" \
-        "    vec4 hPositionWorld = u_worldMatrix * vec4(i_position, 1.0);\n" \
-        "    gl_Position = u_viewProjectionMatrix * hPositionWorld;\n" \
-        "}\n"};
-
-    _hwShader = nullptr;
-    _elem = nullptr;
+    // Construct the nodegraph.
+    mx::DocumentPtr doc = mx::createDocument();
+    doc->importLibrary(stdLib);
+    mx::NodeGraphPtr nodeGraph = doc->addNodeGraph();
+    mx::NodePtr constant = nodeGraph->addNode("constant");
+    constant->setParameterValue("value", color);
+    mx::OutputPtr output = nodeGraph->addOutput();
+    output->setConnectedNode(constant);
+    _elem = output;
     _hasTransparency = false;
+
+    // Generate the GLSL shader.
+    _hwShader = generateSource(shaderGenerator, _elem);
+    std::string vertexShader = _hwShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
+    std::string pixelShader = _hwShader->getSourceCode(mx::HwShader::PIXEL_STAGE);
+
+    // Compile and return.
     _glShader = std::make_shared<ng::GLShader>();
     return _glShader->init(shaderName, vertexShader, pixelShader);
 }

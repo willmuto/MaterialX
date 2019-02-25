@@ -80,7 +80,10 @@ class Material
     bool generateShader(mx::ShaderGeneratorPtr shaderGenerator);
 
     /// Generate a constant color shader
-    bool generateConstantShader(const std::string& shaderName, const mx::Color4& color);
+    bool generateConstantShader(mx::ShaderGeneratorPtr shaderGenerator,
+                                mx::DocumentPtr stdLib,
+                                const std::string& shaderName,
+                                const mx::Color3& color);
 
     /// Return the underlying OpenGL shader.
     GLShaderPtr getShader() const
