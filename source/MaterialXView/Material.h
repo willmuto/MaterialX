@@ -10,7 +10,7 @@
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 #include <MaterialXGenShader/HwShader.h>
 #include <MaterialXRender/Handlers/HwLightHandler.h>
-#include <MaterialXRender/OpenGL/GLTextureHandler.h>
+#include <MaterialXRenderGlsl/GLTextureHandler.h>
 
 #include <nanogui/common.h>
 #include <nanogui/glutil.h>
