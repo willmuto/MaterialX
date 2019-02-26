@@ -7,8 +7,6 @@
 namespace MaterialX
 {
 
-bool OiioImageLoader::enabled = true;
-
 bool OiioImageLoader::saveImage(const std::string& fileName,
                                 const ImageDesc &imageDesc)
 {

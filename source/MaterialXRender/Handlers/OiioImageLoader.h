@@ -51,9 +51,6 @@ class OiioImageLoader : public ImageLoader
     /// @param generateMipMaps Generate mip maps if supported.
     /// @return if load succeeded
     bool acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps) override;
-
-  public:
-    static bool enabled;
 };
 
 } // namespace MaterialX;
