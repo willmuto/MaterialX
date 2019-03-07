@@ -167,9 +167,9 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     });
 
     // Set default light information before initialization
-    _lightFileName = "/documents/TestSuite/Utilities/Lights/default_viewer_lights.mtlx";
-    _envRadiancePath = "/documents/TestSuite/Images/san_giuseppe_bridge.hdr";
-    _envIrradiancePath = "/documents/TestSuite/Images/san_giuseppe_bridge_diffuse.hdr";
+    _lightFileName = "documents/TestSuite/Utilities/Lights/default_viewer_lights.mtlx";
+    _envRadiancePath = "documents/TestSuite/Images/san_giuseppe_bridge.hdr";
+    _envIrradiancePath = "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.hdr";
 
     // Load in standard library and light handler and create top level document
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
