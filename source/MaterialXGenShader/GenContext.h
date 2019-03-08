@@ -64,7 +64,7 @@ class GenContext
     GenContext(ShaderGeneratorPtr sg);
 
     /// Return shader generatior.
-    const ShaderGenerator& getShaderGenerator() const
+    ShaderGenerator& getShaderGenerator()
     {
         return *_sg;
     }

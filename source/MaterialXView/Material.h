@@ -8,7 +8,7 @@
 #include <MaterialXFormat/File.h>
 
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
-#include <MaterialXGenShader/HwShader.h>
+#include <MaterialXGenShader/HwShaderGenerator.h>
 #include <MaterialXRender/Handlers/HwLightHandler.h>
 #include <MaterialXRenderGlsl/GLTextureHandler.h>
 
@@ -73,14 +73,14 @@ class Material
         _udim = val;
     }
 
-    /// Generate shader source for a given element and shader generator
-    mx::HwShaderPtr generateSource(mx::ShaderGeneratorPtr shaderGenerator, mx::ElementPtr elem);
+    /// Generate shader source for a given element and generation context.
+    mx::ShaderPtr generateSource(mx::GenContext& context, mx::ElementPtr elem);
 
     /// Generate a shader from the given inputs.
-    bool generateShader(mx::ShaderGeneratorPtr shaderGenerator);
+    bool generateShader(mx::GenContext& context);
 
     /// Generate a constant color shader
-    bool generateConstantShader(mx::ShaderGeneratorPtr shaderGenerator,
+    bool generateConstantShader(mx::GenContext& context,
                                 mx::DocumentPtr stdLib,
                                 const std::string& shaderName,
                                 const mx::Color3& color);
@@ -98,7 +98,7 @@ class Material
     }
     
     /// Bind shader
-    void bindShader(mx::ShaderGeneratorPtr shaderGenerator);
+    void bindShader(mx::GenContext& context);
 
     /// Bind viewing information for this material.
     void bindViewInformation(const mx::Matrix44& world, const mx::Matrix44& view, const mx::Matrix44& proj);
@@ -124,16 +124,16 @@ class Material
     void drawPartition(mx::MeshPartitionPtr part) const;
 
     // Return the block of public uniforms for this material.
-    const mx::Shader::VariableBlock* getPublicUniforms() const;
+    const mx::VariableBlock* getPublicUniforms() const;
 
     /// Find a public uniform from its MaterialX path.
-    mx::Shader::Variable* findUniform(const std::string& path) const;
+    mx::ShaderPort* findUniform(const std::string& path) const;
 
   protected:
     void bindUniform(const std::string& name, mx::ConstValuePtr value);
 
     GLShaderPtr _glShader;
-    mx::HwShaderPtr _hwShader;
+    mx::ShaderPtr _hwShader;
     mx::TypedElementPtr _elem;
     std::string _udim;
     bool _hasTransparency;

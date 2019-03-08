@@ -12,7 +12,7 @@ int main(int argc, char* const argv[])
         tokens.push_back(std::string(argv[i]));
     }
 
-    mx::StringVec libraryFolders = { "stdlib", "pbrlib", "stdlib/genglsl", "pbrlib/genglsl" };
+    mx::StringVec libraryFolders = { "stdlib", "pbrlib", "stdlib/genglsl", "pbrlib/genglsl", "BxDF" };
     mx::FileSearchPath searchPath;
     std::string meshFilename = "documents/TestSuite/Geometry/teapot.obj";
     std::string materialFilename = "documents/TestSuite/pbrlib/materials/standard_surface_default.mtlx";
@@ -61,6 +61,7 @@ int main(int argc, char* const argv[])
         }
     }
     searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries"));
+    searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Examples"));
 
     try
     {

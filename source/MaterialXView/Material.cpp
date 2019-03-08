@@ -1,6 +1,7 @@
 #include <MaterialXView/Material.h>
 
-#include <MaterialXGenShader/HwShader.h>
+#include <MaterialXGenShader/HwShaderGenerator.h>
+#include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/Util.h>
 
 #include <iostream>
@@ -158,7 +159,7 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
     return (materials.size() - previousMaterialCount);
 }
 
-bool Material::generateConstantShader(mx::ShaderGeneratorPtr shaderGenerator,
+bool Material::generateConstantShader(mx::GenContext& context,
                                       mx::DocumentPtr stdLib,
                                       const std::string& shaderName,
                                       const mx::Color3& color)
@@ -175,32 +176,27 @@ bool Material::generateConstantShader(mx::ShaderGeneratorPtr shaderGenerator,
     _hasTransparency = false;
 
     // Generate the GLSL shader.
-    _hwShader = generateSource(shaderGenerator, _elem);
-    std::string vertexShader = _hwShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
-    std::string pixelShader = _hwShader->getSourceCode(mx::HwShader::PIXEL_STAGE);
+    _hwShader = generateSource(context, _elem);
+    std::string vertexShader = _hwShader->getSourceCode(mx::Stage::VERTEX);
+    std::string pixelShader = _hwShader->getSourceCode(mx::Stage::PIXEL);
 
     // Compile and return.
     _glShader = std::make_shared<ng::GLShader>();
     return _glShader->init(shaderName, vertexShader, pixelShader);
 }
 
-mx::HwShaderPtr Material::generateSource(mx::ShaderGeneratorPtr shaderGenerator, mx::ElementPtr elem)
+mx::ShaderPtr Material::generateSource(mx::GenContext& context, mx::ElementPtr elem)
 {
     if (!elem)
     {
         return nullptr;
     }
 
-    mx::GenOptions options;
-    options.hwSpecularEnvironmentMethod = mx::SPECULAR_ENVIRONMENT_FIS;
-    options.hwTransparency = isTransparentSurface(elem, *shaderGenerator);
-    options.targetColorSpaceOverride = "lin_rec709";
-    mx::ShaderPtr sgShader = shaderGenerator->generate("Shader", elem, options);
-
-    return std::dynamic_pointer_cast<mx::HwShader>(sgShader);
+    context.getOptions().hwTransparency = isTransparentSurface(elem, context.getShaderGenerator());
+    return context.getShaderGenerator().generate("Shader", elem, context);
 }
 
-bool Material::generateShader(mx::ShaderGeneratorPtr shaderGenerator)
+bool Material::generateShader(mx::GenContext& context)
 {
     if (!_elem)
     {
@@ -208,18 +204,20 @@ bool Material::generateShader(mx::ShaderGeneratorPtr shaderGenerator)
     }
     if (!_hwShader)
     {
-        _hwShader = generateSource(shaderGenerator, _elem);
+        _hwShader = generateSource(context, _elem);
     }
     if (!_hwShader)
     {
         return false;
     }
-    _hasTransparency = _hwShader->hasTransparency();
+
+    // TODO: Add support for transparency detection
+    _hasTransparency = false;
 
     if (!_glShader)
     {
-        std::string vertexShader = _hwShader->getSourceCode(mx::HwShader::VERTEX_STAGE);
-        std::string pixelShader = _hwShader->getSourceCode(mx::HwShader::PIXEL_STAGE);
+        std::string vertexShader = _hwShader->getSourceCode(mx::Stage::VERTEX);
+        std::string pixelShader = _hwShader->getSourceCode(mx::Stage::PIXEL);
 
         _glShader = std::make_shared<ng::GLShader>();
         _glShader->init(_elem->getNamePath(), vertexShader, pixelShader);
@@ -227,9 +225,9 @@ bool Material::generateShader(mx::ShaderGeneratorPtr shaderGenerator)
     return true;
 }
 
-void Material::bindShader(mx::ShaderGeneratorPtr shaderGenerator)
+void Material::bindShader(mx::GenContext& context)
 {
-    generateShader(shaderGenerator);
+    generateShader(context);
     if (_glShader)
     {
         _glShader->bind();
@@ -320,19 +318,18 @@ void Material::bindImages(mx::GLTextureHandlerPtr imageHandler, const mx::FileSe
         return;
     }
 
-    const MaterialX::Shader::VariableBlock publicUniforms = _hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE,
-        MaterialX::Shader::PUBLIC_UNIFORMS);
-    for (auto uniform : publicUniforms.variableOrder)
+    const mx::VariableBlock* publicUniforms = getPublicUniforms();
+    for (auto uniform : publicUniforms->getVariableOrder())
     {
-        if (uniform->type != MaterialX::Type::FILENAME)
+        if (uniform->getType() != MaterialX::Type::FILENAME)
         {
             continue;
         }
-        const std::string& uniformName = uniform->name;
+        const std::string& uniformName = uniform->getName();
         std::string filename;
-        if (uniform->value)
+        if (uniform->getValue())
         {
-            filename = searchPath.find(uniform->value->getValueString());
+            filename = searchPath.find(uniform->getValue()->getValueString());
         }
 
         mx::ImageDesc desc;
@@ -533,27 +530,27 @@ void Material::drawPartition(mx::MeshPartitionPtr part) const
     _glShader->drawIndexed(GL_TRIANGLES, 0, (uint32_t) part->getFaceCount());
 }
 
-const MaterialX::Shader::VariableBlock* Material::getPublicUniforms() const
+const mx::VariableBlock* Material::getPublicUniforms() const
 {
     if (!_hwShader)
     {
         return nullptr;
     }
 
-    return &_hwShader->getUniformBlock(MaterialX::Shader::PIXEL_STAGE, MaterialX::Shader::PUBLIC_UNIFORMS);
+    return &_hwShader->getStage(mx::Stage::PIXEL).getUniformBlock(mx::HW::PUBLIC_UNIFORMS);
 }
 
-mx::Shader::Variable* Material::findUniform(const std::string& path) const
+mx::ShaderPort* Material::findUniform(const std::string& path) const
 {
-    const MaterialX::Shader::VariableBlock* publicUniforms = getPublicUniforms();
+    const mx::VariableBlock* publicUniforms = getPublicUniforms();
     if (!publicUniforms)
     {
         return nullptr;
     }
 
-    for (auto uniform : publicUniforms->variableOrder)
+    for (auto uniform : publicUniforms->getVariableOrder())
     {
-        if (uniform->path == path)
+        if (uniform->getPath() == path)
         {
             return uniform;
         }
