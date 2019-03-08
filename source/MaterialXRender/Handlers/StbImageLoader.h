@@ -1,3 +1,8 @@
+//
+// TM & (c) 2017 Lucasfilm Entertainment Company Ltd. and Lucasfilm Ltd.
+// All rights reserved.  See LICENSE.txt for license.
+//
+
 #ifndef MATERIALX_STBIMAGELOADER_H
 #define MATERIALX_STBIMAGELOADER_H
 
@@ -5,7 +10,7 @@
 
 namespace MaterialX
 {
-/// Shared pointer to an StbImageLoader
+// Shared pointer to an StbImageLoader
 using StbImageLoaderPtr = std::shared_ptr<class StbImageLoader>;
 
 /// @class StbImageLoader

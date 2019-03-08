@@ -60,6 +60,16 @@ if(MATERIALX_BUILD_OIIO)
 	endif()
 endif()
 
+if(MATERIALX_BUILD_OIIO)
+	set(OPENIMAGEIO_ROOT_DIR ${MATERIALX_OIIO_DIR})
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/External/OpenImageIO")
+	find_package(OpenImageIO REQUIRED)
+	if(OPENIMAGEIO_FOUND)
+		include_directories(${OPENIMAGEIO_INCLUDE_DIR})
+		target_link_libraries(MaterialXRender ${OPENIMAGEIO_LIBRARIES})
+	endif()
+endif()
+
 set_target_properties(
     MaterialXRender PROPERTIES
     OUTPUT_NAME MaterialXRender

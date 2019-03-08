@@ -1,6 +1,11 @@
+//
+// TM & (c) 2017 Lucasfilm Entertainment Company Ltd. and Lucasfilm Ltd.
+// All rights reserved.  See LICENSE.txt for license.
+//
+
 #include <MaterialXRender/Handlers/OiioImageLoader.h>
 
-#if MATERIALX_BUILD_OIIO
+#ifdef MATERIALX_BUILD_OIIO
 
 #include <OpenImageIO/imageio.h>
 
