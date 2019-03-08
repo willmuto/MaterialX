@@ -46,9 +46,9 @@ option(MATERIALX_BUILD_GEN_OSL "Build the OSL shader generator back-end." ON)
 mark_as_advanced(MATERIALX_BUILD_GEN_OSL)
 option(MATERIALX_BUILD_GEN_GLSL "Build the GLSL shader generator back-end." ON)
 mark_as_advanced(MATERIALX_BUILD_GEN_GLSL)
-option(MATERIALX_BUILD_GEN_OGSFX "Build the OGSFX shader generator back-end." OFF)
+option(MATERIALX_BUILD_GEN_OGSFX "Build the OGSFX shader generator back-end." ON)
 mark_as_advanced(MATERIALX_BUILD_GEN_OGSFX)
-option(MATERIALX_BUILD_GEN_ARNOLD "Build the Arnold OSL shader generator back-end." OFF)
+option(MATERIALX_BUILD_GEN_ARNOLD "Build the Arnold OSL shader generator back-end." ON)
 mark_as_advanced(MATERIALX_BUILD_GEN_ARNOLD)
 if (NOT MATERIALX_BUILD_GEN_OSL)
     set (MATERIALX_BUILD_GEN_ARNOLD OFF)
@@ -118,6 +118,9 @@ endif()
 
 # Adjust compiler settings
 if(MSVC)
+    # Enable multithreaded builds
+    add_compile_options(/MP)
+
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
         string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else()
