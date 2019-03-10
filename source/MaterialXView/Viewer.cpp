@@ -81,19 +81,6 @@ mx::DocumentPtr loadLibraries(const mx::StringVec& libraryFolders, const mx::Fil
     return doc;
 }
 
-void findLightShaders(mx::DocumentPtr doc, std::vector<mx::NodePtr>& lights)
-{
-    static const std::string LIGHT_SHADER = "lightshader";
-    lights.clear();
-    for (mx::NodePtr node : doc->getNodes())
-    {
-        if (node->getNodeDef() && (node->getType() == LIGHT_SHADER))
-        {
-            lights.push_back(node);
-        }
-    }
-}
-
 } // anonymous namespace
 
 //
@@ -235,30 +222,73 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     performLayout();
 }
 
-void Viewer::setupLights(std::vector<mx::NodePtr> lights, const std::string& envRadiancePath, const std::string& envIrradiancePath)
+void Viewer::setupLights(mx::DocumentPtr doc, const std::string& envRadiancePath, const std::string& envIrradiancePath)
 {
+    mx::CopyOptions copyOptions;
+    copyOptions.skipDuplicateElements = true;
+
+    // Import lights
+    mx::DocumentPtr lightDoc = mx::createDocument();
+    mx::FilePath path = _searchPath.find(_lightFileName);
+    if (!path.isEmpty())
+    {
+        try
+        {
+            mx::readFromXmlFile(lightDoc, path.asString());
+            lightDoc->setSourceUri(path);
+            _doc->importLibrary(lightDoc, &copyOptions);
+        }
+        catch (std::exception& e)
+        {
+            new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Cannot load light library file: " + path.asString(), e.what());
+        }
+    }
+
+    // Scan for lights
+    std::vector<mx::NodePtr> lights;
+    for (mx::NodePtr node : doc->getNodes())
+    {
+        const mx::TypeDesc* type = mx::TypeDesc::get(node->getType());
+        if (type == mx::Type::LIGHTSHADER)
+        {
+            lights.push_back(node);
+        }
+    }
+
+    // Create a new light handler
+    _lightHandler = mx::HwLightHandler::create();
+
+    // Clear context light user data.
+    _genContext.popUserData(mx::HW::USER_DATA_LIGHT_SHADERS);
+
     try 
     {
-        // Set directional lights on the generator
+        // Set lights on the generator. Set to empty if no lights found
         _lightHandler->setLightSources(lights);
 
-        mx::HwShaderGenerator& hwShaderGenerator = static_cast<mx::HwShaderGenerator&>(_genContext.getShaderGenerator());
-
-        // Find light types (node definitions) and generate ids.
-        std::unordered_map<std::string, unsigned int> ids;
-        mx::mapNodeDefToIdentiers(_lightHandler->getLightSources(), ids);
-
-        // Register types and ids with the generator
-        std::unordered_map<std::string, unsigned int> identifiers;
-        mx::mapNodeDefToIdentiers(lights, identifiers);
-        for (auto id : identifiers)
+        if (!lights.empty())
         {
-            mx::NodeDefPtr nodeDef = _doc->getNodeDef(id.first);
-            if (nodeDef)
+            // Create a list of unique nodedefs and ids for them
+            std::unordered_map<std::string, unsigned int> identifiers;
+            mx::mapNodeDefToIdentiers(lights, identifiers);
+            for (auto id : identifiers)
             {
-                hwShaderGenerator.bindLightShader(*nodeDef, id.second, _genContext);
+                mx::NodeDefPtr nodeDef = _doc->getNodeDef(id.first);
+                if (nodeDef)
+                {
+                    mx::HwShaderGenerator::bindLightShader(*nodeDef, id.second, _genContext);
+                    new ng::MessageDialog(this, ng::MessageDialog::Type::Information, "Found light nodedef: ", id.first);
+                }
+                else
+                {
+                    new ng::MessageDialog(this, ng::MessageDialog::Type::Information, "Failed to light nodedef: ", id.first);
+                }
             }
-        }  
+
+            // Clamp the number of light sources to the number found
+            unsigned int lightSourceCount = static_cast<unsigned int>(_lightHandler->getLightSources().size());
+            _genContext.getOptions().hwMaxActiveLightSources = lightSourceCount;
+        }
 
         // Set up IBL inputs
         _lightHandler->setLightEnvRadiancePath(envRadiancePath);
@@ -288,28 +318,8 @@ void Viewer::initializeDocument(mx::DocumentPtr libraries)
     }
     _genContext.getShaderGenerator().setColorManagementSystem(cms);
 
-    // Add lighting to generator
-    _lightHandler = mx::HwLightHandler::create();
-    std::vector<mx::NodePtr> lights;
-    mx::DocumentPtr lightDoc = mx::createDocument();
-    mx::FilePath path = _searchPath.find(_lightFileName);
-    if (!path.isEmpty())
-    {
-        try
-        {
-            mx::readFromXmlFile(lightDoc, path.asString());
-            lightDoc->setSourceUri(path);
-            _doc->importLibrary(lightDoc, &copyOptions);
-
-            findLightShaders(_doc, lights);
-            lightDoc->importLibrary(libraries, &copyOptions);
-        }
-        catch (std::exception& e)
-        {
-            new ng::MessageDialog(this, ng::MessageDialog::Type::Warning, "Cannot load light library file: " + path.asString(), e.what());
-        }
-    }
-    setupLights(lights, _envRadiancePath, _envIrradiancePath);
+    // Add lighting 
+    setupLights(_doc, _envRadiancePath, _envIrradiancePath);
 
     // Clear state
     _materials.clear();

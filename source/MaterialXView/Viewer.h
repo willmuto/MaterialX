@@ -58,7 +58,7 @@ class Viewer : public ng::Screen
     }
 
   private:
-    void setupLights(std::vector<mx::NodePtr> lights, const std::string& envRadiancePath, const std::string& envIrradiancePath);
+    void setupLights(mx::DocumentPtr doc, const std::string& envRadiancePath, const std::string& envIrradiancePath);
     void initializeDocument(mx::DocumentPtr libraries);
     void saveActiveMaterialSource();
 

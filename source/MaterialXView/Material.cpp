@@ -479,6 +479,10 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
     for (mx::NodePtr light : lightHandler->getLightSources())
     {
         auto nodeDef = light->getNodeDef();
+        if (!nodeDef)
+        {
+            continue;
+        }
         const std::string prefix = "u_lightData[" + std::to_string(index) + "]";
 
         // Set light type id
