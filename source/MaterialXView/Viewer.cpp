@@ -277,7 +277,6 @@ void Viewer::setupLights(mx::DocumentPtr doc, const std::string& envRadiancePath
                 if (nodeDef)
                 {
                     mx::HwShaderGenerator::bindLightShader(*nodeDef, id.second, _genContext);
-                    new ng::MessageDialog(this, ng::MessageDialog::Type::Information, "Found light nodedef: ", id.first);
                 }
                 else
                 {
