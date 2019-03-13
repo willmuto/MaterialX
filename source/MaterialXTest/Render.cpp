@@ -57,37 +57,11 @@ void createLightRig(mx::DocumentPtr doc, mx::HwLightHandler& lightHandler, mx::G
 {
     // Scan for lights
     std::vector<mx::NodePtr> lights;
-    for (mx::NodePtr node : doc->getNodes())
-    {
-        const mx::TypeDesc* type = mx::TypeDesc::get(node->getType());
-        if (type == mx::Type::LIGHTSHADER)
-        {
-            lights.push_back(node);
-        }
-    }
-    if (!lights.empty())
-    {
-        // Set the list of lights on the with the generator
-        lightHandler.setLightSources(lights);
+    lightHandler.findLights(doc, lights);
+    lightHandler.registerLights(doc, lights, context);
 
-        // Find light types (node definitions) and generate ids.
-        // Register types and ids with the generator
-        std::unordered_map<std::string, unsigned int> identifiers;
-        mx::mapNodeDefToIdentiers(lights, identifiers);
-        for (auto id : identifiers)
-        {
-            mx::NodeDefPtr nodeDef = doc->getNodeDef(id.first);
-            if (nodeDef)
-            {
-                mx::HwShaderGenerator::bindLightShader(*nodeDef, id.second, context);
-            }
-        }
-    }
-
-    // Clamp the number of light sources to the number found
-    unsigned int lightSourceCount = static_cast<unsigned int>(lightHandler.getLightSources().size());
-    context.getOptions().hwMaxActiveLightSources = lightSourceCount;
-
+    // Set the list of lights on the with the generator
+    lightHandler.setLightSources(lights);
     // Set up IBL inputs
     lightHandler.setLightEnvIrradiancePath(envIrradiancePath);
     lightHandler.setLightEnvRadiancePath(envRadiancePath);
@@ -120,7 +94,7 @@ static mx::GlslValidatorPtr createGLSLValidator(const std::string& fileName, std
         std::string geometryFile;
         if (fileName.length())
         {
-            geometryFile =  mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Geometry/") / mx::FilePath(fileName);
+            geometryFile =  mx::FilePath::getCurrentPath() / mx::FilePath("resources/Geometry/") / mx::FilePath(fileName);
             if (!geometryHandler.hasGeometry(geometryFile))
             {
                 geometryHandler.clearGeometry();
@@ -234,7 +208,7 @@ public:
     MaterialX::StringVec overrideFiles;
 
     // Comma separated list of light setup files
-    std::vector<std::string> lightFiles;
+    mx::StringVec lightFiles;
 
     // Set to true to always dump generated code to disk
     bool dumpGeneratedCode = false;
@@ -621,7 +595,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
                     {
                         if (!testOptions.glslShaderGeometry.isAbsolute())
                         {
-                            geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Geometry") / testOptions.glslShaderGeometry;
+                            geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("resources/Geometry") / testOptions.glslShaderGeometry;
                         }
                         else
                         {
@@ -630,7 +604,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
                     }
                     else
                     {
-                        geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Geometry/shaderball.obj");
+                        geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("resources/Geometry/shaderball.obj");
                     }
                     if (!geomHandler.hasGeometry(geomPath))
                     {
@@ -646,7 +620,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
                     {
                         if (!testOptions.glslNonShaderGeometry.isAbsolute())
                         {
-                            geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Geometry") / testOptions.glslNonShaderGeometry;
+                            geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("resources/Geometry") / testOptions.glslNonShaderGeometry;
                         }
                         else
                         {
@@ -655,7 +629,7 @@ static void runGLSLValidation(const std::string& shaderName, mx::TypedElementPtr
                     }
                     else
                     {
-                        geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite/Geometry/sphere.obj");
+                        geomPath = mx::FilePath::getCurrentPath() / mx::FilePath("resources/Geometry/sphere.obj");
                     }
                     if (!geomHandler.hasGeometry(geomPath))
                     {
@@ -1107,7 +1081,7 @@ bool getTestOptions(const std::string& optionFile, ShaderValidTestOptions& optio
 }
 
 void printRunLog(const ShaderValidProfileTimes &profileTimes, const ShaderValidTestOptions& options,
-    std::set<std::string>& usedImpls, std::ostream& profilingLog, mx::DocumentPtr dependLib
+                mx::StringSet& usedImpls, std::ostream& profilingLog, mx::DocumentPtr dependLib
 #ifdef MATERIALX_BUILD_RENDEROSL
     , mx::GenContext& oslContext
 #endif
@@ -1148,7 +1122,7 @@ void printRunLog(const ShaderValidProfileTimes &profileTimes, const ShaderValidT
 
         size_t skipCount = 0;
         profilingLog << "-- Possibly missed implementations ----" << std::endl;
-        std::vector<std::string> whiteList =
+        mx::StringVec whiteList =
         {
             "ambientocclusion", "arrayappend", "backfacing", "screen", "curveadjust", "displacementshader",
             "volumeshader", "IM_constant_string_", "IM_constant_filename_", "IM_dot_string"
@@ -1250,7 +1224,7 @@ TEST_CASE("Render TestSuite", "[render]")
     // For debugging, add files to this set to override
     // which files in the test suite are being tested.
     // Add only the test suite filename not the full path.
-    std::set<std::string> testfileOverride;
+    mx::StringSet testfileOverride;
 
     AdditiveScopedTimer ioTimer(profileTimes.ioTime, "Global I/O time");
     mx::FilePath path = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite");
@@ -1284,7 +1258,7 @@ TEST_CASE("Render TestSuite", "[render]")
     // This will be imported in each test document below
     ioTimer.startTimer();
     mx::DocumentPtr dependLib = mx::createDocument();
-    std::set<std::string> excludeFiles;
+    mx::StringSet excludeFiles;
     if (!options.runGLSLTests && !options.runOGSFXTests)
     {
         excludeFiles.insert("stdlib_" + mx::GlslShaderGenerator::LANGUAGE + "_impl.mtlx");
@@ -1401,7 +1375,7 @@ TEST_CASE("Render TestSuite", "[render]")
     AdditiveScopedTimer validateTimer(profileTimes.validateTime, "Global validation time");
     AdditiveScopedTimer renderableSearchTimer(profileTimes.renderableSearchTime, "Global renderable search time");
 
-    std::set<std::string> usedImpls;
+    mx::StringSet usedImpls;
 
     const std::string MTLX_EXTENSION("mtlx");
     const std::string OPTIONS_FILENAME("_options.mtlx");

@@ -704,13 +704,17 @@ void GlslProgram::bindLighting(HwLightHandlerPtr lightHandler, ImageHandlerPtr i
     }
 
     const std::vector<NodePtr> lightList = lightHandler->getLightSources();
-    std::unordered_map<string, unsigned int> ids;
-    mapNodeDefToIdentiers(lightList, ids);
+    const std::unordered_map<string, unsigned int>& ids = lightHandler->getLightIdentifierMap();
 
     size_t index = 0;
     for (auto light : lightList)
     {
         auto nodeDef = light->getNodeDef();
+        if (!nodeDef)
+        {
+            continue;
+        }
+        const string& nodeDefName = nodeDef->getName();
         const string prefix = "u_lightData[" + std::to_string(index) + "]";
 
         // Set light type id
@@ -721,9 +725,12 @@ void GlslProgram::bindLighting(HwLightHandlerPtr lightHandler, ImageHandlerPtr i
             location = input->second->location;
             if (location >= 0)
             {
-                unsigned int lightType = ids[nodeDef->getName()];
-                glUniform1i(location, lightType);
-                boundType = true;
+                auto it = ids.find(nodeDefName);
+                if (it != ids.end())
+                {
+                    glUniform1i(location, it->second);
+                    boundType = true;
+                }
             }
         }
         if (!boundType)
@@ -880,7 +887,7 @@ void GlslProgram::bindViewInformation(ViewHandlerPtr viewHandler)
     // Set world related matrices. World matrix is identity so
     // bind the same matrix to all locations
     //
-    std::vector<std::string> worldMatrixVariables =
+    StringVec worldMatrixVariables =
     {
         "u_worldMatrix",
         "u_worldInverseMatrix",
@@ -902,7 +909,7 @@ void GlslProgram::bindViewInformation(ViewHandlerPtr viewHandler)
 
     // Bind projection matrices
     //
-    std::vector<std::string> projectionMatrixVariables =
+    StringVec projectionMatrixVariables =
     {
         "u_projectionMatrix",
         "u_projectionTransposeMatrix",
@@ -937,7 +944,7 @@ void GlslProgram::bindViewInformation(ViewHandlerPtr viewHandler)
     }
 
     // Bind view related matrices
-    std::vector<std::string> viewMatrixVariables =
+    StringVec viewMatrixVariables =
     {
         "u_viewMatrix",
         "u_viewTransposeMatrix",
@@ -972,7 +979,7 @@ void GlslProgram::bindViewInformation(ViewHandlerPtr viewHandler)
     }
 
     // Bind combined matrices
-    std::vector<std::string> combinedMatrixVariables =
+    StringVec combinedMatrixVariables =
     {
         "u_viewProjectionMatrix",
         "u_worldViewProjectionMatrix"

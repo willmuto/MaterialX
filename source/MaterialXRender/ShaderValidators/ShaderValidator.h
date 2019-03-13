@@ -27,7 +27,7 @@ class ShaderValidator
 {
   public:
     /// A map with name and source code for each shader stage.
-    using StageMap = std::unordered_map<string, string>;
+    using StageMap = StringMap;
 
   public:
     /// Destructor
@@ -54,7 +54,7 @@ class ShaderValidator
     }
 
     /// Set light handler to use for light bindings
-    /// @param imageHandler Handler used for lights
+    /// @param lightHandler Handler used for lights
     void setLightHandler(const HwLightHandlerPtr lightHandler)
     {
         _lightHandler = lightHandler;
