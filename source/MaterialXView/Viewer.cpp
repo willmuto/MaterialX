@@ -161,8 +161,8 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
 
     // Set default light information before initialization
     _lightFileName = "documents/TestSuite/Utilities/Lights/default_viewer_lights.mtlx";
-    _envRadiancePath = "documents/TestSuite/Images/san_giuseppe_bridge.hdr";
-    _envIrradiancePath = "documents/TestSuite/Images/san_giuseppe_bridge_diffuse.hdr";
+    _envRadiancePath = "resources/Images/san_giuseppe_bridge.hdr";
+    _envIrradiancePath = "resources/Images/san_giuseppe_bridge_diffuse.hdr";
 
     // Load in standard library and light handler and create top level document
     _stdLib = loadLibraries(_libraryFolders, _searchPath);
@@ -270,7 +270,7 @@ void Viewer::setupLights(mx::DocumentPtr doc, const std::string& envRadiancePath
         {
             // Create a list of unique nodedefs and ids for them
             std::unordered_map<std::string, unsigned int> identifiers;
-            mx::mapNodeDefToIdentiers(lights, identifiers);
+            _lightHandler->mapNodeDefToIdentiers(lights, identifiers);
             for (auto id : identifiers)
             {
                 mx::NodeDefPtr nodeDef = _doc->getNodeDef(id.first);
@@ -612,11 +612,11 @@ void Viewer::createAdvancedSettings(Widget* parent)
 void Viewer::updateGeometrySelections()
 {
     _geometryList.clear();
-    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
-    if (!mesh)
+    if (_geometryHandler.getMeshes().empty())
     {
         return;
     }
+    mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
 
     if (_wireMaterial)
     {
@@ -970,7 +970,12 @@ void Viewer::initCamera()
     _arcball = ng::Arcball();
     _arcball.setSize(mSize);
 
+    if (_geometryHandler.getMeshes().empty())
+    {
+        return;
+    }
     mx::MeshPtr mesh = _geometryHandler.getMeshes()[0];
+
     mx::Vector3 boxMin = mesh->getMinimumBounds();
     mx::Vector3 boxMax = mesh->getMaximumBounds();
     mx::Vector3 sphereCenter = (boxMax + boxMin) / 2.0;
