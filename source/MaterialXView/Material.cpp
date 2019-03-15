@@ -439,8 +439,8 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
         _glShader->setUniform("u_envSamples", envSamples);
     }
     mx::StringMap lightTextures = {
-        { "u_envRadiance", indirectLighting ? lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
-        { "u_envIrradiance", indirectLighting ? lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
+        { "u_envRadiance", indirectLighting ? (std::string) lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
+        { "u_envIrradiance", indirectLighting ? (std::string) lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
     };
     const std::string udim;
     std::array<float, 4> fallbackColor = { 0.0, 0.0, 0.0, 1.0 };

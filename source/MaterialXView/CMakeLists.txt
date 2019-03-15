@@ -38,18 +38,14 @@ target_link_libraries(
 
 add_custom_command(TARGET MaterialXView POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/libraries ${CMAKE_CURRENT_BINARY_DIR}/libraries)
+add_custom_command(TARGET MaterialXView POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
                    ${CMAKE_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources)
-add_custom_command(TARGET MaterialXView POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/documents/Examples ${CMAKE_CURRENT_BINARY_DIR}/documents/Examples)
-add_custom_command(TARGET MaterialXView POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/documents/Libraries ${CMAKE_CURRENT_BINARY_DIR}/documents/Libraries)
-add_custom_command(TARGET MaterialXView POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/documents/TestSuite ${CMAKE_CURRENT_BINARY_DIR}/documents/TestSuite)
 
 install(TARGETS MaterialXView
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documents/
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/documents")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libraries/
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/libraries")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/resources")

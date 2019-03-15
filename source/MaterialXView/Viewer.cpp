@@ -160,7 +160,7 @@ Viewer::Viewer(const mx::StringVec& libraryFolders,
     _genContext.getOptions().targetColorSpaceOverride = "lin_rec709";
 
     // Set default light information before initialization
-    _lightFileName = "documents/TestSuite/Utilities/Lights/default_viewer_lights.mtlx";
+    _lightFileName = "resources/Materials/TestSuite/Utilities/Lights/default_viewer_lights.mtlx";
     _envRadiancePath = "resources/Images/san_giuseppe_bridge.hdr";
     _envIrradiancePath = "resources/Images/san_giuseppe_bridge_diffuse.hdr";
 
