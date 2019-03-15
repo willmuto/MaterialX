@@ -20,6 +20,16 @@ This repository contains the **Prototype MaterialX Viewer** (MaterialXView), whi
 - Point CMake to the root of the MaterialX library and generate C++ projects for your platform and compiler.
 - Select the `MATERIALX_BUILD_VIEWER` option to build MaterialXView.
 
+### Repository
+
+The MaterialX repository consists of the following folders:
+
+- [source](source) - Cross-platform C++ libraries for MaterialX with Python bindings.
+- [python](python) - Support modules for MaterialX Python.
+- [documents](documents) - MaterialX documentation, including its specification and developer guides.
+- [libraries](libraries) - The standard data libraries for MaterialX, including the definitions of its pattern and shader nodes.
+- [resources](resources) - Resources for rendering MaterialX content, including example materials, images, and geometry.
+
 ### Additional Resources
 
 - The main [MaterialX repository](https://github.com/materialx/MaterialX)

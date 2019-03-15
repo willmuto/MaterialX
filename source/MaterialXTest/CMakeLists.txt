@@ -6,10 +6,10 @@ include_directories(
 file(GLOB_RECURSE materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 if(NOT MATERIALX_BUILD_RENDER)
     list(REMOVE_ITEM materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/Render.cpp")
-endif(NOT MATERIALX_BUILD_RENDER)
+endif()
 if(NOT MATERIALX_BUILD_GEN_OGSFX)
     list(REMOVE_ITEM materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/GenOgsfx.cpp")
-endif(NOT MATERIALX_BUILD_GEN_OGSFX)
+endif()
 
 file(GLOB_RECURSE materialx_header "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 file(GLOB_RECURSE catch_headers "${CMAKE_CURRENT_SOURCE_DIR}/Catch/*.hpp")
@@ -38,9 +38,7 @@ add_test(NAME MaterialXTest
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../resources" DESTINATION ${CMAKE_CURRENT_BINARY_DIR} MESSAGE_NEVER)
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../documents/Examples" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/documents MESSAGE_NEVER)
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../documents/Libraries" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/documents MESSAGE_NEVER)
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../documents/TestSuite" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/documents MESSAGE_NEVER)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../libraries" DESTINATION ${CMAKE_CURRENT_BINARY_DIR} MESSAGE_NEVER)
 
 set_target_properties(
     MaterialXTest PROPERTIES
@@ -61,7 +59,7 @@ set (LIBS
 # Add language specific generators
 if (MATERIALX_BUILD_GEN_OGSFX)
     LIST(APPEND LIBS "MaterialXGenOgsFx")
-endif(MATERIALX_BUILD_GEN_OGSFX)
+endif()
 
 # Add render libraries
 if (MATERIALX_BUILD_RENDER)
@@ -73,12 +71,12 @@ if (MATERIALX_BUILD_RENDER)
         LIST(APPEND LIBS "MaterialXRenderHw")
         LIST(APPEND LIBS "MaterialXRenderGlsl")
     endif()
-endif(MATERIALX_BUILD_RENDER)
+endif()
 
 # Add contrib libraries
 if (MATERIALX_BUILD_CONTRIB)
     LIST(APPEND LIBS "MaterialXContrib")
-endif(MATERIALX_BUILD_CONTRIB)
+endif()
 
 target_link_libraries(
     MaterialXTest ${LIBS}
