@@ -1,21 +1,24 @@
-#include <MaterialXFormat/XmlIo.h>
+//
+// TM & (c) 2017 Lucasfilm Entertainment Company Ltd. and Lucasfilm Ltd.
+// All rights reserved.  See LICENSE.txt for license.
+//
+
 #include <MaterialXGenShader/Util.h>
-#include <MaterialXGenShader/ShaderNode.h>
+
 #include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/ShaderGenerator.h>
 
-#include <MaterialXCore/Util.h>
+#include <MaterialXFormat/XmlIo.h>
 
-#include <stack>
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include <unordered_set>
 
-#ifdef _WIN32
-#include <Windows.h>
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <direct.h>
-#include <fcntl.h>
 #else
 #include <dirent.h>
 #include <sys/stat.h>
@@ -25,37 +28,37 @@
 namespace MaterialX
 {
 
-void makeDirectory(const std::string& directoryPath)
+void makeDirectory(const string& directoryPath)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
     _mkdir(directoryPath.c_str());
 #else
     mkdir(directoryPath.c_str(), 0777);
 #endif
 }
 
-std::string removeExtension(const std::string& filename)
+string removeExtension(const string& filename)
 {
     size_t lastDot = filename.find_last_of(".");
-    if (lastDot == std::string::npos) return filename;
+    if (lastDot == string::npos) return filename;
     return filename.substr(0, lastDot);
 }
 
-void getSubDirectories(const std::string& baseDirectory, StringVec& relativePaths)
+void getSubDirectories(const string& baseDirectory, StringVec& relativePaths)
 {
     relativePaths.push_back(baseDirectory);
 
-#ifdef WIN32
+#if defined(_WIN32)
     WIN32_FIND_DATA fd;
     HANDLE hFind = ::FindFirstFile((baseDirectory + "\\*").c_str(), &fd);
     if (hFind != INVALID_HANDLE_VALUE)
     {
         do
         {
-            std::string filename = fd.cFileName;
+            string filename = fd.cFileName;
             if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (filename != "." && filename != ".."))
             {
-                std::string newBaseDirectory = baseDirectory + "\\" + filename;
+                string newBaseDirectory = baseDirectory + "\\" + filename;
                 getSubDirectories(newBaseDirectory, relativePaths);
             }
         } while (::FindNextFile(hFind, &fd));
@@ -68,10 +71,10 @@ void getSubDirectories(const std::string& baseDirectory, StringVec& relativePath
     {
         while ((entry = readdir(dir)))
         {
-            std::string filename = entry->d_name;
+            string filename = entry->d_name;
             if (entry->d_type == DT_DIR && (filename != "." && filename != ".."))
             {
-                std::string newBaseDirectory = baseDirectory + "/" + filename;
+                string newBaseDirectory = baseDirectory + "/" + filename;
                 getSubDirectories(newBaseDirectory, relativePaths);
             }
         }
@@ -80,9 +83,9 @@ void getSubDirectories(const std::string& baseDirectory, StringVec& relativePath
 #endif
 }
 
-void getFilesInDirectory(const std::string& directory, StringVec& files, const std::string& extension)
+void getFilesInDirectory(const string& directory, StringVec& files, const string& extension)
 {
-#ifdef WIN32
+#if defined(_WIN32)
     WIN32_FIND_DATA fd;
     HANDLE hFind = ::FindFirstFile((directory + "/*." + extension).c_str(), &fd);
     if (hFind != INVALID_HANDLE_VALUE)
@@ -137,56 +140,35 @@ string getFileExtension(const string& filename)
     return i != string::npos ? filename.substr(i + 1) : EMPTY_STRING;
 }
 
-void loadDocuments(const FilePath& rootPath, const std::set<string>& skipFiles, 
-                   vector<DocumentPtr>& documents, vector<string>& documentsPaths, std::ostream* validityLog)
+void loadDocuments(const FilePath& rootPath, const StringSet& skipFiles, 
+                   vector<DocumentPtr>& documents, StringVec& documentsPaths)
 {
-    const std::string MTLX_EXTENSION("mtlx");
+    const string MTLX_EXTENSION("mtlx");
 
     StringVec dirs;
     string baseDirectory = rootPath;
     getSubDirectories(baseDirectory, dirs);
 
-    bool testSkipFiles = !skipFiles.empty();
-
-    for (auto dir : dirs)
+    for (const string& dir : dirs)
     {
         StringVec files;
         getFilesInDirectory(dir, files, MTLX_EXTENSION);
 
-        for (const std::string& file : files)
+        for (const string& file : files)
         {
-            if (testSkipFiles && skipFiles.count(file) != 0)
+            if (skipFiles.count(file) != 0)
             {
                 continue;
             }
 
             const FilePath filePath = FilePath(dir) / FilePath(file);
-            const std::string filename = filePath;
+            const string filename = filePath;
 
             DocumentPtr doc = createDocument();
-            try
-            {
-                readFromXmlFile(doc, filename, dir);
+            readFromXmlFile(doc, filename, dir);
 
-                if (validityLog)
-                {
-                    std::string docErrors;
-                    bool valid = doc->validate(&docErrors);
-                    if (!valid)
-                    {
-                        *validityLog << filename << std::endl;
-                        *validityLog << docErrors << std::endl;
-                        throw ExceptionShaderGenError("");
-                    }
-                }
-
-                documents.push_back(doc);
-                documentsPaths.push_back(filePath.asString());
-            }
-            catch (Exception& /*e*/)
-            {
-                continue;
-            }
+            documents.push_back(doc);
+            documentsPaths.push_back(filePath.asString());
         }
     }
 }
@@ -208,12 +190,12 @@ namespace
 
     inline bool isBlack(const Color3& c)
     {
-        return isZero(c[0]) && isZero(c[1]) && isZero(c[0]);
+        return isZero(c[0]) && isZero(c[1]) && isZero(c[2]);
     }
 
     inline bool isWhite(const Color3& c)
     {
-        return isOne(c[0]) && isOne(c[1]) && isOne(c[0]);
+        return isOne(c[0]) && isOne(c[1]) && isOne(c[2]);
     }
 
     bool isTransparentShaderGraph(OutputPtr output, const ShaderGenerator& shadergen)
@@ -558,15 +540,15 @@ bool requiresImplementation(const NodeDefPtr nodeDef)
     {
         return false;
     }
-    static std::string TYPE_NONE("none");
-    const std::string& typeAttribute = nodeDef->getType();
+    static string TYPE_NONE("none");
+    const string& typeAttribute = nodeDef->getType();
     return !typeAttribute.empty() && typeAttribute != TYPE_NONE;
 }
 
 bool elementRequiresShading(const TypedElementPtr element)
 {
-    std::string elementType(element->getType());
-    static std::set<std::string> colorClosures =
+    string elementType(element->getType());
+    static StringSet colorClosures =
     {
         "surfaceshader", "volumeshader", "lightshader",
         "BSDF", "EDF", "VDF"
@@ -600,8 +582,7 @@ void findRenderableElements(const DocumentPtr& doc, std::vector<TypedElementPtr>
                         {
                             throw ExceptionShaderGenError("Could not find a nodedef for shaderref '" + shaderRef->getName() + "'");
                         }
-                        if (nodeDef &&
-                            requiresImplementation(nodeDef))
+                        if (requiresImplementation(nodeDef))
                         {
                             elements.push_back(shaderRef);
                         }
@@ -623,7 +604,7 @@ void findRenderableElements(const DocumentPtr& doc, std::vector<TypedElementPtr>
             }
 
             // Find node graph outputs. Skip any light shaders
-            const std::string LIGHT_SHADER("lightshader");
+            const string LIGHT_SHADER("lightshader");
             for (NodeGraphPtr nodeGraph : nodeGraphs)
             {
                 // Skip anything from an include file including libraries.
@@ -644,8 +625,7 @@ void findRenderableElements(const DocumentPtr& doc, std::vector<TypedElementPtr>
                             {
                                 throw ExceptionShaderGenError("Could not find a nodedef for output '" + outputNode->getName() + "'");
                             }
-                            if (nodeDef &&
-                                requiresImplementation(nodeDef))
+                            if (requiresImplementation(nodeDef))
                             {
                                 outputSet.insert(output);
                             }
@@ -713,7 +693,7 @@ ValueElementPtr findNodeDefChild(const string& path, DocumentPtr doc, const stri
 
     // Use the path element name to look up in the equivalent element
     // in the nodedef as only the nodedef elements contain the information.
-    const std::string& valueElementName = pathElement->getName();
+    const string& valueElementName = pathElement->getName();
     ValueElementPtr valueElement = nodeDef->getChildOfType<ValueElement>(valueElementName);
 
     return valueElement;
@@ -814,24 +794,6 @@ unsigned int getUIProperties(const string& path, DocumentPtr doc, const string& 
         return getUIProperties(valueElement, uiProperties);
     }
     return 0;
-}
-
-void mapNodeDefToIdentiers(const std::vector<NodePtr>& nodes,
-                           std::unordered_map<string, unsigned int>& ids)
-{
-    unsigned int id = 1;
-    for (auto node : nodes)
-    {
-        auto nodedef = node->getNodeDef();
-        if (nodedef)
-        {
-            const std::string& name = nodedef->getName();
-            if (!ids.count(name))
-            {
-                ids[name] = id++;
-            }
-        }
-    }
 }
 
 } // namespace MaterialX

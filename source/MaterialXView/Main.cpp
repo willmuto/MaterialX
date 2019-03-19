@@ -12,10 +12,10 @@ int main(int argc, char* const argv[])
         tokens.push_back(std::string(argv[i]));
     }
 
-    mx::StringVec libraryFolders = { "stdlib", "pbrlib", "stdlib/genglsl", "pbrlib/genglsl" };
+    mx::StringVec libraryFolders = { "stdlib", "pbrlib", "stdlib/genglsl", "pbrlib/genglsl", "BxDF" };
     mx::FileSearchPath searchPath;
-    std::string meshFilename = "documents/TestSuite/Geometry/teapot.obj";
-    std::string materialFilename = "documents/TestSuite/pbrlib/materials/standard_surface_default.mtlx";
+    std::string meshFilename = "resources/Geometry/teapot.obj";
+    std::string materialFilename = "resources/Materials/TestSuite/pbrlib/materials/standard_surface_default.mtlx";
     DocumentModifiers modifiers;
     int multiSampleCount = 0;
 
@@ -60,7 +60,8 @@ int main(int argc, char* const argv[])
             multiSampleCount = std::stoi(nextToken);
         }
     }
-    searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries"));
+    searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("libraries"));
+    searchPath.append(mx::FilePath::getCurrentPath() / mx::FilePath("resources/Materials/Examples"));
 
     try
     {

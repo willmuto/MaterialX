@@ -6,6 +6,11 @@ include_directories(
 file(GLOB_RECURSE materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 file(GLOB_RECURSE materialx_header "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
+if(NOT MATERIALX_BUILD_OIIO)
+    list(REMOVE_ITEM materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/Handlers/OiioImageLoader.h")
+    list(REMOVE_ITEM materialx_source "${CMAKE_CURRENT_SOURCE_DIR}/Handlers/OiioImageLoader.cpp")
+endif()
+
 function(assign_source_group prefix)
     foreach(_source IN ITEMS ${ARGN})
         if (IS_ABSOLUTE "${_source}")
@@ -48,6 +53,16 @@ elseif(UNIX)
         MaterialXCore
         ${CMAKE_DL_LIBS}
     )
+endif()
+
+if(MATERIALX_BUILD_OIIO)
+	set(OPENIMAGEIO_ROOT_DIR ${MATERIALX_OIIO_DIR})
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/External/OpenImageIO")
+	find_package(OpenImageIO REQUIRED)
+	if(OPENIMAGEIO_FOUND)
+		include_directories(${OPENIMAGEIO_INCLUDE_DIR})
+		target_link_libraries(MaterialXRender ${OPENIMAGEIO_LIBRARIES})
+	endif()
 endif()
 
 if(MATERIALX_BUILD_OIIO)

@@ -58,8 +58,7 @@ class Viewer : public ng::Screen
     }
 
   private:
-    void setupLights(mx::HwLightHandlerPtr lightHandler, mx::ShaderGeneratorPtr shaderGenerator,
-          std::vector<mx::NodePtr> lights, const std::string& envRadiancePath, const std::string& envIrradiancePath);
+    void setupLights(mx::DocumentPtr doc, const std::string& envRadiancePath, const std::string& envIrradiancePath);
     void initializeDocument(mx::DocumentPtr libraries);
     void saveActiveMaterialSource();
 
@@ -140,7 +139,7 @@ class Viewer : public ng::Screen
     mx::HwLightHandlerPtr _lightHandler;
 
     // Shader generator
-    mx::ShaderGeneratorPtr _shaderGenerator;
+    mx::GenContext _genContext;
 
     // Mesh options
     bool _splitByUdims;

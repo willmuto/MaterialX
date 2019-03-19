@@ -1,5 +1,13 @@
+//
+// TM & (c) 2017 Lucasfilm Entertainment Company Ltd. and Lucasfilm Ltd.
+// All rights reserved.  See LICENSE.txt for license.
+//
+
 #ifndef MATERIALX_OIIOIMAGELOADER_H
 #define MATERIALX_OIIOIMAGELOADER_H
+
+/// @file
+/// Image loader wrapper using OpenImageIO 
 
 #include <MaterialXRender/Handlers/ImageHandler.h>
 
@@ -39,18 +47,18 @@ class OiioImageLoader : public ImageLoader
     virtual ~OiioImageLoader() {}    
 
     /// Save image to disk. This method must be implemented by derived classes.
-    /// @param fileName Name of file to save image to
+    /// @param filePath Path to file to save image to
     /// @param imageDesc Description of image
     /// @return if save succeeded
-    bool saveImage(const std::string& fileName,
+    bool saveImage(const FilePath& filePath,
                    const ImageDesc &imageDesc) override;
 
     /// Load an image from disk. This method must be implemented by derived classes.
-    /// @param fileName Name of file to load image from
+    /// @param filePath Path to file to load image from
     /// @param imageDesc Description of image updated during load.
     /// @param generateMipMaps Generate mip maps if supported.
     /// @return if load succeeded
-    bool acquireImage(const std::string& fileName, ImageDesc &imageDesc, bool generateMipMaps) override;
+    bool acquireImage(const FilePath& filePath, ImageDesc &imageDesc, bool generateMipMaps) override;
 };
 
 } // namespace MaterialX;

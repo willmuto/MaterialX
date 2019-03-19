@@ -1,13 +1,23 @@
+//
+// TM & (c) 2017 Lucasfilm Entertainment Company Ltd. and Lucasfilm Ltd.
+// All rights reserved.  See LICENSE.txt for license.
+//
+
 #include <MaterialXTest/Catch/catch.hpp>
 
+#include <MaterialXTest/GenShaderUtil.h>
+
 #include <MaterialXCore/Document.h>
+
 #include <MaterialXFormat/File.h>
+
 #include <MaterialXGenOsl/OslShaderGenerator.h>
 #include <MaterialXGenOsl/OslSyntax.h>
 
 #include <MaterialXGenShader/DefaultColorManagementSystem.h>
+#include <MaterialXGenShader/GenContext.h>
 #include <MaterialXGenShader/Util.h>
-#include <MaterialXTest/GenShaderUtil.h>
+
 
 namespace mx = MaterialX;
 
@@ -76,63 +86,80 @@ TEST_CASE("OSL Syntax", "[genosl]")
 
 TEST_CASE("OSL Implementation Check", "[genosl]")
 {
-    mx::ShaderGeneratorPtr generator = mx::OslShaderGenerator::create();
+    mx::GenContext context(mx::OslShaderGenerator::create());
 
-    std::set<std::string> generatorSkipNodeTypes;
+    mx::StringSet generatorSkipNodeTypes;
     generatorSkipNodeTypes.insert("light");
-    generatorSkipNodeTypes.insert("pointlight");
-    generatorSkipNodeTypes.insert("directionallight");
-    generatorSkipNodeTypes.insert("spotlight");
-    std::set<std::string> generatorSkipNodeDefs;
+    generatorSkipNodeTypes.insert("point_light");
+    generatorSkipNodeTypes.insert("directional_light");
+    generatorSkipNodeTypes.insert("spot_light");
+    mx::StringSet generatorSkipNodeDefs;
 
-    GenShaderUtil::checkImplementations(generator, generatorSkipNodeTypes, generatorSkipNodeDefs);
+    GenShaderUtil::checkImplementations(context, generatorSkipNodeTypes, generatorSkipNodeDefs);
 }
 
 TEST_CASE("OSL Unique Names", "[genosl]")
 {
-    mx::FilePath searchPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries");
-    mx::ShaderGeneratorPtr shaderGenerator = mx::OslShaderGenerator::create();
-    shaderGenerator->registerSourceCodeSearchPath(searchPath);
-    // Add path to find OSL include files
-    shaderGenerator->registerSourceCodeSearchPath(searchPath / mx::FilePath("stdlib/osl"));
+    mx::GenContext context(mx::OslShaderGenerator::create());
 
-    GenShaderUtil::testUniqueNames(shaderGenerator, mx::Shader::PIXEL_STAGE);
+    mx::FilePath searchPath = mx::FilePath::getCurrentPath() / mx::FilePath("libraries");
+    context.registerSourceCodeSearchPath(searchPath);
+    // Add path to find OSL include files
+    context.registerSourceCodeSearchPath(searchPath / mx::FilePath("stdlib/osl"));
+
+    GenShaderUtil::testUniqueNames(context, mx::Stage::PIXEL);
 }
 
-class OSLGenCodeGenerationTester : public GenShaderUtil::ShaderGeneratorTester
+class OslShaderGeneratorTester : public GenShaderUtil::ShaderGeneratorTester
 {
-public:
+  public:
     using ParentClass = GenShaderUtil::ShaderGeneratorTester;
 
-    OSLGenCodeGenerationTester(const mx::FilePath& searchPath, const mx::FilePath& testRootPath,
-        const mx::FilePath& logFilePath) : GenShaderUtil::ShaderGeneratorTester(searchPath, testRootPath, logFilePath)
+    OslShaderGeneratorTester(const mx::FilePath& testRootPath, const mx::FilePath& libSearchPath,
+                               const mx::FileSearchPath& srcSearchPath, const mx::FilePath& logFilePath) : 
+        GenShaderUtil::ShaderGeneratorTester(testRootPath, libSearchPath, srcSearchPath, logFilePath)
     {}
 
     void createGenerator() override
     {
         _shaderGenerator = mx::OslShaderGenerator::create();
-        _shaderGenerator->registerSourceCodeSearchPath(_searchPath);
-        // Add path to find OSL include files
-        _shaderGenerator->registerSourceCodeSearchPath(_searchPath / mx::FilePath("stdlib/osl"));
-
-        if (!_shaderGenerator)
-        {
-            _logFile << ">> Failed to create OSL generator" << std::endl;
-        }
     }
 
     void setTestStages() override
     {
-        _testStages.push_back(mx::Shader::PIXEL_STAGE);
+        _testStages.push_back(mx::Stage::PIXEL);
+    }
+
+    // Ignore trying to create shader code for lightshaders
+    void addSkipNodeDefs() override
+    {
+        _skipNodeDefs.insert("ND_point_light");
+        _skipNodeDefs.insert("ND_spot_light");
+        _skipNodeDefs.insert("ND_directional_light");
+        ParentClass::addSkipNodeDefs();
+    }
+
+    // Ignore light shaders in the document for OSL
+    void findLights(mx::DocumentPtr /*doc*/, std::vector<mx::NodePtr>& lights) override
+    {
+        lights.clear();
+    }
+
+    // No direct lighting to register for OSL
+    void registerLights(mx::DocumentPtr /*doc*/, const std::vector<mx::NodePtr>& /*lights*/, mx::GenContext& /*context*/) override
+    {
+        ; // no-op
     }
 };
 
 static void generateOSLCode()
 {
-    const mx::FilePath searchPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/Libraries");
-    const mx::FilePath testRootPath = mx::FilePath::getCurrentPath() / mx::FilePath("documents/TestSuite");
+    const mx::FilePath testRootPath = mx::FilePath::getCurrentPath() / mx::FilePath("resources/Materials/TestSuite");
+    const mx::FilePath libSearchPath = mx::FilePath::getCurrentPath() / mx::FilePath("libraries");
+    mx::FileSearchPath srcSearchPath(libSearchPath.asString());
+    srcSearchPath.append(libSearchPath / mx::FilePath("stdlib/osl"));
     const mx::FilePath logPath("genosl_vanilla_generate_test.txt");
-    OSLGenCodeGenerationTester tester(searchPath, testRootPath, logPath);
+    OslShaderGeneratorTester tester(testRootPath, libSearchPath, srcSearchPath, logPath);
  
     const mx::GenOptions genOptions;
     tester.testGeneration(genOptions);

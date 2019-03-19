@@ -1,7 +1,7 @@
 #ifndef MATERIALXVIEW_EDITOR_H
 #define MATERIALXVIEW_EDITOR_H
 
-#include <MaterialXGenShader/HwShader.h>
+#include <MaterialXGenShader/HwShaderGenerator.h>
 #include <MaterialXGenShader/Util.h>
 
 #include <nanogui/formhelper.h>
@@ -15,7 +15,7 @@ class Viewer;
 struct EditorItem
 {
     std::string label;
-    mx::Shader::Variable* variable = nullptr;
+    mx::ShaderPort* variable = nullptr;
     mx::UIProperties ui;
 };
 
