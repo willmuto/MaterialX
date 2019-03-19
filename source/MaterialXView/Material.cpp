@@ -4,6 +4,8 @@
 #include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/Util.h>
 
+#include <MaterialXFormat/File.h>
+
 #include <iostream>
 
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
@@ -34,7 +36,10 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
     mx::XmlReadOptions readOptions;
     readOptions.readXIncludeFunction = [](mx::DocumentPtr doc, const std::string& filename, const std::string& searchPath, const mx::XmlReadOptions* options)
     {
-        mx::FilePath resolvedFilename = mx::FileSearchPath(searchPath).find(filename);
+        mx::FileSearchPath fileSearchPath = mx::FileSearchPath(searchPath);
+        fileSearchPath.append(mx::getEnvironmentPath());
+        
+        mx::FilePath resolvedFilename = fileSearchPath.find(filename);
         if (resolvedFilename.exists())
         {
             readFromXmlFile(doc, resolvedFilename, mx::EMPTY_STRING, options);
@@ -439,8 +444,8 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
         _glShader->setUniform("u_envSamples", envSamples);
     }
     mx::StringMap lightTextures = {
-        { "u_envRadiance", indirectLighting ? (std::string) lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
-        { "u_envIrradiance", indirectLighting ? (std::string) lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
+        { "u_envRadiance", indirectLighting ? lightHandler->getLightEnvRadiancePath() : mx::EMPTY_STRING },
+        { "u_envIrradiance", indirectLighting ? lightHandler->getLightEnvIrradiancePath() : mx::EMPTY_STRING }
     };
     const std::string udim;
     std::array<float, 4> fallbackColor = { 0.0, 0.0, 0.0, 1.0 };
@@ -474,7 +479,7 @@ void Material::bindLights(mx::HwLightHandlerPtr lightHandler, mx::GLTextureHandl
     int lightCount = directLighting ? (int) lightHandler->getLightSources().size() : 0;
     _glShader->setUniform("u_numActiveLightSources", lightCount);
     std::unordered_map<std::string, unsigned int> ids;
-    lightHandler->mapNodeDefToIdentiers(lightHandler->getLightSources(), ids);
+    mx::mapNodeDefToIdentiers(lightHandler->getLightSources(), ids);
     size_t index = 0;
     for (mx::NodePtr light : lightHandler->getLightSources())
     {
