@@ -350,6 +350,11 @@ bool Material::bindImage(std::string filename, const std::string& uniformName, m
         return false;
     }
 
+    if (filename.empty())
+    {
+        return false;
+    }
+
     // Apply udim string if specified.
     if (!udim.empty())
     {
