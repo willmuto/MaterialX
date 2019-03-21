@@ -4,6 +4,8 @@
 #include <MaterialXGenShader/Shader.h>
 #include <MaterialXGenShader/Util.h>
 
+#include <MaterialXFormat/File.h>
+
 #include <iostream>
 
 using MatrixXfProxy = Eigen::Map<const ng::MatrixXf>;
@@ -34,7 +36,10 @@ size_t Material::loadDocument(mx::DocumentPtr destinationDoc, const mx::FilePath
     mx::XmlReadOptions readOptions;
     readOptions.readXIncludeFunction = [](mx::DocumentPtr doc, const std::string& filename, const std::string& searchPath, const mx::XmlReadOptions* options)
     {
-        mx::FilePath resolvedFilename = mx::FileSearchPath(searchPath).find(filename);
+        mx::FileSearchPath fileSearchPath = mx::FileSearchPath(searchPath);
+        fileSearchPath.append(mx::getEnvironmentPath());
+        
+        mx::FilePath resolvedFilename = fileSearchPath.find(filename);
         if (resolvedFilename.exists())
         {
             readFromXmlFile(doc, resolvedFilename, mx::EMPTY_STRING, options);
@@ -341,6 +346,11 @@ bool Material::bindImage(std::string filename, const std::string& uniformName, m
                          mx::ImageDesc& desc, const std::string& udim, std::array<float, 4>* fallbackColor)
 {
     if (!_glShader)
+    {
+        return false;
+    }
+
+    if (filename.empty())
     {
         return false;
     }
