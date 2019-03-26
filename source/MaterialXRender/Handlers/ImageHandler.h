@@ -36,6 +36,8 @@ class ImageDesc
     void* resourceBuffer = nullptr;
     /// Is buffer floating point
     bool floatingPoint = true;
+    /// Is buffer compressed
+    bool compressed = false;
     /// Hardware target dependent resource identifier. May be undefined.
     unsigned int resourceId = 0;
 
@@ -93,6 +95,7 @@ class ImageLoader
     static std::string TIF_EXTENSION;
     static std::string TIFF_EXTENSION;
     static std::string TXT_EXTENSION;
+    static std::string TXR_EXTENSION;
 
     /// Returns a list of supported extensions
     /// @return List of support extensions

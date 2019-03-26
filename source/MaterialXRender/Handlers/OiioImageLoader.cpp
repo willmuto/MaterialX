@@ -5,6 +5,8 @@
 
 #include <MaterialXRender/Handlers/OiioImageLoader.h>
 
+#include <iostream>
+
 #if defined(OSWin_) || defined(_WIN32)
 #pragma warning( push )
 #pragma warning( disable: 4100)
@@ -20,6 +22,7 @@
 #endif
 
 #include <OpenImageIO/imageio.h>
+#include <OpenImageIO/imagebuf.h>
 
 
 #if defined(OSWin_) || defined(_WIN32)
@@ -49,25 +52,36 @@ bool OiioImageLoader::acquireImage(const FilePath& filePath,
     OIIO::ImageInput* imageInput = OIIO::ImageInput::open(filePath);
     if (!imageInput)
     {
+        std::cout << "Failed to open " << filePath.asString() << std::endl;
         return false;
     }
 
     const OIIO::ImageSpec& imageSpec = imageInput->spec();
     if (imageSpec.format != OIIO::TypeDesc::UINT8 &&
+        imageSpec.format != OIIO::TypeDesc::HALF &&
         imageSpec.format != OIIO::TypeDesc::FLOAT)
     {
+        std::cout << "imageFormat does not match " << imageSpec.format << std::endl;
         return false;
     }
 
     imageDesc.width = imageSpec.width;
     imageDesc.height = imageSpec.height;
     imageDesc.channelCount = imageSpec.nchannels;
-    imageDesc.floatingPoint = (imageSpec.format == OIIO::TypeDesc::FLOAT);
+    imageDesc.floatingPoint = (imageSpec.format == OIIO::TypeDesc::FLOAT || 
+                               imageSpec.format == OIIO::TypeDesc::HALF);
     imageDesc.computeMipCount();
 
     size_t imageBytes = (size_t) imageSpec.image_bytes();
-    void* imageBuf = malloc(imageBytes);
-    imageInput->read_image(imageSpec.format, imageBuf);
+    if (imageSpec.format == OIIO::TypeDesc::HALF)
+    {
+        // Since we are reading HALF into FLOAT. Find a cleaner 
+        // way to do this.
+        imageBytes *= 2;
+    }
+    void* imageBuf = malloc(imageBytes * 2);
+    imageInput->read_image(imageSpec.format == OIIO::TypeDesc::HALF ? OIIO::TypeDesc::FLOAT : imageSpec.format, 
+                           imageBuf);
     imageDesc.resourceBuffer = imageBuf;
     
     return true;
