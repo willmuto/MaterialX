@@ -68,12 +68,7 @@ TEST_CASE("OGSFX Implementation Check", "[genogsfx]")
 
     mx::StringSet generatorSkipNodeTypes;
     mx::StringSet generatorSkipNodeDefs;
-    generatorSkipNodeDefs.insert("ND_add_surfaceshader");
-    generatorSkipNodeDefs.insert("ND_multiply_surfaceshaderF");
-    generatorSkipNodeDefs.insert("ND_multiply_surfaceshaderC");
-    generatorSkipNodeDefs.insert("ND_mix_surfaceshader");
-
-    GenShaderUtil::checkImplementations(context, generatorSkipNodeTypes, generatorSkipNodeDefs);
+    GenShaderUtil::checkImplementations(context, generatorSkipNodeTypes, generatorSkipNodeDefs, 34);
 }
 
 TEST_CASE("OGSFX Unique Names", "[genogsfx]")
@@ -83,7 +78,7 @@ TEST_CASE("OGSFX Unique Names", "[genogsfx]")
     mx::FilePath searchPath = mx::FilePath::getCurrentPath() / mx::FilePath("libraries");
     context.registerSourceCodeSearchPath(searchPath);
 
-    GenShaderUtil::testUniqueNames(context, mx::HW::FX_STAGE);
+    GenShaderUtil::testUniqueNames(context, mx::Stage::EFFECT);
 }
 
 class OgsFxShaderGeneratorTester : public GlslShaderGeneratorTester
@@ -98,6 +93,11 @@ public:
     void createGenerator() override
     {
         _shaderGenerator = mx::OgsFxShaderGenerator::create();
+    }
+
+    void setTestStages() override
+    {
+        _testStages.push_back(mx::Stage::EFFECT);
     }
 };
 
