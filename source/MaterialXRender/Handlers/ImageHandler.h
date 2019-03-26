@@ -36,8 +36,6 @@ class ImageDesc
     void* resourceBuffer = nullptr;
     /// Is buffer floating point
     bool floatingPoint = true;
-    /// Is buffer compressed
-    bool compressed = false;
     /// Hardware target dependent resource identifier. May be undefined.
     unsigned int resourceId = 0;
 
