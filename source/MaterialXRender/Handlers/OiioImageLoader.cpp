@@ -79,7 +79,7 @@ bool OiioImageLoader::acquireImage(const FilePath& filePath,
         // way to do this.
         imageBytes *= 2;
     }
-    void* imageBuf = malloc(imageBytes * 2);
+    void* imageBuf = malloc(imageBytes);
     imageInput->read_image(imageSpec.format == OIIO::TypeDesc::HALF ? OIIO::TypeDesc::FLOAT : imageSpec.format, 
                            imageBuf);
     imageDesc.resourceBuffer = imageBuf;
