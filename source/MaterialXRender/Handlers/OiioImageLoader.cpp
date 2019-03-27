@@ -5,7 +5,6 @@
 
 #include <MaterialXRender/Handlers/OiioImageLoader.h>
 
-#include <iostream>
 
 #if defined(OSWin_) || defined(_WIN32)
 #pragma warning( push )
@@ -22,7 +21,6 @@
 #endif
 
 #include <OpenImageIO/imageio.h>
-#include <OpenImageIO/imagebuf.h>
 
 
 #if defined(OSWin_) || defined(_WIN32)
@@ -52,36 +50,32 @@ bool OiioImageLoader::acquireImage(const FilePath& filePath,
     OIIO::ImageInput* imageInput = OIIO::ImageInput::open(filePath);
     if (!imageInput)
     {
-        std::cout << "Failed to open " << filePath.asString() << std::endl;
         return false;
     }
 
-    const OIIO::ImageSpec& imageSpec = imageInput->spec();
+    OIIO::ImageSpec imageSpec = imageInput->spec();
+    if (imageSpec.format == OIIO::TypeDesc::HALF)
+    {
+        // Due to display issue with 16-bit tiled exrs,
+        // treat as 32-bit float.
+        imageSpec.set_format(OIIO::TypeDesc::FLOAT);
+    }
+
     if (imageSpec.format != OIIO::TypeDesc::UINT8 &&
-        imageSpec.format != OIIO::TypeDesc::HALF &&
         imageSpec.format != OIIO::TypeDesc::FLOAT)
     {
-        std::cout << "imageFormat does not match " << imageSpec.format << std::endl;
         return false;
     }
 
     imageDesc.width = imageSpec.width;
     imageDesc.height = imageSpec.height;
     imageDesc.channelCount = imageSpec.nchannels;
-    imageDesc.floatingPoint = (imageSpec.format == OIIO::TypeDesc::FLOAT || 
-                               imageSpec.format == OIIO::TypeDesc::HALF);
+    imageDesc.floatingPoint = (imageSpec.format == OIIO::TypeDesc::FLOAT);
     imageDesc.computeMipCount();
 
     size_t imageBytes = (size_t) imageSpec.image_bytes();
-    if (imageSpec.format == OIIO::TypeDesc::HALF)
-    {
-        // Since we are reading HALF into FLOAT. Find a cleaner 
-        // way to do this.
-        imageBytes *= 2;
-    }
     void* imageBuf = malloc(imageBytes);
-    imageInput->read_image(imageSpec.format == OIIO::TypeDesc::HALF ? OIIO::TypeDesc::FLOAT : imageSpec.format, 
-                           imageBuf);
+    imageInput->read_image(imageSpec.format, imageBuf);
     imageDesc.resourceBuffer = imageBuf;
     
     return true;
